@@ -44,10 +44,10 @@ nav{
     z-index: 2;
 }
 .logo:hover{
-    top: 15%;
+    top: 11%;
     left: 6.25%;
-    width: 220px;
-    height: 220px;   
+    width: 200px;
+    height: 200px;   
 }
 
 /*PASEK GÓRNY*/
