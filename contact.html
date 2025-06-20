@@ -64,13 +64,11 @@
                 </div>
             </div>
             <div data-aos="fade" data-aos-duration="2000" data-aos-delay="10" class="kontakt-col">
-                <form action="mail.php" method="POST" class="ajax" enctype="multipart/form-data">
-                    <input id="mail_name" name="name" type="text" placeholder="Imię i nazwisko" required>
-                    <input id="mail_email" name="email" type="text" placeholder="E-mail"required>
-                    <!--<input id="mail_subject" type="text" placeholder="Temat" required>-->
-                    <textarea id="mail_message" name="message" placeholder="Treść wiadomości"required></textarea>
-                    <!--<input id="mail_file" name="file" type="file" placeholder="Załącznik">-->
-                    <button id="mail_submit" type="submit" class="wyslij-btn">Wyślij wiadomość</button>
+                <form id="mailForm" class="ajax">
+                  <input id="mail_name" name="name" type="text" placeholder="Imię i nazwisko" required>
+                  <input id="mail_email" name="email" type="email" placeholder="E-mail" required>
+                  <textarea id="mail_message" name="message" placeholder="Treść wiadomości" required></textarea>
+                  <button id="mail_submit" type="submit" class="wyslij-btn">Wyślij wiadomość</button>
                 </form>
             </div>
         </div>
@@ -93,6 +91,22 @@
         <audio id="player" loop>
             <source src="audio/background1.mp3" type="audio/mpeg">
         </audio>
+        <script>
+          document.getElementById('mailForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+        
+            const name = document.getElementById('mail_name').value;
+            const email = document.getElementById('mail_email').value;
+            const message = document.getElementById('mail_message').value;
+        
+            const subject = `Wiadomość od ${name}`;
+            const body = `Imię i nazwisko: ${name}%0D%0AEmail: ${email}%0D%0A%0D%0AWiadomość:%0D%0A${message}`;
+        
+            const mailtoLink = `mailto:danielkrzyk44@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            window.location.href = mailtoLink;
+          });
+        </script>
         <!--Skrypty przejścia/kolorów-->
         <script src="js/index_zmiana.js"></script>
         <!--JavaScript pokaż/schowaj liste---> 
