@@ -99,11 +99,16 @@
             const email = document.getElementById('mail_email').value;
             const message = document.getElementById('mail_message').value;
         
-            const subject = `Wiadomość od ${name}`;
-            const body = `Imię i nazwisko: ${name}%0D%0AEmail: ${email}%0D%0A%0D%0AWiadomość:%0D%0A${message}`;
-        
-            const mailtoLink = `mailto:danielkrzyk44@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            const subject = `Nowa wiadomość od ${name}`;
             
+            const body =
+              `👤 Imię i nazwisko: ${name}\n` +
+              `📧 E-mail: ${email}\n\n` +
+              `💬 Wiadomość:\n${message}`;
+        
+            const mailtoLink =
+              `mailto:danielkrzyk44@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        
             window.location.href = mailtoLink;
           });
         </script>
