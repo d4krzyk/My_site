@@ -1,52 +1,33 @@
-# Chaotyczne Wyrazy Ekspresji
+# KRZYK — Zejście
 
-## Overview
-This website is a personal creative portfolio called "Chaotic Words of Expression" (Chaotyczne Wyrazy Ekspresji). It showcases artistic works in the fields of graphics and music, expressing emotions and ideas through various media. The site is designed to present the author's unique perspective on art, creativity, and the surrounding world.
+Portfolio d4krzyk w dwóch działach: **Krzyk** (muzyka, obraz, persony) i **Maszynologia** (projekty IT, CV, kontakt).
+Estetyka: zin post-punk lat 90., dither, PS1 low-poly, demoscena.
 
-## Author
-The creator of this website is **d4krzyk**, known artistically as **Krzyk**. All content, graphics, and music are original works by Krzyk.
+## Struktura
 
-## Purpose
-The main goal of the website is to share original graphic and musical works, inspire visitors, and provide information about the author and the creative process. It also serves as a hub for connecting with the author's social media profiles and YouTube channel, where more content is published.
+- `src/app/` — strony (App Router):
+  - `/` — brama: zejście w tunel, sztandary słońca i księżyca palą się, popiół składa się w sigile; po zejściu ścieżki do działów,
+  - `/krzyk/` — dział artystyczny (szkic),
+  - `/maszynologia/` — dział IT w stylu NFO (szkic).
+- `src/components/` — `Gate` (brama) i `CardsNav` (nawigacja kartami IV · II · IV na podstronach).
+- `src/engine/` — silnik wizualny przeniesiony z planszy stylu: dither Bayera, pętle o stałej liczbie klatek, brama, karty.
+- `public/` — fonty pikselowe, sztandary, sprite'y kart, kolaż.
+- `legacy/` — poprzednia wersja strony (HTML/CSS/jQuery), zostawiona do wglądu.
 
-## Features
-- **Homepage**: Introduction to the site and its motto, with navigation to other sections.
-- **Idea**: Explanation of the concept and philosophy behind the creative works.
-- **Materials**: Access to video and audio content, including background music.
-- **About the Author**: Information about the creator and their artistic journey.
-- **Contact**: A contact form for visitors to reach out to the author.
-- **Footer**: Social media links (YouTube, Facebook, Instagram, Twitter).
-- **Background Music**: Audio player with controls for background music.
+## Uruchomienie
 
-## Technologies Used
-- **HTML5**: Structure of the website.
-- **CSS3**: Styling and layout, including custom fonts from Google Fonts and Font Awesome icons.
-- **JavaScript**: Interactive features such as menu toggling, audio controls, and animations.
-- **jQuery**: Used for DOM manipulation and effects.
-- **AOS (Animate On Scroll)**: Library for scroll-based animations.
-- **Font Awesome**: Icon library for social media and UI elements.
+```bash
+npm install
+npm run dev      # podgląd na http://localhost:3000
+npm run build    # statyczny eksport do out/
+```
 
-## File Structure
-- `index.html`: Main homepage.
-- `Idea.html`, `video.html`, `author.html`, `contact.html`, `about_page.html`: Subpages for different sections.
-- `style.css`, `css/all.css`: Stylesheets for layout and design.
-- `js/index_zmiana.js`, `js/wysuwanie.js`, `js/contact.js`: JavaScript files for interactivity.
-- `audio/background1.mp3`: Background music file.
-- `images/`: Folder containing graphics and icons used throughout the site.
-- `webfonts/`: Font files for icons.
+## Publikacja
 
-## How It Was Made
-The website was hand-coded using HTML, CSS, and JavaScript. It leverages external libraries for fonts, icons, and animations to create a modern and visually appealing user experience. The design is responsive and works on both desktop and mobile devices. All content, graphics, and music are original works by the author.
+Workflow `.github/workflows/pages.yml` buduje stronę przy pushu na `main` i publikuje ją na GitHub Pages
+pod `/My_site` (zmienna `PAGES=1` ustawia `basePath`). W ustawieniach repozytorium: **Settings → Pages → Source: GitHub Actions**.
 
-## How to Use
-Simply open `index.html` in a web browser. Navigate through the menu to explore different sections. Use the audio controls to play or mute background music. Contact the author via the contact page or connect through social media links in the footer.
+## Licencje fontów
 
-## Credits
-All content, graphics, and music are created by **d4krzyk**. External libraries used:
-- [jQuery](https://jquery.com/)
-- [AOS](https://michalsnik.github.io/aos/)
-- [Font Awesome](https://fontawesome.com/)
-- [Google Fonts](https://fonts.google.com/)
-
----
-For any questions or feedback, please use the contact form or reach out via social media.
+`Alagard PL` i `Krzyk DOS` są w `public/fonts/`. Przed publikacją trzeba potwierdzić ich licencje.
+Fonty tylko do użytku osobistego (np. Archive Stamp, HVD Poster, Eroded) nie są dołączone.
