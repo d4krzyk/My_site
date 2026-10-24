@@ -175,7 +175,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .tw{opacity:0;display:inline-block;white-space:pre;transform:translate(var(--dx,0),var(--dy,0))}
 .tw.on{opacity:var(--ink,1)}
 .tw.hit{text-shadow:0 0 .12em currentColor;filter:brightness(1.4)}
-.k-stamp{--sw:min(50cqw,98svh);position:absolute;left:calc(94.3cqw - var(--sw));top:max(18cqw,min(41cqw,calc(100svh - var(--sw) * .4375 - 22px)));width:var(--sw);z-index:2;pointer-events:none;opacity:0;user-select:none}
+.k-stamp{--sw:max(30cqw,min(46cqw,calc((100svh - 33cqw - 20px) / .4375)));position:absolute;left:calc(89.8cqw - var(--sw));top:max(33cqw,min(42cqw,calc(100svh - var(--sw) * .4375 - 20px)));width:var(--sw);z-index:2;pointer-events:none;opacity:0;user-select:none}
 .k-safe{position:absolute;left:0;top:0;width:100cqw;height:86cqw;z-index:2;pointer-events:none;opacity:0;mix-blend-mode:screen;
   background:radial-gradient(60% 45% at 66% 52%,rgba(150,12,8,.28),transparent 70%)}
 .dev .k-stamp{animation:k-develop 3.4s .35s both cubic-bezier(.35,.1,.3,1)}
