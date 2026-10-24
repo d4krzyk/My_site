@@ -139,10 +139,11 @@ export function initRooms(root, { assets, go }) {
     if (kind === 'walkman') {
       loadPSX(P, assets.walkman).then(m => { const o = fit(m, 1.1); o.rotation.set(-.15, .5, .1); P.scene.add(o);
         P.cam.position.set(0, .15, 2.3); P.cam.lookAt(0, 0, 0);
-        let spin = 0;
-        click = () => { st.busy = true; st.t0 = st.now; spin = 1; setTimeout(() => { st.busy = false; go(kind); }, RM ? 0 : 520); };
-        tick = (t) => { const k = spin ? clamp((t - st.t0) / 520, 0, 1) : 0; if (k >= 1) spin = 0;
-          o.rotation.y = .5 + Math.sin(t / 1600) * (st.hot ? .55 : .3) + easeOut(k) * Math.PI * 2;
+        const phones = []; o.traverse(c => { if (c.isMesh && /^headphone|^headJack/i.test(c.material.name || '')) phones.push(c); });
+        // klik: słuchawki zeskakują z walkmana i zakładają się na ekran (nakładka na cały ekran), potem sekcja muzyki
+        click = () => { if (RM) return go(kind); st.busy = true; phones.forEach(c => { c.visible = false; });
+          headphonesOn(assets, cv, o, () => go(kind, true), () => { phones.forEach(c => { c.visible = true; }); st.busy = false; }); };
+        tick = (t) => { o.rotation.y = .5 + Math.sin(t / 1600) * (st.hot ? .55 : .3);
           o.position.y = Math.sin(t / 900) * .03 + (st.hot ? .06 : 0); o.rotation.z = .1 + Math.sin(t / 2100) * .05; };
       }).catch(() => {});
     }
@@ -216,6 +217,44 @@ export function initRooms(root, { assets, go }) {
   });
   return () => stop.forEach(f => f());
 }
+
+/* ---------- walkman → muzyka: słuchawki wylatują z karty, obracają się wokół osi nauszników (pałąk idzie do tyłu, jakby
+   zakładały się na głowę), nauszniki dochodzą do brzegów ekranu, ekran gaśnie ditherem i odsłania sekcję ---------- */
+let hpBusy = false;
+function headphonesOn(assets, pickCv, pickObj, arrive, done) {
+  if (hpBusy) return; hpBusy = true;
+  const ov = document.createElement('div'); ov.className = 'hp-ov'; ov.innerHTML = '<canvas></canvas><canvas class="hp-dim"></canvas>'; document.body.appendChild(ov);
+  const [cv, dimC] = ov.querySelectorAll('canvas'), lw = Math.ceil(innerWidth / 3), lh = Math.ceil(innerHeight / 3);
+  const P = ps1(cv, lw, lh, { alpha: 0 }); lights(P); P.cam.position.set(0, 0, 3); P.cam.lookAt(0, 0, 0);
+  dimC.width = Math.ceil(lw / 2); dimC.height = Math.ceil(lh / 2); const dx = dimC.getContext('2d');
+  let finished = false;
+  const end = () => { if (finished) return; finished = true; ov.classList.add('out'); setTimeout(() => { ov.remove(); P.r.dispose(); hpBusy = false; done(); }, 380); };
+  loadPSX(P, assets.walkman).then(m => {
+    const o = fit(m, 1.1); o.traverse(c => { if (c.isMesh && !/^headphone|^headJack/i.test(c.material.name || '')) c.visible = false; });
+    // oś obrotu: przez środki nauszników (przy zerowym obrocie, w układzie walkmana)
+    o.updateMatrixWorld(true); const cups = new THREE.Box3(); o.traverse(c => { if (c.isMesh && /^headphoneOrange/i.test(c.material.name || '')) cups.expandByObject(c); });
+    const pc = cups.getCenter(new THREE.Vector3()), piv = new THREE.Group(); piv.position.copy(pc); o.add(piv);
+    [...o.children].forEach(c => { if (c !== piv) piv.attach(c); });
+    const T = new THREE.Group(); T.add(o); o.position.sub(pc); T.position.copy(pc); P.scene.add(T);   // T obraca się wokół osi nauszników
+    // start dokładnie tam, gdzie słuchawki były w karcie: pozycja na ekranie i skala z rozmiaru płótna karty
+    const r = pickCv.getBoundingClientRect(), H = 3 * Math.tan(17.5 * Math.PI / 180), Wd = H * innerWidth / innerHeight;
+    const sx = ((r.left + r.width / 2) / innerWidth * 2 - 1) * Wd, sy = -((r.top + r.height / 2) / innerHeight * 2 - 1) * H;
+    const s0 = (r.height / (2 * 2.3 * Math.tan(17.5 * Math.PI / 180))) / (innerHeight / (2 * H));
+    const R0 = pickObj.rotation.clone(), start = new THREE.Vector3(sx, sy, 0).add(pc.clone().multiplyScalar(s0)), s1 = 2.6 * Math.min(1, innerWidth / innerHeight);
+    let t0 = null;
+    loop(cv, 30, t => { if (finished) return; if (t0 === null) t0 = t; const e = t - t0;
+      const up = easeOut(clamp(e / 450, 0, 1)), put = ease(clamp((e - 380) / 1150, 0, 1));
+      T.scale.setScalar(s0 + (s1 - s0) * put);
+      T.position.set(start.x * (1 - put), start.y * (1 - put) + up * .5 * s0 * (1 - put) - .06 * put, put * 1.7);
+      T.rotation.set(R0.x * (1 - put), R0.y * (1 - put), R0.z * (1 - put));
+      piv.rotation.x = 1.3 * ease(clamp((e - 520) / 1000, 0, 1));                   // pałąk przechodzi nad głową widza (ku kamerze i w górę), nauszniki na boki
+      P.render();
+      const d = clamp((e - 1250) / 380, 0, 1); dx.clearRect(0, 0, dimC.width, dimC.height);
+      if (d > 0) { const img = dx.createImageData(dimC.width, dimC.height), D = img.data; for (let yy = 0; yy < dimC.height; yy++) for (let xx = 0; xx < dimC.width; xx++) if (bthC(xx, yy) < d) D[(yy * dimC.width + xx) * 4 + 3] = 255; dx.putImageData(img, 0, 0); }
+      if (e > 1680) { arrive(); end(); } });
+  }).catch(() => { arrive(); end(); });
+}
+const BAYC = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5], bthC = (x, y) => (BAYC[(y & 3) * 4 + (x & 3)] + .5) / 16;
 
 /* ---------- przejście miniDV → HC90E: ciemność, kamera wjeżdża, najazd na LCD w NightShot, ekran nabiera koloru i odsłania dział ---------- */
 let hcBusy = false;

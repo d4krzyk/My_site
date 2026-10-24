@@ -228,6 +228,10 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .hc-ov{position:fixed;inset:0;z-index:50;background:#000;cursor:pointer;transition:opacity .45s}
 .hc-ov canvas{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block}
 .hc-ov.out{opacity:0}
+/* walkman → muzyka: słuchawki na cały ekran, na koniec ditherowe ściemnienie */
+.hp-ov{position:fixed;inset:0;z-index:50;pointer-events:none;transition:opacity .35s}
+.hp-ov canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+.hp-ov.out{opacity:0}
 .hc-skip{position:absolute;right:16px;bottom:14px;color:#5d8a68;font-size:14px}
 /* Maszynologia: pasek stanu pagera (jak `more`/`less`: odwrócone kolory), błysk przy skoku */
 .pager{position:fixed;left:12px;bottom:10px;z-index:60;padding:2px 7px;background:var(--silver);color:#000;font-size:16px;line-height:1.1;opacity:0;pointer-events:none;transition:opacity .2s}
