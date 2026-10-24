@@ -19,7 +19,7 @@ export default function Maszyn() {
       <main className="sec maszyn" ref={ref}>
         <h1 className="sr-only">Maszynologia [IT]</h1>
         <div className="m-prompt dos" aria-hidden="true">C:\MASZYNOLOGIA&gt; <span className="m-cur" /></div>
-        <div className="cracktro"><canvas id="demo" width="320" height="200" aria-label="Cracktro: listing asemblera zamieniający się w przewijany napis" role="img" /></div>
+        <div className="cracktro" aria-hidden="true"><canvas id="demo" width="320" height="200" /></div>
         <div className="nfo-wrap">
           <img id="ornL" alt="" draggable="false" />
           <div className="nfo-mid">

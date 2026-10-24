@@ -248,7 +248,7 @@ export function initMaszyn(root, opts) {
 
 FONTS().then(()=>{
   const c=$('demo'); if(!c) return;
-  const x=c.getContext('2d',{willReadFrequently:true}); const W=320,H=200, COL=[196,18,29];
+  const x=c.getContext('2d',{willReadFrequently:true}); const W=320, COL=[196,18,29]; let H=200;
   const asm=`; KRZYK.COM — intro 256b
         org 100h
 start:  mov al,13h
@@ -327,7 +327,10 @@ ogien:  mov cx,64000
   const DS=116, DE=200;                         // pełna fala do DS, wygaszanie w stronę DE
   const AF=1.5;                                 // poniżej tej amplitudy fala = 0 (bez 1-px załamań, które czytają się jak ogonki: A→Ą)
   const LA=40,  LB=172;                         // zakres zatrzaśnięć (rozrzucona kolejność), kończy się zanim linia się wyprostuje
-  const Y0=141, BT=120, BB=175, SY=180;
+  /* demo na całą stronę: szerokość logiczna 320, wysokość dopasowana do proporcji okna; pas ze scrollerem zostaje przy dolnej krawędzi, a nad nim biegnie dłuższy listing */
+  let Y0=141, BT=120, BB=175, SY=180, LN=10;
+  const layout=()=>{ H=Math.max(200,Math.round(W*(innerHeight||200)/(innerWidth||320))); c.width=W; c.height=H; const d=H-200; Y0=141+d; BT=120+d; BB=175+d; SY=180+d; LN=Math.ceil((BT-2)/16)+1; };
+  layout(); let rt; addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(layout,150); },{passive:true});
   const HOLD=Math.round(1300/FT)*SP;            // "KLUCZ OK" trzyma się ~1,3 s (w px drogi)
 
   /* każde przejście taśmy dekoduje w innej kolejności i z innymi sigilami */
@@ -351,10 +354,10 @@ ogien:  mov cx,64000
     /* listing asm (jak w rev.03, przyciemniony do ~65% rastra), 1 px/klatkę */
     const ay=n%(asm.length*16);
     x.fillStyle='rgb(170,170,170)';
-    for(let i=0;i<10;i++){ const li=Math.floor(ay/16)+i; x.fillText(asm[li%asm.length],4,i*16-(ay%16)); }
+    for(let i=0;i<LN;i++){ const li=Math.floor(ay/16)+i; x.fillText(asm[li%asm.length],4,i*16-(ay%16)); }
     // rozpuszczanie listingu na górze i nad pasem
     let g=x.createLinearGradient(0,0,0,22); g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=g; x.fillRect(0,0,W,22);
-    g=x.createLinearGradient(0,86,0,BT-2); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,1)'); x.fillStyle=g; x.fillRect(0,86,W,BT-86);
+    g=x.createLinearGradient(0,BT-34,0,BT-2); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,1)'); x.fillStyle=g; x.fillRect(0,BT-34,W,32);
     x.fillStyle='#000'; x.fillRect(0,BT-2,W,H-BT+2);
 
     /* pasek copper: kropkowane linie rzednące ku górze, maszerujące; na dole jedna linia */
