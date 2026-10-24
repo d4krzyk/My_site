@@ -198,14 +198,14 @@ export function initRooms(root, { assets, go }) {
       }).catch(() => {});
     }
     if (kind === 'phone') {
-      loadPSX(P, assets.phone).then(m => { const d = new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3());
-        if (d.x >= d.y && d.x >= d.z) m.rotation.z = Math.PI / 2; else if (d.z >= d.y) m.rotation.x = Math.PI / 2;
-        const up = new THREE.Group(); up.add(m); up.rotation.z = Math.PI;                         // model stał do góry nogami
-        const o = fit(up, 1.1); P.scene.add(o); P.cam.position.set(0, 0, 1.75); P.cam.lookAt(0, 0, 0);
+      loadPSX(P, assets.phone).then(m => {
+        // w pliku ekran patrzy w +Y, a telefon leży wzdłuż X górą (słuchawka, antena) ku −X: najpierw ekran do kamery, potem góra do góry
+        m.rotation.set(Math.PI / 2, 0, -Math.PI / 2, 'ZYX');
+        const o = fit(m, 1.1); P.scene.add(o); P.cam.position.set(0, 0, 1.75); P.cam.lookAt(0, 0, 0);
         let ring = 0;
         click = () => { st.busy = true; ring = 1; st.t0 = st.now; setTimeout(() => { st.busy = false; ring = 0; go(kind); }, RM ? 0 : 600); };
         tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0;
-          o.rotation.set(.15 + Math.sin(t / 2000) * .08, Math.sin(t / 1500) * (st.hot ? .9 : .5) + r, -.25 + r * .5 + (st.hot ? Math.sin(t / 60) * .03 : 0));
+          o.rotation.set(.1 + Math.sin(t / 2000) * .06, Math.sin(t / 1500) * (st.hot ? .8 : .45) + r, -.06 + r * .5 + (st.hot ? Math.sin(t / 60) * .03 : 0));
           o.position.y = Math.sin(t / 1000) * .02; };
       }).catch(() => {});
     }
