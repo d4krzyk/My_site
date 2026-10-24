@@ -25,17 +25,17 @@ export function loadPSX(P, url) {
     g.scene.traverse(m => { if (!m.isMesh) return;
       const mats = (Array.isArray(m.material) ? m.material : [m.material]).map(o => { const map = o.map || null;
         if (map) { map.magFilter = THREE.NearestFilter; map.minFilter = THREE.NearestFilter; map.generateMipmaps = false; map.encoding = THREE.LinearEncoding; map.needsUpdate = true; }
-        const mt = P.mat({ map, color: o.color ? o.color.clone().convertLinearToSRGB() : 0xffffff, side: THREE.DoubleSide });
+        const mt = P.mat({ map, color: o.color ? o.color.clone().convertLinearToSRGB() : 0xffffff, side: THREE.DoubleSide }); mt.name = o.name || '';
         if (/white plastic/i.test(o.name || '')) { mt.polygonOffset = true; mt.polygonOffsetFactor = -2; mt.polygonOffsetUnits = -8; } return mt; });
       m.material = mats.length > 1 ? mats : mats[0]; });
     res(g.scene); }, undefined, rej));
 }
 // skaluje obiekt do największego wymiaru `size` i ustawia jego środek w (0,0,0)
-function fit(obj, size) {
+export function fit(obj, size) {
   const g = new THREE.Group(); const b = new THREE.Box3().setFromObject(obj), d = b.getSize(new THREE.Vector3());
   const s = size / Math.max(d.x, d.y, d.z); obj.scale.setScalar(s); obj.position.sub(b.getCenter(new THREE.Vector3()).multiplyScalar(s)); g.add(obj); return g;
 }
-function lights(P, rim = 0x3ff0ff, rim2 = 0xc4121d) {
+export function lights(P, rim = 0x3ff0ff, rim2 = 0xc4121d) {
   P.scene.add(new THREE.AmbientLight(0x7a7f98, .85));
   const k = new THREE.DirectionalLight(0xfff2dc, .9); k.position.set(1.5, 2, 3); P.scene.add(k);
   const a = new THREE.DirectionalLight(rim, .5); a.position.set(-3, 1, -1); P.scene.add(a);
@@ -101,14 +101,13 @@ function maskTex(kind, seed) {
     x.restore();
   }
   if (kind === 'void') {
-    // (ukryta) czerń i krew: szparki oczu, poszarpany uśmiech z zębami, zacieki
     x.fillStyle = '#4a0006'; for (let k = 0; k < 9; k++) x.fillRect(10 + r() * 108, 90 + r() * 20, 2, 20 + r() * 50);
     E.forEach(ex => hole(() => { x.moveTo(ex - 14, EY + 4); x.lineTo(ex + 12, EY - 6); x.lineTo(ex + 10, EY); x.closePath(); }));
     hole(() => { x.moveTo(26, 106); for (let k = 0; k <= 12; k++) x.lineTo(26 + k * 6.3, 106 + (k % 2 ? 14 : 4) + Math.sin(k / 12 * Math.PI) * 14); x.lineTo(102, 106); x.quadraticCurveTo(64, 116, 26, 106); });
   }
   return c;
 }
-function makeMask(P, kind, seed) {
+export function makeMask(P, kind, seed) {
   const g = new THREE.SphereGeometry(1, 14, 12, Math.PI / 2 - 1.15, 2.3, .3, 2.45), p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
     let X = p.getX(i), Y = p.getY(i), Z = p.getZ(i);
@@ -148,7 +147,7 @@ export function initRooms(root, { assets, go }) {
       }).catch(() => {});
     }
     if (kind === 'heads') {
-      // trzy maski obok siebie, każda rusza się po swojemu; czwarta, ukryta, siedzi w środku i prawie nigdy się nie pokazuje
+      // trzy maski obok siebie, każda rusza się po swojemu
       const ks = ['haunt', 'sleaze', 'sacral'], ms = ks.map((k, i) => { const m = makeMask(P, k, 11 + i * 7); m.scale.setScalar(.31); m.position.x = (i - 1) * .6; P.scene.add(m); return m; });
       const cold = new THREE.PointLight(0x7fe8ff, .8, 1.6); cold.position.set(-.64, .1, .6); P.scene.add(cold);
       const pink = new THREE.PointLight(0xff3fb4, .7, .7); pink.position.set(0, -.2, .6); P.scene.add(pink);
