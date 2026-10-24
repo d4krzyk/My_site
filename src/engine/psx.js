@@ -51,7 +51,7 @@ function grime(w, h, base, v, seed = 1) {
 
 /* ---------- persony: teatralne maski PS1 (1 lękowa / haunted, 2 wyluzowana / indie sleeze, 3 poważna / gotycka sakralna) ---------- */
 function maskTex(kind, seed) {
-  const W = 128, H = 160, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const W = 128, H = 160, c = document.createElement('canvas'), hi = kind === 'sacral' ? 2 : 1; c.width = W * hi; c.height = H * hi; const x = c.getContext('2d');
   let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
   const base = { haunt: '#dfe4e2', sleaze: '#f4e9f0', sacral: '#e6e2e4', void: '#120607' }[kind];
   x.fillStyle = base; x.fillRect(0, 0, W, H);
@@ -78,15 +78,32 @@ function maskTex(kind, seed) {
     x.fillStyle = '#ff3fb4'; x.fillRect(100, 30, 8, 8); x.fillStyle = '#fff36a'; x.fillRect(102, 32, 4, 4);   // naklejka
   }
   if (kind === 'sacral') {
-    // biała jak dwie pozostałe, z gotyckim makijażem: ciemne cienie z wyciągniętą kreską, ostre brwi, czarne usta zaciśnięte w poważną minę, mały krzyż na czole
-    x.fillStyle = '#1a1018';
+    // biała twarz z gotyckim makijażem (jak na wzorach): szare cienie łukiem nad okiem, gruba czarna kreska z ostrym skrzydłem,
+    // wysokie cienkie brwi, ankh na czole, kropki, kontur nosa i policzków, czarne usta-serce z kłami; drobne gwiazdki; mina poważna
+    x.save(); x.scale(2, 2);
+    x.fillStyle = '#efeceb'; x.fillRect(0, 0, W, H);
+    for (let i = 0; i < 900; i++) { x.fillStyle = r() < .5 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.06)'; x.fillRect(r() * W, r() * H, 1, .5); }
+    const shade = (x0, y0, x1, y1, w, a) => { x.strokeStyle = `rgba(70,66,72,${a})`; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
+    shade(18, 90, 42, 106, 9, .32); shade(110, 90, 86, 106, 9, .32);                                   // kontur policzków
     E.forEach((ex, i) => { const d = i ? 1 : -1;
-      x.beginPath(); x.moveTo(ex - 15, EY - 2); x.quadraticCurveTo(ex, EY - 15, ex + 15, EY - 2); x.lineTo(ex + d * 22, EY - 8 + (i ? 0 : 0)); x.quadraticCurveTo(ex, EY + 13, ex - 15, EY - 2); x.fill();
-      x.fillRect(ex - 2, EY + 8, 2, 10 + Math.floor(r() * 10)); });
-    x.fillStyle = '#120a10'; x.fillRect(28, 46, 24, 3); x.fillRect(48, 49, 6, 3); x.fillRect(76, 46, 24, 3); x.fillRect(74, 49, 6, 3);   // brwi ściągnięte w dół do środka
-    x.fillStyle = '#1a1018'; x.fillRect(62, 18, 4, 18); x.fillRect(56, 23, 16, 4);
-    x.fillStyle = '#140a12'; x.beginPath(); x.moveTo(48, 121); x.quadraticCurveTo(64, 117, 80, 121); x.quadraticCurveTo(64, 128, 48, 121); x.fill();
-    E.forEach(ex => hole(() => { x.moveTo(ex - 11, EY); x.quadraticCurveTo(ex, EY - 4, ex + 11, EY); x.quadraticCurveTo(ex, EY + 6, ex - 11, EY); }));
+      const g = x.createRadialGradient(ex, EY - 2, 4, ex, EY - 2, 18); g.addColorStop(0, 'rgba(30,26,34,.95)'); g.addColorStop(1, 'rgba(40,36,44,0)');
+      x.fillStyle = g; x.beginPath(); x.moveTo(ex - 19, EY); x.quadraticCurveTo(ex, EY - 26, ex + 19, EY); x.quadraticCurveTo(ex, EY - 7, ex - 19, EY); x.fill();   // cień łukiem
+      x.fillStyle = '#0b080b'; x.beginPath();                                                           // kreska ze skrzydłem
+      x.moveTo(ex - d * 15, EY + 2); x.quadraticCurveTo(ex, EY - 12, ex + d * 14, EY - 2); x.lineTo(ex + d * 31, EY - 12); x.lineTo(ex + d * 16, EY + 4);
+      x.quadraticCurveTo(ex, EY + 11, ex - d * 15, EY + 2); x.fill();
+      x.strokeStyle = '#0b080b'; x.lineWidth = .8; for (let k = -2; k <= 2; k++) { x.beginPath(); x.moveTo(ex + k * 4, EY + 6); x.lineTo(ex + k * 4.6, EY + 9); x.stroke(); }   // dolne rzęsy
+      x.lineWidth = 2.6; x.beginPath(); x.moveTo(ex - d * 15, EY - 15); x.quadraticCurveTo(ex + d * 2, EY - 19, ex + d * 19, EY - 13); x.stroke();   // brew
+      x.fillRect(ex + d * 21, EY - 22, 2.4, 2.4);                                                         // kropka nad brwią
+    });
+    x.fillStyle = '#0b080b'; x.beginPath(); x.ellipse(64, 41, 2.4, 3, 0, 0, 7); x.lineWidth = 1.2; x.strokeStyle = '#0b080b'; x.stroke(); x.fillRect(59.5, 44, 9, 1.4); x.fillRect(63.3, 44, 1.4, 9);   // ankh
+    shade(60, 54, 58, 86, 1.5, .35); shade(68, 54, 70, 86, 1.5, .35); shade(58, 92, 70, 92, 3, .3);     // kontur nosa
+    x.fillStyle = '#0b080b'; [[57, 82], [71, 82], [56, 86], [72, 86]].forEach(([a, b]) => x.fillRect(a, b, 1.2, 1.2));
+    x.beginPath(); x.moveTo(46, 118); x.quadraticCurveTo(55, 107, 64, 113); x.quadraticCurveTo(73, 107, 82, 118); x.quadraticCurveTo(64, 135, 46, 118); x.fill();   // usta-serce
+    x.fillRect(51, 121, 2.2, 7); x.fillRect(74.8, 121, 2.2, 7); [[48, 122], [80, 122], [61, 131], [67, 131]].forEach(([a, b]) => x.fillRect(a, b, 1.3, 1.3));
+    const star = (cx, cy, rr) => { x.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = k % 2 ? rr * .3 : rr; x.lineTo(cx + Math.cos(a) * q, cy + Math.sin(a) * q); } x.closePath(); x.fill(); };
+    x.fillStyle = '#1a141e'; star(30, 48, 4.5); star(98, 48, 4.5); star(36, 112, 3.4); star(92, 112, 3.4);   // gwiazdki
+    E.forEach(ex => hole(() => { x.moveTo(ex - 10, EY + 1); x.quadraticCurveTo(ex, EY - 6, ex + 10, EY); x.quadraticCurveTo(ex, EY + 5, ex - 10, EY + 1); }));
+    x.restore();
   }
   if (kind === 'void') {
     // (ukryta) czerń i krew: szparki oczu, poszarpany uśmiech z zębami, zacieki
@@ -139,12 +156,10 @@ export function initRooms(root, { assets, go }) {
     if (kind === 'heads') {
       // trzy maski obok siebie, każda rusza się po swojemu; czwarta, ukryta, siedzi w środku i prawie nigdy się nie pokazuje
       const ks = ['haunt', 'sleaze', 'sacral'], ms = ks.map((k, i) => { const m = makeMask(P, k, 11 + i * 7); m.scale.setScalar(.31); m.position.x = (i - 1) * .6; P.scene.add(m); return m; });
-      const hid = makeMask(P, 'void', 97); hid.scale.setScalar(.31); hid.visible = false; P.scene.add(hid);
       const cold = new THREE.PointLight(0x7fe8ff, .8, 1.6); cold.position.set(-.64, .1, .6); P.scene.add(cold);
-      const pink = new THREE.PointLight(0xff3fb4, .7, .9); pink.position.set(0, -.2, .6); P.scene.add(pink);
+      const pink = new THREE.PointLight(0xff3fb4, .7, .7); pink.position.set(0, -.2, .6); P.scene.add(pink);
       const gold = new THREE.PointLight(0xffd27a, .8, 1.6); gold.position.set(.64, .4, .6); P.scene.add(gold);
       P.cam.position.set(0, .05, 2.9); P.cam.lookAt(0, 0, 0);
-      let hoverFrom = null, flashAt = null, flashed = false;
       tick = (t) => {
         const [a1, a2, a3] = ms, hot = st.hot;
         // 1: lękowa, drży i nerwowo się rozgląda
@@ -153,14 +168,12 @@ export function initRooms(root, { assets, go }) {
         // 2: wyluzowana, podskakuje i kiwa się na boki, czasem kręci się dla zabawy
         const sp = (t % 6000) < 700 ? (t % 6000) / 700 * Math.PI * 2 : 0;
         a2.position.set(0, Math.abs(Math.sin(t / 380)) * (hot ? .12 : .07) - .02, 0); a2.rotation.set(0, sp + Math.sin(t / 1400) * .2, Math.sin(t / 520) * .22);
-        // 3: poważna, wolno unosi się, broda w górze, patrzy z góry
-        a3.position.set(.6, Math.sin(t / 2200) * .04 + .03, 0); a3.rotation.set(-.18 + Math.sin(t / 3000) * .03, hot ? 0 : Math.sin(t / 4000) * .15, 0);
-        // ukryta: tylko po długim wpatrywaniu się (najechanie > 6 s) mignie raz na ułamek sekundy w miejscu środkowej maski
-        if (hot) { if (hoverFrom === null) { hoverFrom = t; flashAt = t + 6000 + Math.random() * 5000; } } else { hoverFrom = null; flashed = false; }
-        const show = hot && !flashed && flashAt && t > flashAt && t < flashAt + 90;
-        if (hot && flashAt && t >= flashAt + 90) flashed = true;
-        hid.visible = !!show; a2.visible = !show; hid.position.copy(a2.position); hid.rotation.set(0, 0, 0);
-        pink.color.setHex(show ? 0xff0000 : 0xff3fb4); pink.intensity = show ? 2.5 : .7;
+        // 3: poważna, broda w górze; obraca się szarpnięciami jak manekin (skok, bezruch, skok)
+        const st3 = Math.floor(t / (hot ? 700 : 1500)), ph3 = (t % (hot ? 700 : 1500)) / 90;
+        const pose = k => [[-.28, .06], [0, 0], [.24, -.05], [0, .03]][((k % 4) + 4) % 4];
+        const p0 = pose(st3 - 1), p1 = pose(st3), k3 = Math.min(1, ph3);
+        a3.position.set(.6, .03 + (ph3 < 1 ? .012 : 0), 0);
+        a3.rotation.set(-.18, p0[0] + (p1[0] - p0[0]) * k3, p0[1] + (p1[1] - p0[1]) * k3);
       };
       click = () => { st.busy = true; setTimeout(() => { st.busy = false; go(kind); }, RM ? 0 : 380); };
     }
