@@ -1,5 +1,6 @@
 // czerwona wersja zewnętrznej oprawy bramy (narożniki z zawijasem, romb ze skrzydłami, krzyżyk w pnączach, ciemna płyta z fakturą) dla ramek Maszynologii
 import { bth, RM } from './core';
+import { pageReady } from './ready';
 
 export function redFrame(pre){
   if(!pre) return;
@@ -81,7 +82,7 @@ export function redFrame(pre){
   }
   // rysuj od razu niewidoczne; animacja startuje, gdy ramka wjedzie w kadr
   draw(false); cv.style.visibility='hidden';
-  const io=new IntersectionObserver(es=>{ if(!es[0].isIntersecting||shown) return; shown=true; io.disconnect(); cv.style.visibility=''; draw(true); },{threshold:.15});
+  const io=new IntersectionObserver(es=>{ if(!es[0].isIntersecting||shown) return; shown=true; io.disconnect(); pageReady().then(()=>{ cv.style.visibility=''; draw(true); }); },{threshold:.15});   // po kurtynie, jako pierwsza na osi czasu
   io.observe(pre);
   if(window.ResizeObserver){ let t; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(()=>{ if(pre.querySelector('canvas.rframe')!==cv) return; if(busy) dirty=true; else draw(); },80); }).observe(pre); }
 }

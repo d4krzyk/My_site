@@ -4,7 +4,8 @@ import { RM, bth, makeGlyph, drawGlyph } from './core';
 
 const PAL = { krzyk: ['#3ff0ff', '#0e7c8a', '#062f36'], maszynologia: ['#ff3a3a', '#a8161f', '#3c070b'], brama: ['#dfe2e8', '#6e717d', '#1c1d24'] };
 const PX = 3, CW = 9;            // piksel płótna (px ekranu), szerokość kolumny sigili (px płótna)
-let busy = false;
+let busy = false, phaseNow = null;
+export const veilPhase = () => phaseNow;             // 'in' | 'hold' | 'out' | null — czytane przez ready.js
 
 function sprites(cols) {
   const out = [];
@@ -28,6 +29,8 @@ export function veilGo(href, kind, navigate) {
   const shade = x.createImageData(W, H), S = shade.data;
   const [dr, dg, db] = [5, 4, 8];
   let phase = 'in', t0 = performance.now(), from = location.pathname, arrived = 0, last = 0;
+  phaseNow = 'in';
+  const open = () => { phase = 'out'; phaseNow = 'out'; dispatchEvent(new Event('veil-open')); };   // podstrona może ruszać ze swoimi animacjami
   const DIN = 760, DOUT = 900;
   const frame = now => {
     if (now - last < 1000 / 30) { requestAnimationFrame(frame); return; } last = now;
@@ -51,14 +54,14 @@ export function veilGo(href, kind, navigate) {
         x.globalAlpha = near ? 1 : Math.max(.15, .8 - j * .05); x.drawImage(spr, cx, Math.round(gy)); }
       x.globalAlpha = 1; });
     if (phase === 'in' && edge.every(e => e > H + 30)) {
-      phase = 'hold'; navigate(href);
+      phase = 'hold'; phaseNow = 'hold'; navigate(href);
     }
     if (phase === 'hold') {
       if (location.pathname !== from && !arrived) arrived = now;
-      if (arrived && now - arrived > 280) { phase = 'out'; t0 = now; col.forEach(c => { c.d = Math.random() * 220; c.v = .5 + Math.random() * .55; }); }
-      if (!arrived && t > 6000) { phase = 'out'; t0 = now; }
+      if (arrived && now - arrived > 280) { open(); t0 = now; col.forEach(c => { c.d = Math.random() * 220; c.v = .5 + Math.random() * .55; }); }
+      if (!arrived && t > 6000) { open(); t0 = now; }
     }
-    if (phase === 'out' && edge.every(e => e > H + 30)) { cv.remove(); busy = false; return; }
+    if (phase === 'out' && edge.every(e => e > H + 30)) { cv.remove(); busy = false; phaseNow = null; return; }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
