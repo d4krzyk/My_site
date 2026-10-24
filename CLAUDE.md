@@ -23,3 +23,8 @@ W polu wyborów są tylko trzy maski (bez ukrytej czwartej za nimi).
 **Czwarta persona jest sekretem.** Ma być ukryta najgłębiej, niewidoczna przy pierwszym oglądaniu strony;
 najwyżej rzadkie, ulotne skrawki (gdzie i jak — do ustalenia z autorem). Nie opisuj jej w tekstach strony, w repozytorium
 ani w opisach commitów i PR-ów — szczegóły zna tylko autor.
+
+## Kamera HC90E (przejście z kasety miniDV do sekcji Obraz)
+
+Na ekranie LCD kamery jest na razie zastępcze zdjęcie (`public/krzyk/lcd.webp`). Gdy powstanie sekcja ze zdjęciami,
+podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja jest obrócona o 90°, a obraz na LCD ma format 9:16.

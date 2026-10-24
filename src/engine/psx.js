@@ -179,7 +179,11 @@ export function initRooms(root, { assets, go }) {
       const hole = new THREE.Mesh(new THREE.CircleGeometry(.42, 10), P.mat({ color: 0x000000 })); hole.rotation.x = -Math.PI / 2; hole.position.y = .003; hole.scale.setScalar(.001); P.scene.add(hole);
       const crumbs = []; const cg = new THREE.BoxGeometry(.03, .03, .03);
       for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(cg, P.mat({ color: i % 3 ? 0x2a2420 : 0x5a5048 })); m.visible = false; P.scene.add(m); crumbs.push({ m, v: new THREE.Vector3(), t: 0 }); }
+      // wszystko poniżej poziomu podłoża jest odcinane: kaseta naprawdę znika w otworze, zamiast przenikać przez teksturę
+      P.r.localClippingEnabled = true; const under = [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)];
+      crumbs.forEach(c => { c.m.material.clippingPlanes = under; });
       loadPSX(P, assets.minidv).then(m => { const o = fit(m, 1.05), tp = new THREE.Group(); tp.add(o); P.scene.add(tp);
+        o.traverse(n => { if (n.isMesh) (Array.isArray(n.material) ? n.material : [n.material]).forEach(mt => { mt.clippingPlanes = under; }); });
         const lift = -new THREE.Box3().setFromObject(o).min.y; o.position.y += lift;
         P.cam.position.set(0, .62, 2.25); P.cam.lookAt(0, .32, 0);
         let sink = false;
@@ -219,18 +223,23 @@ let hcBusy = false;
 function hc90e(assets, arrive, done) {
   if (hcBusy) return; hcBusy = true;
   const ov = document.createElement('div'); ov.className = 'hc-ov'; ov.innerHTML = '<canvas></canvas><span class="hc-skip dos">[ Esc ] pomiń</span>'; document.body.appendChild(ov);
-  const cv = ov.querySelector('canvas'); const P = ps1(cv, 384, 216, { clear: 0x000000, alpha: 1 });
+  // pionowy ekran (telefon): cały widok obrócony o 90°, kamera trzymana pionowo, obraz na LCD w formacie 9:16
+  const portrait = innerHeight > innerWidth;
+  const cv = ov.querySelector('canvas'); const P = ps1(cv, portrait ? 216 : 384, portrait ? 384 : 216, { clear: 0x000000, alpha: 1 });
   const lcdC = document.createElement('canvas'); lcdC.width = 256; lcdC.height = 144; const x = lcdC.getContext('2d'); x.imageSmoothingEnabled = false;
+  const LW = portrait ? 144 : 256, LH = portrait ? 256 : 144;   // logiczny układ ekranu LCD (po obrocie)
   const img = new Image(); img.src = assets.lcd;
   const tc = ms => { const s = Math.floor(ms / 1000), f = Math.floor(ms / 40) % 25; return `0:${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}:${String(f).padStart(2, '0')}`; };
   const txt = (s, px, py, col) => { x.font = '16px "Krzyk DOS"'; x.textBaseline = 'top'; x.fillStyle = '#000'; x.fillText(s, px + 1, py + 1); x.fillStyle = col; x.fillText(s, px, py); };
-  const lcd = (re, ns) => { x.fillStyle = '#000'; x.fillRect(0, 0, 256, 144); if (img.complete) x.drawImage(img, 0, 0, 256, 144);
+  const lcd = (re, ns) => { x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = '#000'; x.fillRect(0, 0, 256, 144);
+    if (portrait) x.setTransform(0, 1, -1, 0, 256, 0);           // rysujemy pionowo; obrót kamery stawia obraz z powrotem prosto
+    if (img.complete) { if (portrait) { const sw = img.naturalHeight * 9 / 16, sx = (img.naturalWidth - sw) / 2; x.drawImage(img, sx, 0, sw, img.naturalHeight, 0, 0, LW, LH); } else x.drawImage(img, 0, 0, 256, 144); }
     if (ns > 0) { const id = x.getImageData(0, 0, 256, 144), d = id.data;
       for (let i = 0; i < d.length; i += 4) { const L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) / 255, v = clamp(L * 1.8 + (Math.random() - .5) * .3, 0, 1);
         d[i] = d[i] * (1 - ns) + v * 40 * ns; d[i + 1] = d[i + 1] * (1 - ns) + (30 + v * 225) * ns; d[i + 2] = d[i + 2] * (1 - ns) + v * 80 * ns; }
       x.putImageData(id, 0, 0); }
-    x.globalAlpha = Math.max(ns, .25); txt('● REC', 6, 4, Math.floor(re / 500) % 2 ? '#ff3030' : '#7a1010'); txt(tc(re), 150, 4, '#d8ffe0');
-    x.globalAlpha = ns; if (Math.floor(re / 350) % 2) txt('NIGHTSHOT', 6, 124, '#b6ffc8'); x.globalAlpha = 1; screenT.needsUpdate = true; };
+    x.globalAlpha = Math.max(ns, .25); txt('● REC', 6, 4, Math.floor(re / 500) % 2 ? '#ff3030' : '#7a1010'); txt(tc(re), LW - 106, portrait ? 22 : 4, '#d8ffe0');
+    x.globalAlpha = ns; if (Math.floor(re / 350) % 2) txt('NIGHTSHOT', 6, LH - 20, '#b6ffc8'); x.globalAlpha = 1; screenT.needsUpdate = true; };
   const screenT = P.tex(lcdC);
   let finished = false;
   const end = () => { if (finished) return; finished = true; arrive(); ov.classList.add('out'); setTimeout(() => { ov.remove(); P.r.dispose(); hcBusy = false; done(); }, 450); window.removeEventListener('keydown', key); };
@@ -244,6 +253,7 @@ function hc90e(assets, arrive, done) {
     const glow = new THREE.PointLight(0x5dff8a, 0, 1.4); P.scene.add(glow); P.scene.add(new THREE.AmbientLight(0x6a7088, .05));
     const lcdW = new THREE.Vector3(-.19, -.127, -.203), camA = new THREE.Vector3(.05, .02, 1.9), camB = new THREE.Vector3(-.19, -.127, .14), camC = new THREE.Vector3(-.19, -.127, -.03);
     const OFF = 2.15; let t0 = null;
+    if (portrait) P.cam.up.set(1, 0, 0);                               // kamera obrócona o 90°: dłuższy bok LCD idzie w pionie
     loop(cv, 24, (t) => { if (finished) return; if (t0 === null) t0 = t; const e = t - t0;
       const k1 = easeOut(clamp((e - 300) / 1300, 0, 1)), r = 1 - k1;
       g.position.set(r * OFF, -r * .05, 0); g.rotation.set(0, -r * .5, r * .05);
