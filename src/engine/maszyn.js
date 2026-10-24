@@ -40,7 +40,6 @@ export function initMaszyn(root, opts) {
       {c: ['IT · MUZYKA · FOTOGRAFIA · DIY · BIEGANIE']},
       {h: 'KONTAKT'},
       {kv: [['GITHUB', 'github.com/d4krzyk'], ['LINKEDIN', 'linkedin.com/in/d4krzyk']]},
-      {c: ['', 'DŹWIĘK I OBRAZ  //  W SZTUCE I W KODZIE']},
     ];
     // linki w NFO: słowo kluczowe w wierszu -> litera klasy (A..H) -> adres; po wciśnięciu napis zapala się na czerwono i otwiera repozytorium
     const GH = 'https://github.com/d4krzyk/';

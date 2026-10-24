@@ -81,6 +81,7 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
         // gotycki krzyż wpleciony w gałęzie: konturowe ramiona rozszerzające się ku końcom, zakończone szpicem z płatkami,
     // w środku medalion z akcentem; łodyga wchodzi w szczyt i wychodzi spod stopy, spod ramion wyrastają zawijasy
     const outline = (P, r = .5) => { for (let i = 0; i < P.length - 1; i++) stroke('a', line(P[i][0], P[i][1], P[i + 1][0], P[i + 1][1]), () => r); };
+    const crossInfo = [];
     const crossSpan = s => [s * .75 + 8, s * 1.45 + 8];
     const cross = (y, s) => {
       const x = sx(y)[0];
@@ -94,6 +95,8 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
       for (let k = 0; k < 4; k++) { const a = k * PI / 2 + PI / 4; dot('a', x + Math.cos(a) * 3.3, y + Math.sin(a) * 3.3, .6); }
       dot('r', x, y, 1.7);
       const top = y - s * .75 - 5, foot = y + s * 1.45 + 5;
+      crossInfo.push({ x, y, top, foot });
+      for (const dx of [-1, 1]) branches.push({ at: [x, y], p: .85, pts: line(x + dx * 6, y, x + dx * (s * .68 + 4), y) });   // krew rozlewa się na poprzeczkę i skapuje z jej końców
       const up = sx(top - 4), dn = sx(foot + 4); stroke('a', line(x, top, up[0], up[1]), () => .65); stroke('a', line(x, foot, dn[0], dn[1]), () => .65);
       // gałęzie oplatające krzyż: duży zawijas spod ramienia zwija się pod nim, mniejszy po drugiej stronie, listki przy szczycie
       const q = B.seed & 1 ? 1 : -1;
@@ -154,6 +157,10 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     heads.filter(h => h > y0 + 8 && h < y1 - 8).forEach(h => { const p = sx(h);
       for (let k = 0; k < 5; k++) { const w = 2.6 - Math.abs(k - 2) * 1.1; Ly.sh.fillRect(Math.round(p[0] - 2), Math.round(h - 3 + k), 4, 2); Ly.r.fillRect(Math.round(p[0] - w / 2), Math.round(h - 2 + k), Math.max(1, Math.round(w)), 1); } });
 
+    // trasa krwi: łodyga, ale przez krzyż prosto pionowym ramieniem (a nie po niewidocznej krzywej)
+    const mkRoute = tail => { const r = spine.filter(p => !crossInfo.some(c => p[1] > c.top - 4 && p[1] < c.foot + 4));
+      crossInfo.forEach(c => { let k = r.findIndex(p => p[1] > c.top - 4); if (k < 0) k = r.length; r.splice(k, 0, ...line(c.x, c.top - 4, c.x, c.foot + 4)); });
+      return r.concat(tail); };
     // zakończenia
     const top = spine[0], end = spine[spine.length - 1];
     if (B.cap === 'volute') {
@@ -166,7 +173,7 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
       const side = end[0] < cx ? 1 : -1; scrollOld(end[0], end[1] - 16, PI / 2 - side * .9, -side, 15, 1);
       dashed('b', line(end[0], end[1] + 2, end[0], end[1] + 30), 3, 2.6, .5); dot('a', end[0], end[1] + 12, .8); dot('r', end[0], end[1] + 22, .7);
       const sy = end[1] + 36; stroke('a', line(end[0], sy - 5, end[0], sy + 5), t => .6 * (1 - Math.abs(t * 2 - 1)) + .15); stroke('a', line(end[0] - 3, sy - 1, end[0] + 3, sy - 1), () => .4);
-      dot('a', end[0], sy + 8, .6); B.route = spine.concat(line(end[0], end[1] + 2, end[0], end[1] + 31));
+      dot('a', end[0], sy + 8, .6); B.route = mkRoute(line(end[0], end[1] + 2, end[0], end[1] + 31));
     } else {
       // góra: gałąź w poprzek z wisiorkami
       const br = []; bez([x0 + 8, y0 + 4], [x0 + 12, y0 - 30], [top[0], y0 - 34], top, br);
@@ -175,9 +182,9 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
       [.34, .6].forEach((f, i) => { const p = br[Math.floor(br.length * f)]; pendant(p[0], p[1] + 1, 14 + i * 14); });
       // dół: wykropkowana nitka, z której kapie krew
       dashed('b', line(end[0], end[1], end[0], end[1] + 28), 3, 2.6, .5); dot('a', end[0], end[1] + 31, .9);
-      B.route = spine.concat(line(end[0], end[1], end[0], end[1] + 33));
+      B.route = mkRoute(line(end[0], end[1], end[0], end[1] + 33));
     }
-    B.branches = branches;
+    B.branches = branches.map(b => ({ at: typeof b.at === 'number' ? [spine[b.at][0], spine[b.at][1]] : b.at, pts: b.pts, p: b.p }));
     for (const L of Object.values(Ly)) L.restore();
   }
   // progowanie: linie ostre, przygaszone nitki ditherowane, czarna obwódka oddziela rycinę od tła
@@ -194,8 +201,8 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
   }
   // trasy spływu krwi: łodyga z nitką na końcu i odgałęzienia (duże zawijasy) przypięte do punktu łodygi
   const px = pts => { const o = []; for (const p of pts) { const x = Math.round(p[0]), y = Math.round(p[1]), l = o[o.length - 1]; if (l && l[0] === x && l[1] === y) continue; o.push([x, y, p[2]]); } return o; };
-  const routes = bands.map(B => { const main = px(B.route), idx = i => { const p = B.route[i]; let b = 0; for (let k = 1; k < main.length; k++) if (Math.abs(main[k][1] - p[1]) + Math.abs(main[k][0] - p[0]) < Math.abs(main[b][1] - p[1]) + Math.abs(main[b][0] - p[0])) b = k; return b; };
-    return { main, branches: B.branches.map(b => ({ at: idx(b.at), pts: px(b.pts) })) }; });
+  const routes = bands.map(B => { const main = px(B.route), idx = p => { let b = 0; for (let k = 1; k < main.length; k++) if (Math.abs(main[k][1] - p[1]) + Math.abs(main[k][0] - p[0]) < Math.abs(main[b][1] - p[1]) + Math.abs(main[b][0] - p[0])) b = k; return b; };
+    return { main, branches: B.branches.map(b => ({ at: idx(b.at), pts: px(b.pts), p: b.p })) }; });
   return { img, routes, blood: tone === 'red' ? COL.a : COL.r };
 }
 
@@ -222,7 +229,7 @@ export function ornCanvas(cv) {
       const p = P[Math.min(P.length - 1, f.i | 0)], v = 10 + 46 * Math.abs(Math.sin(p[2]));   // grawitacja: pion szybko, poziom wolno
       const i0 = f.i | 0; f.i += v * dt;
       for (let i = i0; i <= Math.min(P.length - 1, f.i | 0); i++) { f.trail[i] = 1;
-        if (f.ri != null) { const br = routes[f.ri].branches.find(b => b.at === i); if (br && Math.random() < .3) run(br.pts, trails[f.ri].br[routes[f.ri].branches.indexOf(br)], 0, null); } }
+        if (f.ri != null) routes[f.ri].branches.forEach((br, j) => { if (br.at === i && Math.random() < (br.p || .3)) run(br.pts, trails[f.ri].br[j], 0, null); }); }
       if (f.i >= P.length - 1) { const e = P[P.length - 1]; drops.push({ x: e[0], y: e[1] + 1, v: 0 }); flows.splice(k, 1); } }
     const decay = Math.exp(-dt / 4.5);
     trails.forEach(t => { for (const a of [t.main, ...t.br]) for (let i = 0; i < a.length; i++) if (a[i]) a[i] = a[i] < .04 ? 0 : a[i] * decay; });
