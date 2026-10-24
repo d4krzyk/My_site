@@ -128,6 +128,10 @@ button{-webkit-user-select:none;user-select:none}
 .pgnew .pgs{color:var(--blood-hi);font-size:13px}
 .slitfx{position:fixed;inset:0;width:100%;height:100%;z-index:61;image-rendering:pixelated;pointer-events:none}
 
+/* pasek przewijania strony ukryty: nie zabiera szerokości, przewijanie działa jak zwykle */
+html{scrollbar-width:none;-ms-overflow-style:none}
+html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
+
 /* ===== działy: wspólny układ ===== */
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .sec{max-width:1080px;margin:0 auto;padding:96px 16px 80px}
@@ -283,8 +287,13 @@ button{-webkit-user-select:none;user-select:none}
 /* terminal */
 .term{max-width:980px}
 .t-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;color:#c4121d;border-bottom:1px solid #4a080c;padding:0 4px 6px;margin:0 0 8px;font-size:13px}
-.t-out{height:min(52vh,460px);overflow-y:auto;overflow-x:auto;padding:4px;font-size:16px;line-height:1.25;color:var(--silver);scrollbar-width:thin;scrollbar-color:#4a080c transparent;
+.t-out{height:min(52vh,460px);overflow-y:auto;overflow-x:auto;padding:4px 14px 4px 4px;font-size:16px;line-height:1.25;color:var(--silver);scrollbar-width:thin;scrollbar-color:#c4121d #1a0508;overscroll-behavior:contain;scroll-behavior:smooth;-webkit-mask:linear-gradient(transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);mask:linear-gradient(transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);
   -webkit-font-smoothing:none;word-break:break-word}
+.t-out::-webkit-scrollbar{width:10px;height:10px}
+.t-out::-webkit-scrollbar-track{background:repeating-linear-gradient(0deg,#1a0508 0 2px,#0a0204 2px 4px);border-left:1px solid #4a080c}
+.t-out::-webkit-scrollbar-thumb{background:#c4121d;border:2px solid #1a0508;image-rendering:pixelated;box-shadow:inset -2px -2px 0 #6e0d14,inset 2px 2px 0 #ff5a3c}
+.t-out::-webkit-scrollbar-thumb:hover{background:#ff3a3a}
+.t-out::-webkit-scrollbar-corner{background:#0a0204}
 .tl{position:relative;white-space:pre-wrap;min-height:1.25em}
 .tl.pre{white-space:pre;line-height:1;min-height:1em}.tl.plain::before{display:none}.tl .sky{color:#ff8a3a}
 .tl .tb{display:inline-block;clip-path:inset(50% 0 50% 0)}

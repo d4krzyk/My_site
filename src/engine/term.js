@@ -158,16 +158,16 @@ export function initTerm(root, { go } = {}) {
         if (!spans.length) body.textContent = '\u00a0';
         row.appendChild(body); out.appendChild(row); return { row, spans };
       });
-      out.scrollTop = out.scrollHeight;
+      out.scrollTo({ top: out.scrollHeight, behavior: 'instant' });
       if (RM) { done(); return; }
-      els.forEach(({ row, spans }, i) => setTimeout(() => { row.classList.add('on'); decodeChars(spans, performance.now() + 260); out.scrollTop = out.scrollHeight; }, i * 55));
+      els.forEach(({ row, spans }, i) => setTimeout(() => { row.classList.add('on'); decodeChars(spans, performance.now() + 260); out.scrollTo({ top: out.scrollHeight, behavior: 'instant' }); }, i * 55));
       setTimeout(done, Math.min(900, els.length * 55 + 120));
     }));
     return queue;
   };
   const link = async url => { await print([[seg('otwieram ', 'dim'), seg(url, 'dir')]]); window.open(url, '_blank', 'noopener'); };
   // wiersze bez dekodowania, do animacji klatkowych (matrix)
-  const raw = (n, cls) => { const rows = Array.from({ length: n }, () => { const r = document.createElement('div'); r.className = 'tl on pre plain ' + cls; out.appendChild(r); return r; }); out.scrollTop = out.scrollHeight; return rows; };
+  const raw = (n, cls) => { const rows = Array.from({ length: n }, () => { const r = document.createElement('div'); r.className = 'tl on pre plain ' + cls; out.appendChild(r); return r; }); out.scrollTo({ top: out.scrollHeight, behavior: 'instant' }); return rows; };
   const anim = (ms, fps, f) => new Promise(done => { if (RM) { f(1); return done(); } const t0 = performance.now(); let last = 0;
     const st = now => { if (now - last >= 1000 / fps) { last = now; f(Math.min(1, (now - t0) / ms)); } if (now - t0 < ms) requestAnimationFrame(st); else { f(1); done(); } }; requestAnimationFrame(st); });
   const cols = () => Math.max(20, Math.floor(out.clientWidth / (parseFloat(getComputedStyle(out).fontSize) * .5)) - 2);
