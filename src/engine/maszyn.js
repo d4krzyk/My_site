@@ -160,8 +160,8 @@ export function initMaszyn(root, opts) {
       const txt = lines.join('\n').replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '');
       e.clipboardData.setData('text/plain', txt); e.preventDefault();
     });
-    // co ~5 s kropla krwi zbiera się na ostrzu prawej ryciny i spada
-    if (!RM) loop(cv, 15, t => { if (mode === 'full') orn.tick(t); });
+    // krew spływająca po rycinach
+    if (!RM) loop(cv, 24, () => { if (mode === 'full') orn.tick(performance.now()); });
   }
 }
 
