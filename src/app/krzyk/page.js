@@ -16,8 +16,9 @@ export default function Krzyk() {
       <CardsNav current={1} />
       <main className="sec krzyk">
         <header className="k-hero">
-          <img src={asset('/krzyk/kolaz.webp')} alt="Kolaż KRZYK: portrety, wycinki z taśmą i stemplowy napis KRZYK" width="1280" height="720" />
+          <img src={asset('/krzyk/kolaz.webp')} alt="Kolaż KRZYK: portrety, wycinki z taśmą i stemplowy napis KRZYK" width="1280" height="720" draggable="false" />
         </header>
+        <div className="k-body">
         <section className="k-intro">
           <p className="k-lv dos">·÷·──── POZIOM −1 ────·÷·</p>
           <h1 className="k-title">Krzyk</h1>
@@ -33,6 +34,7 @@ export default function Krzyk() {
             </article>
           ))}
         </section>
+        </div>
       </main>
     </>
   );

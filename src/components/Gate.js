@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { asset } from '@/lib/base';
+import { getLang, setLang } from '@/lib/lang';
 
 // zasoby sztandarów: wersje pionowe (desktop) i poziome do obrotu (telefon) + zakres ryciny w pikselach pasa
 const GATE_ASSETS = {
@@ -17,7 +18,7 @@ export default function Gate() {
   useEffect(() => {
     let alive = true;
     import('@/engine/gate').then(({ initGate }) => {
-      if (alive && ref.current) initGate(ref.current, { assets: GATE_ASSETS, onPath: i => router.push(PATHS[i]) });
+      if (alive && ref.current) { const lang = getLang(); document.documentElement.lang = lang; initGate(ref.current, { assets: GATE_ASSETS, lang, setLang, onPath: i => router.push(PATHS[i]) }); }
     });
     return () => { alive = false; };          // pętle animacji same się kończą, gdy brama zniknie z dokumentu
   }, [router]);
