@@ -4,6 +4,8 @@ name: Strona na GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -33,6 +35,8 @@ jobs:
         with:
           path: out
   deploy:
+    # publikacja tylko z main; w pull requeście działa samo sprawdzenie budowy
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
