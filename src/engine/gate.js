@@ -1,10 +1,10 @@
-// brama: zejście (tunel, sztandary słońca i księżyca z paleniem i popiołem w sigile, okno z ramkami, pęknięcie okna)
+// brama (tunel, sztandary słońca i księżyca z paleniem i popiołem w sigile, okno z ramkami, pęknięcie okna)
 import { RM, rnd, clamp, FONTS, loop, N, bth, makeGlyph, drawGlyph } from './core';
 export function initGate(root, opts){
   const $ = id => root.querySelector('#'+id);
   const ASSETS = opts.assets;
 /* zakładki: słońce i księżyc na wysokich czarnych pasach z ozdobami rycinowymi;
-   w spoczynku tlą się u góry i u dołu, po zejściu spalają się całe (od krawędzi i dziurami od środka),
+   w spoczynku tlą się u góry i u dołu, po wejściu spalają się całe (od krawędzi i dziurami od środka),
    a popiół leci na boki i składa się w pionowe pasma sigili */
 const GP=matchMedia('(max-width:700px)').matches, GW=GP?270:480, GH=GP?480:270;   // telefon: brama pionowa 9:16, pasy poziomo
 
@@ -113,7 +113,7 @@ function ashLayer(gate){
   loop(gate,20,(t,dt)=>{
     if(!active){ return; }
     if(t0<0) t0=t; const T=t-t0;
-    // pasma pojawiają się dopiero, gdy czerwony tunel prawie zgaśnie (gaśnie od 70% do 100% czasu zejścia)
+    // pasma pojawiają się dopiero, gdy czerwony tunel prawie zgaśnie (gaśnie od 70% do 100% czasu wejścia)
     const tEnd=calm?2600:4200, appear=clamp((T-tEnd*.92)/1100,0,1);
     gx.clearRect(0,0,GW,GH); ax.clearRect(0,0,GW,GH); gx.lineWidth=1; ax.lineWidth=1;
     // popiół: najpierw unosi się, potem szuka wolnego miejsca w swoim pasie i „zastyga” jako znak
@@ -387,11 +387,14 @@ function gateOuter(pre){
 
 /* ---------- I: brama ---------- */
 FONTS().then(()=>{
-  const gate=$('gate'), c=$('tun'), x=c.getContext('2d'); c.width=GW; c.height=GH; const W=c.width, H=c.height;
+  // komputer: pętla okręgów na całe okno (bez czarnych pasów po bokach szerokich ekranów); telefon: w bramie 9:16
+  const gate=$('gate'), c=$('tun'), x=c.getContext('2d'); let W=GW, H=GH;
+  const fit=()=>{ W=GP?GW:Math.max(GW,Math.round(GH*innerWidth/Math.max(1,innerHeight))); H=GH; c.width=W; c.height=H; if(typeof off!=='undefined'){ off.width=W; off.height=H; } };
+  fit();
   const tints={red:{hi:[150,18,30],lo:[70,8,16]}}; const tint='red';
   const T={
-    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',l1:'·÷·──── POZIOM -1 ────·÷·',l2:'·÷·──── POZIOM -2 ────·÷·',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia',replay:'↺ OD NOWA'},
-    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',l1:'·÷·──── LEVEL -1 ────·÷·',l2:'·÷·──── LEVEL -2 ────·÷·',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology',replay:'↺ REPLAY'}
+    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',l1:'·÷·──── POZIOM -1 ────·÷·',l2:'·÷·──── POZIOM -2 ────·÷·',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
+    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',l1:'·÷·──── LEVEL -1 ────·÷·',l2:'·÷·──── LEVEL -2 ────·÷·',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology'}
   };
   let lang=opts.lang;
   const frame=()=>{ const s=T[lang]; const w=40; const ctr=(str,ch=' ')=>{const n=[...str.replace(/\uFE0E/g,'')].length; const l=Math.floor((w-n)/2); return ch.repeat(Math.max(0,l))+str+ch.repeat(Math.max(0,w-n-l));};
@@ -401,7 +404,7 @@ FONTS().then(()=>{
       `<span class="gl gb"><span class="w">D. K.</span><span class="gx"></span><span class="yr">2026</span></span>`;
     gateOuter($('gFrame'));
     $('gEnter').onclick=()=>go(false); $('gCalm').onclick=()=>go(true);
-    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gL1').textContent=s.l1; $('gL2').textContent=s.l2; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; $('gReplay').textContent=s.replay;
+    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gL1').textContent=s.l1; $('gL2').textContent=s.l2; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach;
     $('lPL').setAttribute('aria-pressed',lang==='pl'); $('lEN').setAttribute('aria-pressed',lang==='en'); };
   $('lPL').onclick=()=>{lang='pl'; opts.setLang('pl'); frame();}; $('lEN').onclick=()=>{lang='en'; opts.setLang('en'); frame();};
   frame();
@@ -410,11 +413,11 @@ FONTS().then(()=>{
   loop(gate,2,(t)=>{ const cu=gate.querySelector('.enter .cur'); if(cu) cu.style.visibility=(Math.floor(t/500)%2)?'hidden':'visible'; });
   let falling=false, calm=false, f0=0, phase=0, done=false;
   const go=(c0)=>{ calm=c0; falling=true; f0=-1; gate.classList.add('falling'); gate.dispatchEvent(new CustomEvent('descend',{detail:{calm:c0}})); };
-  $('gReplay').onclick=()=>{ falling=false; done=false; gate.classList.remove('falling','done'); gate.dispatchEvent(new CustomEvent('reset')); };
   const build=()=>{ gate.querySelectorAll('[data-build]').forEach(el=>{ const full=el.textContent; const r=[...full].map(()=>Math.random()); let k=0;
     const iv=setInterval(()=>{ k+=.12; el.textContent=[...full].map((ch,i)=> ch===' '?' ': (k>r[i]+.5? ch : (k>r[i] ? '░▒▓'[Math.floor((k-r[i])*6)%3] : ' '))).join(''); if(k>1.6){ clearInterval(iv); el.textContent=full; } },40); }); };
   const rings=['═╪═╪═╪','░▒▓▒░ ','·÷·÷· ','╬═╬═╬═','○∙●∙○∙','≡ ≡ ≡ ','╤╧╤╧╤╧','♦·♦·♦·','┼─┼─┼─','▓░▓░▓░'];
-  const off=document.createElement('canvas'); off.width=W; off.height=H; const ox=off.getContext('2d',{willReadFrequently:true});
+  var off=document.createElement('canvas'); off.width=W; off.height=H; const ox=off.getContext('2d',{willReadFrequently:true});
+  if(!GP){ let rt; addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(fit,120); },{passive:true}); }
   loop(gate,20,(t,dt)=>{
     if(falling && f0<0) f0=t;
     const dur=calm?2600:4200; const k=falling ? clamp((t-f0)/dur,0,1) : 0;
@@ -430,7 +433,7 @@ FONTS().then(()=>{
       const rot=(i%2?1:-1)*t/24000;
       for(let j=0;j<n;j++){ const a=j/n*Math.PI*2+rot; ox.save(); ox.translate(cx+Math.cos(a)*R, cy+Math.sin(a)*R*.92); ox.rotate(a+Math.PI/2); ox.fillText([...pat][j%[...pat].length],0,0); ox.restore(); }
     }
-    // gaśnięcie ditherem na końcu zejścia
+    // gaśnięcie ditherem na końcu wejścia
     const fade = falling ? clamp((k-.7)/.3,0,1) : 0;
     const src=ox.getImageData(0,0,W,H).data, out=x.createImageData(W,H), o=out.data, tc=tints[tint];
     for(let yy=0;yy<H;yy++) for(let xx=0;xx<W;xx++){ const kk=(yy*W+xx)*4; const v=src[kk]/255*(1-fade); const th=bth(xx,yy);

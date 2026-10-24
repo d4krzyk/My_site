@@ -43,7 +43,6 @@ export default function Gate() {
             </nav>
           </div>
         </div>
-        <button type="button" className="replay dos" id="gReplay">↺ OD NOWA</button>
       </div>
     </main>
   );

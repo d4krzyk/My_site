@@ -2,7 +2,7 @@ import CardsNav from '@/components/CardsNav';
 import KrzykFx, { KrzykLayers } from '@/components/KrzykFx';
 import { asset } from '@/lib/base';
 
-export const metadata = { title: 'Krzyk — Zejście', description: 'Krzyk: muzyka, obraz, persony. Sztuka z chaosu.' };
+export const metadata = { title: 'Krzyk — KRZYK', description: 'Krzyk: muzyka, obraz, persony. Sztuka z chaosu.' };
 
 // dział Krzyk: kolaż przechodzący w ciemne tła, pole wyborów z modelami 3D i podrozdziały z ciemnej tektury (treść w budowie)
 const LOREM = [
@@ -17,7 +17,7 @@ const PICKS = [
 ];
 // podrozdziały (treść później)
 const SUBS = [
-  ['k-muzyka', 'A1', 'muzyka · taśmy', 'Tu będą klipy w odtwarzaczu z planszy „Zejście”.'],
+  ['k-muzyka', 'A1', 'muzyka · taśmy', 'Tu będą klipy w odtwarzaczu.'],
   ['k-persony', 'A2', 'persony', 'Tu zamieszkają trzy persony: lękowa, wyluzowana i poważna.'],
   ['k-obraz', 'A3', 'obraz · DSC-V1', 'Tu będzie aparat Sony DSC-V1 do przeglądania zdjęć.'],
   ['k-kontakt', 'A4', 'kontakt', 'Tu będzie kontakt.'],

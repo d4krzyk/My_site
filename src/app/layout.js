@@ -6,7 +6,7 @@ const martian = Martian_Mono({ subsets: ['latin', 'latin-ext'], weight: ['300', 
 const vt = VT323({ subsets: ['latin', 'latin-ext'], weight: '400', variable: '--font-vt', display: 'swap' });
 
 export const metadata = {
-  title: 'KRZYK — Zejście',
+  title: 'KRZYK',
   description: 'Krzyk i Maszynologia: sztuka z chaosu, muzyka, obraz i maszyny.',
 };
 

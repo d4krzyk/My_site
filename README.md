@@ -1,4 +1,4 @@
-# KRZYK — Zejście
+# KRZYK
 
 Portfolio d4krzyk w dwóch działach: **Krzyk** (muzyka, obraz, persony) i **Maszynologia** (projekty IT, CV, kontakt).
 Estetyka: zin post-punk lat 90., dither, PS1 low-poly, demoscena.
@@ -6,7 +6,7 @@ Estetyka: zin post-punk lat 90., dither, PS1 low-poly, demoscena.
 ## Struktura
 
 - `src/app/` — strony (App Router):
-  - `/` — brama: zejście w tunel, sztandary słońca i księżyca palą się, popiół składa się w sigile; po zejściu ścieżki do działów,
+  - `/` — brama: wejście w tunel, sztandary słońca i księżyca palą się, popiół składa się w sigile; po wejściu ścieżki do działów,
   - `/krzyk/` — dział artystyczny (szkic),
   - `/maszynologia/` — dział IT w stylu NFO (szkic).
 - `src/components/` — `Gate` (brama) i `CardsNav` (nawigacja kartami IV · II · IV na podstronach).

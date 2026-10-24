@@ -1,4 +1,4 @@
-// silnik wizualny przeniesiony z planszy „Zejście”: dither Bayera, szum, pętla o stałej liczbie klatek, sigile
+// silnik wizualny przeniesiony z planszy koncepcyjnej: dither Bayera, szum, pętla o stałej liczbie klatek, sigile
 export const RM = typeof window!=='undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const rnd = (a=1,b) => b===undefined ? Math.random()*a : a+Math.random()*(b-a);
 export const clamp = (v,a,b) => Math.max(a,Math.min(b,v));

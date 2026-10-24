@@ -42,7 +42,7 @@ export default function Maszyn() {
           {foot}
         </div>
         <section className="m-panel rf term" aria-label="Terminal">
-          <div className="t-head dos"><span>tty1</span><span>/bin/bash</span></div>
+          <div className="t-head dos"><span className="t-path" /><span className="t-desc" /></div>
           <div className="t-out dos selectable" role="log" aria-live="polite" />
           <form className="t-line">
             <label className="t-ps dos" htmlFor="t-in" />
