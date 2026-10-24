@@ -79,13 +79,11 @@ function maskTex(kind, seed) {
   }
   if (kind === 'sacral') {
     // biała twarz, męski gotycki makijaż: zapadnięte, przydymione oczodoły z ostrą, krótką kreską, ciężkie proste brwi ściągnięte w dół,
-    // wklęsłe policzki i cień szczęki, wąskie, proste czarne usta, mały krzyż na czole; dwie drobne gwiazdki; mina poważna
+    // wąskie, proste czarne usta, mały krzyż na czole; dwie drobne gwiazdki; mina poważna
     x.save(); x.scale(2, 2);
     x.fillStyle = '#ebe8e6'; x.fillRect(0, 0, W, H);
     for (let i = 0; i < 900; i++) { x.fillStyle = r() < .5 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.06)'; x.fillRect(r() * W, r() * H, 1, .5); }
     const shade = (x0, y0, x1, y1, w, a) => { x.strokeStyle = `rgba(55,50,58,${a})`; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
-    shade(22, 86, 44, 112, 11, .38); shade(106, 86, 84, 112, 11, .38);                                 // wklęsłe policzki
-    shade(30, 132, 52, 146, 8, .3); shade(98, 132, 76, 146, 8, .3);                                    // cień szczęki
     E.forEach((ex, i) => { const d = i ? 1 : -1;
       const g = x.createRadialGradient(ex, EY, 5, ex, EY, 20); g.addColorStop(0, 'rgba(20,16,22,.95)'); g.addColorStop(1, 'rgba(20,16,22,0)');
       x.fillStyle = g; x.beginPath(); x.ellipse(ex, EY + 1, 20, 16, 0, 0, 7); x.fill();                 // zapadnięty, przydymiony oczodół
@@ -96,7 +94,6 @@ function maskTex(kind, seed) {
     x.fillStyle = '#0b080b'; x.fillRect(62.6, 30, 2.8, 16); x.fillRect(58, 35, 12, 2.6);                 // krzyż
     shade(60, 56, 58, 88, 2, .4); shade(68, 56, 70, 88, 2, .4); shade(57, 94, 71, 94, 3, .35);           // kontur nosa
     x.fillStyle = '#0b080b'; x.beginPath(); x.moveTo(48, 119); x.lineTo(80, 119); x.lineTo(76, 124); x.lineTo(52, 124); x.closePath(); x.fill();   // wąskie, proste usta
-    shade(52, 130, 76, 130, 2, .35);                                                                    // cień pod wargą
     const star = (cx, cy, rr) => { x.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = k % 2 ? rr * .3 : rr; x.lineTo(cx + Math.cos(a) * q, cy + Math.sin(a) * q); } x.closePath(); x.fill(); };
     x.fillStyle = '#1a141e'; star(98, 50, 3.6); star(30, 108, 2.8);                                      // dwie drobne gwiazdki
     E.forEach(ex => hole(() => { x.moveTo(ex - 10, EY + 1); x.quadraticCurveTo(ex, EY - 5, ex + 10, EY); x.quadraticCurveTo(ex, EY + 5, ex - 10, EY + 1); }));
