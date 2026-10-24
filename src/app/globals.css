@@ -165,6 +165,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .k-asm{position:absolute;left:0;top:0;width:100cqw;height:85.94cqw;z-index:1;pointer-events:none;transition:opacity .45s;background:#04050a}
 .k-asm.drawn{background:none}
 .k-asm.done{opacity:0}
+.k-asm{transition:opacity .35s}
 .k-motto{position:absolute;left:0;top:0;width:100cqw;height:56.25cqw;z-index:2;pointer-events:none;container-type:inline-size;
   -webkit-mask:var(--dust-m) 0 0/100% 100% no-repeat;mask:var(--dust-m) 0 0/100% 100% no-repeat}
 .k-motto p:not([data-prep]){visibility:hidden}
@@ -174,7 +175,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .tw{opacity:0;display:inline-block;white-space:pre;transform:translate(var(--dx,0),var(--dy,0))}
 .tw.on{opacity:var(--ink,1)}
 .tw.hit{text-shadow:0 0 .12em currentColor;filter:brightness(1.4)}
-.k-stamp{position:absolute;left:35.55cqw;top:clamp(32cqw,calc(100svh - 29cqw),39.14cqw);width:58.75cqw;z-index:2;pointer-events:none;opacity:0;user-select:none}
+.k-stamp{position:absolute;left:35.55cqw;top:max(24cqw,min(39.14cqw,calc(100svh - 28.5cqw)));width:58.75cqw;z-index:2;pointer-events:none;opacity:0;user-select:none}
 .k-safe{position:absolute;left:0;top:0;width:100cqw;height:86cqw;z-index:2;pointer-events:none;opacity:0;mix-blend-mode:screen;
   background:radial-gradient(60% 45% at 66% 52%,rgba(150,12,8,.28),transparent 70%)}
 .dev .k-stamp{animation:k-develop 3.4s .35s both cubic-bezier(.35,.1,.3,1)}
@@ -257,6 +258,9 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
   line-height:1;letter-spacing:0;white-space:pre;color:var(--silver);-webkit-font-smoothing:none;font-smooth:never;font-kerning:none;
   font-variant-ligatures:none;scrollbar-width:thin;scrollbar-color:#2a2d3a transparent}
 .nfo-mid pre,.nfo-title,.nfo-sub{text-shadow:0 0 3px #000,0 0 8px #000,1px 1px 0 #000}
+.nfo-mid pre a.lk{color:#e8dcc0;text-decoration:underline dotted;text-decoration-color:#6e0d14;text-underline-offset:3px;cursor:pointer}
+.nfo-mid pre a.lk:hover,.nfo-mid pre a.lk:focus-visible{color:#ff5a3c;text-decoration-style:solid;outline:none}
+.nfo-mid pre a.lk.zap{color:#ff1f1f;background:rgba(196,18,29,.35);text-shadow:0 0 6px #ff1f1f,0 0 14px #c4121d}
 .nfo-mid pre .o{color:#5f6582}
 .nfo-mid pre .q{color:#3d4159}
 .nfo-mid pre .d{color:var(--ink-dim)}

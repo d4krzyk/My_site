@@ -28,7 +28,23 @@ export function typeOut(el, { seed = 7, speed = 1, delay = 0 } = {}) {
     setTimeout(step, delay); });
 }
 
-// wczytanie kolażu: reszta kolażu stoi od razu, a pięć zdjęć (oko, dwa portrety, kamienica, staw) rozwija się klatkami jak zwinięty papier
+// wczytanie kolażu: tło kolażu stoi od razu (bez zdjęć i ich cieni); zdjęcia wypełniają się wstecz, jakby ktoś je podgryzał do tyłu w czasie:
+// oko od prawego górnego rogu do lewego dolnego, kamienica od prawej, portret od lewej, staw przykleja się jak naklejka, drugi portret zwija się z góry rulonem
+const hash = (x, y) => { let n = Math.imul(x * 374761393 + y * 668265263, 1274126177); n ^= n >>> 13; n = Math.imul(n, 1103515245); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+function thresholds(w, h, frm) {
+  // T[i] = moment (0..1), w którym piksel „wraca”: kierunek + poszarpane, okrągłe ugryzienia (worley) + drobne strzępy
+  const T = new Float32Array(w * h), CS = Math.max(14, Math.round(Math.min(w, h) / 9));
+  const gx = Math.ceil(w / CS) + 2, gy = Math.ceil(h / CS) + 2, px = new Float32Array(gx * gy), py = new Float32Array(gx * gy);
+  for (let j = 0; j < gy; j++) for (let i = 0; i < gx; i++) { px[j * gx + i] = (i + hash(i, j * 7 + 1)) * CS; py[j * gx + i] = (j + hash(i * 5 + 3, j)) * CS; }
+  const proj = (u, v) => frm === 'tr' ? ((1 - u) * w + v * h) / (w + h) : frm === 'r' ? 1 - u : frm === 'l' ? (u * .8 + v * .2) : v;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const ci = Math.floor(x / CS) + 1, cj = Math.floor(y / CS) + 1; let d = 1e9;
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const k = (cj + dj) * gx + ci + di, dx = px[k] - CS - x, dy = py[k] - CS - y; const dd = dx * dx + dy * dy; if (dd < d) d = dd; }
+    const wo = Math.min(1, Math.sqrt(d) / CS), p = proj(x / w, y / h);
+    T[y * w + x] = p * .78 + wo * .13 + hash(x >> 1, y >> 1) * .035 + hash(x, y) * .02 + .02;
+  }
+  return T;
+}
 function assemble(sec, url) {
   const cv = sec.querySelector('.k-asm'); if (!cv) return Promise.resolve();
   if (RM) { cv.remove(); return Promise.resolve(); }
@@ -41,30 +57,47 @@ function assemble(sec, url) {
     // komputer: cały kolaż; telefon: prawa połówka (x ≥ 455) u góry, lewa (x < 526) niżej, jak na tle
     const half = h => { const cw = cv.width; if (!ph) return { s: cw / 1280, ox: 0, oy: 0, cx0: 0, cx1: 1280 };
       return h === 'L' ? { s: cw / 526, ox: 0, oy: 700 / 720 * cw, cx0: 0, cx1: 526 } : { s: cw / 825, ox: -455 * cw / 825, oy: 0, cx0: 455, cx1: 1280 }; };
-    const STEP = 1000 / 12, ROLL = 640, GAP = 330;
-    const P = meta.pieces.map((p, i) => ({ ...p, im: ims[i], hf: ph && LEFT.has(p.n) ? 'L' : 'R', t0: 300 + i * GAP }));
-    const order = meta.stack.map(n => P.find(p => p.n === n)).filter(Boolean);
+    // piksele sprite'ów i mapy progów (liczone raz)
+    const P = meta.pieces.map((p, i) => {
+      const o = { ...p, im: ims[i], hf: ph && LEFT.has(p.n) ? 'L' : 'R' }; if (!o.im) return o;
+      const c = document.createElement('canvas'); c.width = p.w; c.height = p.h; const cx = c.getContext('2d', { willReadFrequently: true }); cx.drawImage(o.im, 0, 0);
+      o.src = cx.getImageData(0, 0, p.w, p.h); o.out = cx.createImageData(p.w, p.h); o.cv = c; o.cx = cx;
+      if (p.mode === 'bite') o.T = thresholds(p.w, p.h, p.frm); return o; });
+    const STEP = 1000 / 15, STEPS = 14;
     const ground = h => { const T = half(h); x.drawImage(gr, T.cx0, 0, T.cx1 - T.cx0, meta.h, T.ox + T.cx0 * T.s, T.oy, (T.cx1 - T.cx0) * T.s, meta.h * T.s); };
-    const piece = (p, t) => { if (!p.im) return; const T = half(p.hf), raw = (t - p.t0) / ROLL; if (raw <= 0) return;
-      const k = Math.min(1, Math.round(Math.min(1, raw) * 8) / 8);                 // klatkowo: 8 kroków rozwijania
-      const X = T.ox + p.x * T.s, Y = T.oy + p.y * T.s, Wd = p.w * T.s, Ht = p.h * T.s, hor = p.dir === 'r', len = (hor ? Wd : Ht) * k;
+    const shadow = (T, on, k) => { if (!on) { x.shadowColor = 'transparent'; return; } x.shadowColor = 'rgba(0,0,0,.65)'; x.shadowBlur = 14 * T.s * dpr; x.shadowOffsetX = 6 * T.s; x.shadowOffsetY = 9 * T.s * (1 + (1 - k) * 1.2); };
+    const piece = (p, t) => { if (!p.im || !p.src) return; const T = half(p.hf), raw = (t - p.t0) / p.dur; if (raw < 0 && !(p.k0 > 0)) return;
+      const kq = Math.min(1, Math.max(0, Math.floor(Math.max(0, raw) * STEPS) / STEPS)), k = p.k0 + (1 - p.k0) * kq;
+      const X = T.ox + p.x * T.s, Y = T.oy + p.y * T.s, Wd = p.w * T.s, Ht = p.h * T.s;
       x.save(); x.beginPath(); x.rect(T.ox + T.cx0 * T.s, T.oy, (T.cx1 - T.cx0) * T.s, meta.h * T.s); x.clip();
-      x.beginPath(); if (hor) x.rect(X, Y, len, Ht); else if (p.dir === 'd') x.rect(X, Y, Wd, len); else x.rect(X, Y + Ht - len, Wd, len); x.clip();
-      x.drawImage(p.im, X, Y, Wd, Ht); x.restore();
-      if (k < 1) { // zwinięta rolka papieru na krawędzi: jasny wałek z cieniem
-        const rw = Math.max(4, 11 * T.s); x.save();
-        let g; if (hor) { const ex = X + len; g = x.createLinearGradient(ex, 0, ex + rw, 0); x.translate(0, 0); g.addColorStop(0, '#2a2420'); g.addColorStop(.35, '#e9e1cd'); g.addColorStop(.7, '#b9ad94'); g.addColorStop(1, '#3a332c'); x.fillStyle = g; x.fillRect(ex, Y - rw * .15, rw, Ht + rw * .3);
-          x.fillStyle = 'rgba(0,0,0,.45)'; x.fillRect(ex + rw, Y, rw * .8, Ht); }
-        else { const ey = p.dir === 'd' ? Y + len : Y + Ht - len - rw; g = x.createLinearGradient(0, ey, 0, ey + rw); g.addColorStop(0, '#2a2420'); g.addColorStop(.35, '#e9e1cd'); g.addColorStop(.7, '#b9ad94'); g.addColorStop(1, '#3a332c'); x.fillStyle = g; x.fillRect(X - rw * .15, ey, Wd + rw * .3, rw);
-          x.fillStyle = 'rgba(0,0,0,.45)'; x.fillRect(X, p.dir === 'd' ? ey + rw : ey - rw * .8, Wd, rw * .8); }
-        x.restore(); } };
-    const END = P[P.length - 1].t0 + ROLL + 200; let t0 = null, last = -1;
+      if (p.mode === 'bite') {
+        const s = p.src.data, d = p.out.data, TT = p.T, n = p.w * p.h, lim = k * 1.05, rim = lim - .045;
+        for (let i = 0, j = 0; i < n; i++, j += 4) { const th = TT[i];
+          if (th > lim || s[j + 3] === 0) { d[j + 3] = 0; continue; }
+          if (th > rim) { d[j] = s[j] * .35 + 214 * .65; d[j + 1] = s[j + 1] * .35 + 206 * .65; d[j + 2] = s[j + 2] * .35 + 184 * .65; d[j + 3] = s[j + 3]; }   // świeżo odgryziony brzeg: biel kartki
+          else { d[j] = s[j]; d[j + 1] = s[j + 1]; d[j + 2] = s[j + 2]; d[j + 3] = s[j + 3]; } }
+        p.cx.putImageData(p.out, 0, 0); shadow(T, true, k); x.drawImage(p.cv, X, Y, Wd, Ht);
+      } else if (p.mode === 'sticker') {
+        if (raw < 0) { x.restore(); return; }
+        const e = Math.min(1, raw), step = Math.floor(e * 4) / 4, sc = 1.22 - .22 * step, rot = (-.1 + .1 * step), pop = step >= 1 ? 1 : .55 + .45 * step;
+        x.translate(X + Wd / 2, Y + Ht / 2); x.rotate(rot); x.scale(sc, sc); x.globalAlpha = pop; shadow(T, true, step);
+        x.drawImage(p.im, -Wd / 2, -Ht / 2, Wd, Ht);
+      } else { // roll: zwija się z góry, rulon na brzegu natarcia
+        if (raw < 0) { x.restore(); return; }
+        const len = Ht * Math.min(1, Math.floor(Math.min(1, raw) * 10) / 10);
+        x.save(); x.beginPath(); x.rect(X, Y, Wd, len); x.clip(); shadow(T, true, 1); x.drawImage(p.im, X, Y, Wd, Ht); x.restore();
+        if (len < Ht) { const rw = Math.max(4, 11 * T.s), g = x.createLinearGradient(0, Y + len, 0, Y + len + rw);
+          g.addColorStop(0, '#2a2420'); g.addColorStop(.35, '#e9e1cd'); g.addColorStop(.7, '#b9ad94'); g.addColorStop(1, '#3a332c'); x.fillStyle = g; x.fillRect(X - rw * .15, Y + len - rw * .5, Wd + rw * .3, rw); }
+      }
+      x.restore(); };
+    const ENDT = Math.max(...P.map(p => p.t0 + p.dur)) + 120; let t0 = null, last = -1, signalled = false;
     const frame = now => { if (t0 === null) t0 = now; const t = now - t0, st = Math.floor(t / STEP);
       if (st !== last) { last = st; x.clearRect(0, 0, cv.width, cv.height);
-        if (ph) { ground('L'); order.filter(p => p.hf === 'L').forEach(p => piece(p, t)); ground('R'); order.filter(p => p.hf === 'R').forEach(p => piece(p, t)); }
-        else { ground('R'); order.forEach(p => piece(p, t)); }
+        if (ph) { ground('L'); P.filter(p => p.hf === 'L').forEach(p => piece(p, t)); ground('R'); P.filter(p => p.hf === 'R').forEach(p => piece(p, t)); }
+        else { ground('R'); P.forEach(p => piece(p, t)); }
         cv.classList.add('drawn'); }
-      if (t < END) requestAnimationFrame(frame); else { cv.classList.add('done'); setTimeout(() => cv.remove(), 450); done(); } };
+      if (!signalled && t > ENDT * .72) { signalled = true; done(); }           // stempel startuje, zanim ostatnie zdjęcie dojedzie
+      if (t < ENDT) requestAnimationFrame(frame); else { cv.classList.add('done'); setTimeout(() => cv.remove(), 380); } };
     requestAnimationFrame(frame);
   }))).catch(() => { cv.remove(); });
 }
@@ -80,7 +113,7 @@ export function initKrzykFx(sec, opts = {}) {
     if (st) await new Promise(r => { if (st.complete) r(); else st.addEventListener('load', r, { once: true }); });
     sec.classList.add('dev');
     await (document.fonts ? document.fonts.load('34px "Special Elite K"').catch(() => {}) : 0);
-    for (let i = 0; i < mot.length; i++) await typeOut(mot[i], { seed: 31 + i, delay: i ? 260 : 1500 });
+    for (let i = 0; i < mot.length; i++) await typeOut(mot[i], { seed: 31 + i, delay: i ? 200 : 900 });
   })();
   // podpisy i nagłówki pisane, gdy wjadą w kadr
   const io = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; io.unobserve(e.target);

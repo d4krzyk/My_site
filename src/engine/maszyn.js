@@ -210,6 +210,11 @@ export function initMaszyn(root, opts) {
       {kv: [['GITHUB', 'github.com/d4krzyk'], ['LINKEDIN', 'linkedin.com/in/d4krzyk']]},
       {c: ['', 'DŹWIĘK I OBRAZ  //  W SZTUCE I W KODZIE']},
     ];
+    // linki w NFO: słowo kluczowe w wierszu -> litera klasy (A..H) -> adres; po wciśnięciu napis zapala się na czerwono i otwiera repozytorium
+    const GH = 'https://github.com/d4krzyk/';
+    const LINKS = { A: GH + 'MasterWorkVE-2.0', B: GH + 'WikiRooms-Project', C: GH + 'Remuz-io', D: GH + 'MusicClubApp', E: GH + 'ShadowDetection', F: GH + 'GameInJava', G: 'https://github.com/d4krzyk', H: 'https://www.linkedin.com/in/d4krzyk' };
+    const KEYS = [['VISUAL ECHOES 2.0', 'A'], ['WIKIROOMS', 'B'], ['REMUZ.IO', 'C'], ['MUSICCLUBAPP', 'D'], ['SHADOWDETECTION', 'E'], ['GAMEINJAVA', 'F'], ['github.com/d4krzyk', 'G'], ['linkedin.com/in/d4krzyk', 'H']];
+    const linkify = rows => rows.map(([t, k]) => { const kk = [...k.padEnd(t.length, ' ')]; for (const [key, L] of KEYS) { let i = t.indexOf(key); while (i >= 0) { for (let j = 0; j < key.length; j++) kk[i + j] = L; i = t.indexOf(key, i + key.length); } } return [t, kk.join('')]; });
     const wrapText = (t, w) => { const out = []; let cur = ''; for (const wd of t.split(/\s+/)) { if (!wd) continue; if (!cur) cur = wd; else if ((cur + ' ' + wd).length <= w) cur += ' ' + wd; else { out.push(cur); cur = wd; } } if (cur) out.push(cur); return out; };
     // wiersze treści: [tekst, klasy] o szerokości do w
     const compose = (w, gap = 0) => {
@@ -222,7 +227,7 @@ export function initMaszyn(root, opts) {
         else if (b.kv) { const kc = Math.min(11, Math.floor(w * .34)); for (const [k, v] of b.kv) { if (Math.max(...v.split(' ').map(x => x.length)) > w - kc) { add(k, 'd'.repeat(k.length)); wrapText(v, w - 2).forEach(l => add('  ' + l, '  ' + 's'.repeat(l.length))); continue; } const vl = wrapText(v, w - kc - 1); vl.forEach((l, i) => { const key = i ? ' '.repeat(kc) : (k + ' ' + '.'.repeat(Math.max(1, kc - k.length - 2)) + ' ').padEnd(kc); const t = key + l; add(t.slice(0, w), (i ? ' '.repeat(kc) : 'd'.repeat(Math.min(kc, key.length))) + 's'.repeat(Math.max(0, t.length - kc))); }); } }
         else if (b.e) { const [t1, t2, tx] = b.e; wrapText(t1, w).forEach(l => add(l, 's'.repeat(l.length))); add('  ' + t2, '  ' + 'd'.repeat(t2.length)); wrapText(tx, w - 2).forEach(l => add('  ' + l, '  ' + 's'.repeat(l.length))); if (tx) rows.push(['', '']); }
       }
-      return rows;
+      return linkify(rows);
     };
     {
       const A = 9, B = 26, TW = 40, X0 = 23, SRC = L.full, N0 = SRC.ch.length;
@@ -269,6 +274,7 @@ export function initMaszyn(root, opts) {
         const flush = () => {
           if (!run) return;
           const c = CLASS[k0];
+          if (LINKS[k0]) { html += `<a class="lk" href="${LINKS[k0]}" target="_blank" rel="noopener noreferrer">${run}</a>`; run = ''; return; }
           html += c ? `<span class="${c}"${c === 'o' || c === 'q' || c === 'r' ? ' aria-hidden="true"' : ''}>${run}</span>` : run;
           run = '';
         };
@@ -279,7 +285,7 @@ export function initMaszyn(root, opts) {
           if (o) [g, k] = o;
           if (dec && g !== ' ') { const t = (dec.now - dec.t0 - (r / G.ch.length) * 900 - dh(r, c) * 420) / 150;
             if (t < 0) g = ' '; else if (t < 1) { g = BLK[Math.min(2, Math.floor(t * 3))]; k = 'd'; } }
-          if (g === ' ' || k === 's') k = ' ';
+          if ((g === ' ' && !LINKS[k]) || k === 's') k = ' ';
           if (k !== k0) { flush(); k0 = k; }
           run += esc(g);
         }
@@ -308,11 +314,16 @@ export function initMaszyn(root, opts) {
     update();
     if ('ResizeObserver' in window) new ResizeObserver(update).observe(wrap);
     else addEventListener('resize', update, {passive: true});
+    let holding = false;
+    pre.addEventListener('pointerenter', () => { holding = true; }); pre.addEventListener('pointerleave', () => { holding = false; });
+    pre.addEventListener('pointerdown', () => { holding = true; });
+    pre.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a.lk'); if (!a) return; e.preventDefault();
+      const url = a.href; a.classList.add('zap'); setTimeout(() => { a.classList.remove('zap'); window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
     if (!RM) {
       // co ~5 s kropla wydłuża się, odrywa i spada w dół (12 kl./s); tylko w układzie FULL
       let last = -1;
       loop(pre, 12, t => {
-        if (mode !== 'full' || dec) return;
+        if (mode !== 'full' || dec || holding) return;
         const cyc = t % 5200;
         const f = cyc < 4300 ? -1 : Math.min(DROP.length - 1, Math.floor((cyc - 4300) / 84));
         if (f !== last) { last = f; render(f < 0 ? null : DROP[f]); }
