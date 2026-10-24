@@ -2,7 +2,7 @@
 // walkman → muzyka, trzy maski → persony, kaseta miniDV (zapada się pod ziemię, potem kamera HC90E) → obraz, telefon → kontakt
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { RM, loop, clamp } from './core';
+import { RM, loop, clamp, makeGlyph, drawGlyph } from './core';
 
 const ease = k => k * k * (3 - 2 * k), easeOut = k => 1 - Math.pow(1 - k, 3);
 const TAU = Math.PI * 2;
@@ -221,50 +221,78 @@ export function initRooms(root, { assets, go }) {
   return () => stop.forEach(f => f());
 }
 
-/* ---------- persony: trzy maski wylatują z karty, krążą w kręgu twarzami do widza, wpadają w heksagonalny portal z ditherem,
-   który zalewa ekran; po skoku do sekcji warstwy portalu schodzą (trzy warstwy heksów, od środka na zewnątrz) ---------- */
-const PCOL = ['#7fe8ff', '#ff3fb4', '#ffd27a'];          // lękowa · wyluzowana · poważna
+/* ---------- persony: przejście jak krąg czarownic. Maski krążą, kredą rysuje się podwójny krąg z runami i pentakl,
+   maski stają na wierzchołkach, zapalają się świece; potem znak zajmuje się ogniem od środka (żar → krew → węgiel),
+   pękają szczeliny i wylewa się ciemność; po skoku do sekcji ciemność rozpada się na odłamki z płonącymi brzegami ---------- */
 let ppBusy = false;
 function personaPortal(pickCv, xs, arrive, done) {
   if (ppBusy) return; ppBusy = true;
   const ov = document.createElement('div'); ov.className = 'pp-ov'; ov.innerHTML = '<canvas class="pp-hex"></canvas><canvas class="pp-3d"></canvas>'; document.body.appendChild(ov);
-  const [hx, cv] = ov.querySelectorAll('canvas'), lw = Math.ceil(innerWidth / 3), lh = Math.ceil(innerHeight / 3);
-  const P = ps1(cv, lw, lh, { alpha: 0 }); lights(P); P.cam.position.set(0, 0, 3); P.cam.lookAt(0, 0, 0);
-  const cold = new THREE.PointLight(0x7fe8ff, .7, 3); cold.position.set(-1, .3, 1.2); P.scene.add(cold); const gold = new THREE.PointLight(0xffd27a, .6, 3); gold.position.set(1, .4, 1.2); P.scene.add(gold);
-  hx.width = lw; hx.height = lh; const x = hx.getContext('2d');
+  const [pc, cv] = ov.querySelectorAll('canvas'), W = Math.ceil(innerWidth / 3), H = Math.ceil(innerHeight / 3), CX = W / 2, CY = H / 2;
+  const P = ps1(cv, W, H, { alpha: 0 }); lights(P); P.cam.position.set(0, 0, 3); P.cam.lookAt(0, 0, 0);
+  pc.width = W; pc.height = H; const x = pc.getContext('2d'); x.imageSmoothingEnabled = false;
   const ms = ['haunt', 'sleaze', 'sacral'].map((k, i) => { const m = makeMask(P, k, 11 + i * 7); P.scene.add(m); return m; });
-  const r = pickCv.getBoundingClientRect(), H = 3 * Math.tan(17.5 * Math.PI / 180), Wd = H * innerWidth / innerHeight, k0 = 2 * 2.9 * Math.tan(17.5 * Math.PI / 180);
-  const s0 = (r.height / k0) / (innerHeight / (2 * H)), cx0 = ((r.left + r.width / 2) / innerWidth * 2 - 1) * Wd, cy0 = -((r.top + r.height / 2) / innerHeight * 2 - 1) * H;
-  const RAD = Math.min(.62, Wd * .55), SZ = Math.min(.24, Wd * .2);
-  // siatka heksów (ostre wierzchołki u góry), rysowana pełnymi wierszami pikseli, żeby była ostra
-  const S = Math.max(6, Math.round(Math.min(lw, lh) / 14)), cells = [], cxm = lw / 2, cym = lh / 2;
-  for (let row = -2, y; (y = row * S * 1.5) < lh + S * 2; row++) for (let q = -2, xx; (xx = (q + (row & 1) / 2) * S * 1.732) < lw + S * 2; q++)
-    cells.push({ x: xx, y, d: Math.hypot(xx - cxm, y - cym), j: Math.random(), layer: ((q + row * 2) % 3 + 3) % 3 });
-  const maxD = Math.hypot(cxm, cym) + S * 2;
-  const hexAt = (cxp, cyp, s, fill, edge) => { const w = s * .866;
-    for (let dy = -s; dy <= s; dy++) { const hw = Math.abs(dy) <= s / 2 ? w : w * (s - Math.abs(dy)) / (s / 2); if (hw < .5) continue;
-      x.fillStyle = edge; x.fillRect(Math.round(cxp - hw), Math.round(cyp + dy), Math.round(hw * 2), 1);
-      if (Math.abs(dy) < s - 1 && hw > 1.5) { x.fillStyle = fill; x.fillRect(Math.round(cxp - hw + 1), Math.round(cyp + dy), Math.round(hw * 2 - 2), 1); } } };
+  const HW = 3 * Math.tan(17.5 * Math.PI / 180), toW = (px, py) => [(px - CX) / (H / 2) * HW, -(py - CY) / (H / 2) * HW];
+  const r = pickCv.getBoundingClientRect(), s0 = (r.height / (2 * 2.9 * Math.tan(17.5 * Math.PI / 180))) / (innerHeight / (2 * HW));
+  const c0 = [(r.left + r.width / 2) / innerWidth * W, (r.top + r.height / 2) / innerHeight * H], pxPerW = (H / 2) / HW;
+  const START = xs.map(xw => [c0[0] + xw * s0 * pxPerW, c0[1]]), R = Math.min(W, H) * .34, MS = Math.min(.12, R / pxPerW * .18);
+  const hsh = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5], bt = (a, b) => (B4[(b & 3) * 4 + (a & 3)] + .5) / 16, seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+  const px = (a, b, c) => { x.fillStyle = c; x.fillRect(Math.round(a), Math.round(b), 1, 1); };
+  const CH = '#e9e2cf', CH2 = '#8f897a';
+  let br = -1;                                                           // promień ognia (od środka); punkt w jego zasięgu płonie zamiast kredy
+  const ink = (xx, yy, h) => { if (br >= 0) { const d = Math.hypot(xx - CX, yy - CY); if (d < br) { const age = (br - d) / R * 1000;
+      return age < 110 ? '#fff1c1' : age < 280 ? '#ff7a1a' : age < 620 ? '#a8161f' : (hsh(Math.round(xx), Math.floor(performance.now() / 80)) < .1 ? '#ff5a1a' : '#3a1210'); } }
+    return h < .3 ? CH2 : CH; };
+  const chalk = (x0, y0, x1, y1, frac, sd) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2); for (let i = 0; i <= n * frac; i++) { const t = i / n, h = hsh(i + sd, sd * 3.1); if (h < .1) continue;
+    const xx = x0 + (x1 - x0) * t + (hsh(i, sd) - .5) * .7, yy = y0 + (y1 - y0) * t + (hsh(sd, i) - .5) * .7, c = ink(xx, yy, h); px(xx, yy, c); if (c === '#fff1c1' || c === '#ff7a1a') px(xx, yy + 1, '#5a1206'); } };
+  const circ = (rr, frac, rot, sd) => { const n = Math.ceil(TAU * rr * 2); for (let i = 0; i <= n * frac; i++) { const a = rot + i / n * TAU, h = hsh(i + sd, 7); if (h < .1) continue;
+    const xx = CX + Math.cos(a) * (rr + (h - .5) * .6), yy = CY + Math.sin(a) * (rr + (h - .5) * .6); px(xx, yy, ink(xx, yy, h)); } };
+  const vert = (rr, k, rot = 0) => { const a = -Math.PI / 2 + k * TAU / 5 + rot; return [CX + Math.cos(a) * rr, CY + Math.sin(a) * rr]; };
+  const glyphs = Array.from({ length: 24 }, () => { let g; do g = makeGlyph(); while (g.st.length < 2); const c = document.createElement('canvas'); c.width = c.height = 7; const gx = c.getContext('2d'); gx.strokeStyle = CH; gx.lineWidth = 1; drawGlyph(g, gx, .5, .5, 6); return c; });
+  const black = f => { const img = x.getImageData(0, 0, W, H), D = img.data; for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) { const v = f(xx, yy); if (v <= 0) continue;
+    if (v >= 1 || bt(xx, yy) < v) { const i = (yy * W + xx) * 4; D[i] = 2; D[i + 1] = 1; D[i + 2] = 4; D[i + 3] = 255; } } x.putImageData(img, 0, 0); };
+  const cracks = Array.from({ length: 9 }, (_, k) => { const pts = []; let a = hsh(k, 9) * TAU, xx = CX, yy = CY; for (let q = 0; q < Math.hypot(W, H); q++) { a += (hsh(k, q) - .5) * .5; xx += Math.cos(a); yy += Math.sin(a); pts.push([xx, yy]); } return pts; });
+  // odłamki: pierścienie trójkątów pokrywające cały ekran, od środka na zewnątrz
+  const maxD = Math.hypot(W, H) / 2 + 10, RW = Math.max(18, H / 5), shards = [];
+  for (let ring = 0; ring * RW < maxD; ring++) { const n = 6 + ring * 6; for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU, r0 = ring * RW, r1 = (ring + 1) * RW, q = [[a0, r0], [a1, r0], [a1, r1], [a0, r1]].map(([a, rr]) => [CX + Math.cos(a) * rr, CY + Math.sin(a) * rr]);
+    for (const tri of [[0, 1, 2], [0, 2, 3]]) { const pts = tri.map(j => q[j]), mx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3, my = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
+      shards.push({ pts: pts.map(([a, b]) => [a - mx, b - my]), mx, my, del: ring * .07 + hsh(k, ring) * .12, rot: (hsh(k, ring + 7) - .5) * 3, ox: (hsh(ring, k) - .5) * 50 }); } } }
+  const CORNERS = [0, 2, 3];                                             // maski stają na wierzchołkach pentaklu: górnym i dwóch dolnych
   let finished = false, jumped = false, t0 = null;
   const end = () => { if (finished) return; finished = true; ov.remove(); P.r.dispose(); ppBusy = false; done(); };
   loop(cv, 30, t => { if (finished) return; if (t0 === null) t0 = t; const e = t - t0;
-    // maski: z karty do kręgu (0–0,5 s), krążą coraz szybciej, potem spiralą wpadają w środek portalu (1,25–1,75 s)
-    const gather = ease(clamp(e / 500, 0, 1)), dive = ease(clamp((e - 1250) / 500, 0, 1)), spin = e / 1000 * (2.2 + e / 600);
-    ms.forEach((m, i) => { const a = spin + i * TAU / 3 + Math.PI / 2, rr = RAD * (1 - dive);
-      const ox = Math.cos(a) * rr, oy = Math.sin(a) * rr * .85, sx0 = cx0 + xs[i] * s0, sy0 = cy0;
-      m.position.set(sx0 + (ox - sx0) * gather, sy0 + (oy - sy0) * gather, dive * -.8);
-      m.scale.setScalar((.31 * s0 + (SZ - .31 * s0) * gather) * (1 - dive * .95)); m.rotation.set(0, Math.sin(e / 300 + i) * .15, Math.sin(e / 400 + i * 2) * .08); m.visible = dive < .98; });
+    x.clearRect(0, 0, W, H);
+    const g = ease(seg(e, 0, 700)), toV = ease(seg(e, 1500, 1900)), burnt = seg(e, 2150, 2500), rot = e / 4000;
+    ms.forEach((m, i) => { if (e > 2500) { m.visible = false; return; } m.visible = true;
+      const a = e / 1000 * 1.4 * (1 - toV) + i * TAU / 3 - Math.PI / 2, [cx, cy] = [CX + Math.cos(a) * R * 1.15, CY + Math.sin(a) * R * 1.03], [vx, vy] = vert(R * .8, CORNERS[i], rot * .3);
+      const ax = START[i][0] + (cx - START[i][0]) * g, ay = START[i][1] + (cy - START[i][1]) * g, [wx, wy] = toW(ax + (vx - ax) * toV, ay + (vy - ay) * toV);
+      m.position.set(wx, wy, 0); m.scale.setScalar(.31 * s0 + (MS - .31 * s0) * g); m.rotation.set(0, Math.sin(e / 500 + i) * .2, Math.sin(e / 700 + i * 2) * .06);
+      const ember = burnt * (.75 + .25 * Math.sin(e / 45 + i)); m.children[0].material.color.setRGB(1 - ember * .55, 1 - ember * .85, 1 - ember * .92); });   // zwęglają się, żar pulsuje
     P.render();
-    // portal: otwiera się od środka (1,0–1,8 s) i zalewa ekran; po skoku trzy warstwy schodzą od środka (1,95–2,95 s)
-    x.clearRect(0, 0, lw, lh);
-    const kin = clamp((e - 1000) / 800, 0, 1), kout = clamp((e - 1950) / 1000, 0, 1);
-    if (kin > 0) for (const c of cells) { const dn = c.d / maxD;
-      if (dn > kin * 1.2 - c.j * .2) continue;
-      if (kout > 0 && dn < (kout - c.layer * .18) * 1.6 - c.j * .12) continue;
-      const front = kin < 1 ? dn > kin * 1.2 - .22 : kout > 0 && dn > (kout - c.layer * .18) * 1.6 - .3;
-      hexAt(c.x, c.y, S, front ? '#140d1c' : '#07060c', front ? PCOL[(c.layer + Math.floor(e / 120)) % 3] : '#1c1426'); }
-    if (kin >= 1 && !jumped) { jumped = true; arrive(); }
-    if (e > 3000) end(); });
+    if (e < 3250) {
+      br = e > 2000 ? seg(e, 2000, 2700) * R * 1.25 : -1;
+      if (e > 400) { circ(R, seg(e, 400, 1000), -Math.PI / 2, 1); circ(R * .82, seg(e, 700, 1200), Math.PI / 2, 2); }
+      const nr = Math.floor(24 * seg(e, 900, 1600)); for (let k = 0; k < nr; k++) { const a = rot + k * TAU / 24, rr = R * .91, gx = CX + Math.cos(a) * rr, gy = CY + Math.sin(a) * rr;
+        if (br >= 0 && Math.hypot(gx - CX, gy - CY) < br) continue;          // runy spłonęły
+        x.globalAlpha = .55 + .45 * hsh(k, Math.floor(e / 120)); x.drawImage(glyphs[k], Math.round(gx - 3), Math.round(gy - 3)); } x.globalAlpha = 1;
+      const pf = seg(e, 1300, 1900); for (let k = 0; k < 5; k++) { const [a0, b0] = vert(R * .8, k * 2, rot * .3), [a1, b1] = vert(R * .8, k * 2 + 2, rot * .3); chalk(a0, b0, a1, b1, clamp(pf * 5 - k, 0, 1), k * 9); }
+      if (e > 1700 && e < 2600) for (let k = 0; k < 5; k++) { const [vx, vy] = vert(R * .8, k, rot * .3); if (!seg(e, 1700 + k * 50, 1800 + k * 50)) continue;
+        for (let yy = 0; yy < 4; yy++) { px(vx, vy + 1 + yy, '#cfc6b0'); px(vx + 1, vy + 1 + yy, '#9d9480'); }
+        const fl = 1 + Math.floor(hsh(k, Math.floor(e / 70)) * 3) + (e > 2100 ? 2 : 0); for (let yy = 0; yy < fl; yy++) px(vx + (yy && hsh(k, e) > .5 ? 1 : 0), vy - yy, yy ? '#ffb347' : '#ff6a1a');
+        for (let d = 0; d < 10; d++) { const a = hsh(d, k) * TAU, rr = 2 + hsh(k, d) * 4; if (hsh(d, Math.floor(e / 90) + k) < .3) px(vx + Math.cos(a) * rr, vy - 2 + Math.sin(a) * rr, '#8a0b16'); } }
+      const cr = seg(e, 2450, 2950); if (cr > 0) cracks.forEach((c, k) => { const L = Math.floor(cr * c.length * (.4 + hsh(k, 3) * .6)); for (let q = 0; q < L; q++) { px(c[q][0], c[q][1], q > L - 6 ? '#ff5a1a' : '#1a0505'); if (q & 1) px(c[q][0] + 1, c[q][1], '#5a0a0a'); } });
+      const fl = seg(e, 2700, 3200) * maxD * 1.3; if (fl > 0) black((xx, yy) => { const d = Math.hypot(xx - CX, yy - CY) + hsh(xx >> 2, yy >> 2) * 30; return d < fl - 10 ? 1 : d < fl + 10 ? .5 : 0; });
+    } else {
+      if (!jumped) { jumped = true; arrive(); }
+      // czarne odłamki opadają z płonącymi brzegami, w szczelinach żar
+      const k0 = seg(e, 3250, 4150), flick = Math.floor(e / 70);
+      shards.forEach((sh, j) => { const f = Math.max(0, (k0 - sh.del) / .55), dy = f * f * H * 1.5; if (dy > H * 1.4) return;
+        x.save(); x.translate(sh.mx + sh.ox * f, sh.my + dy); x.rotate(sh.rot * f); x.beginPath(); sh.pts.forEach(([a, b], q) => q ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath();
+        x.fillStyle = '#040306'; x.fill(); x.strokeStyle = f > 0 ? (hsh(j, flick) < .5 ? '#ff6a1a' : '#c4121d') : '#2a0a08'; x.lineWidth = 1; x.stroke(); x.restore();
+        if (f > 0 && hsh(j, flick + 3) < .25) px(sh.mx + sh.ox * f + (hsh(j, 1) - .5) * 6, sh.my + dy - 4 - hsh(j, flick) * 8, '#ffb347'); });
+      if (e > 4200) end();
+    } });
 }
 
 /* ---------- sekcja person: trzy maski lewitują u góry; przy części danej persony ona wychyla się na wprost,
