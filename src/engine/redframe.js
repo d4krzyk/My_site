@@ -1,12 +1,13 @@
 // czerwona wersja zewnętrznej oprawy bramy (narożniki z zawijasem, romb ze skrzydłami, krzyżyk w pnączach, ciemna płyta z fakturą) dla ramek Maszynologii
 import { bth, RM } from './core';
+import { pageReady } from './ready';
 
 export function redFrame(pre){
   if(!pre) return;
   const PX=2, COL={'#':'#e3313c',s:'#a8161f',d:'#6e0d14',D:'#3c070b',w:'#ffd9d4',c:'#ff5a3c',t:'#8c1018',T:'#4a080c'};
   const old=pre.querySelector('canvas.rframe'); if(old) old.remove();
   const cv=document.createElement('canvas'); cv.className='rframe'; pre.prepend(cv);
-  let shown = false, busy = false;
+  let shown = false, busy = false, dirty = false;   // dirty: rozmiar zmienił się w trakcie animacji (np. NFO wczytało się później) — przerysuj po niej
   function draw(anim){
     const r=pre.getBoundingClientRect(); if(!r.width) return;
     // nieparzysta szerokość (piksel środka) i płótno wyśrodkowane na oknie co do pół piksela, żeby ozdoby były symetryczne względem tekstu
@@ -76,13 +77,13 @@ export function redFrame(pre){
         if(on && bth(px,py)>lim-.08 && src[i+3]) { F[i]=110; F[i+1]=14; F[i+2]=20; } } }   // świeży brzeg ditheru rozjarzony czerwienią
       x.clearRect(0,0,W,H); x.putImageData(fr,0,0);
       const n=Math.floor(orn.length*Math.min(1,k*1.25)); for(let j=0;j<n;j++){ const [a,b,c]=orn[j]; x.fillStyle=j>n-24?COL.c:COL[c]; x.fillRect(a,b,1,1); }
-      if(k<1) requestAnimationFrame(step); else { busy=false; final(); } };
+      if(k<1) requestAnimationFrame(step); else { busy=false; if(dirty){ dirty=false; draw(false); } else final(); } };
     requestAnimationFrame(step);
   }
   // rysuj od razu niewidoczne; animacja startuje, gdy ramka wjedzie w kadr
   draw(false); cv.style.visibility='hidden';
-  const io=new IntersectionObserver(es=>{ if(!es[0].isIntersecting||shown) return; shown=true; io.disconnect(); cv.style.visibility=''; draw(true); },{threshold:.15});
+  const io=new IntersectionObserver(es=>{ if(!es[0].isIntersecting||shown) return; shown=true; io.disconnect(); pageReady().then(()=>{ cv.style.visibility=''; draw(true); }); },{threshold:.15});   // po kurtynie, jako pierwsza na osi czasu
   io.observe(pre);
-  if(window.ResizeObserver){ let t; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(()=>{ if(pre.querySelector('canvas.rframe')===cv && !busy) draw(); },80); }).observe(pre); }
+  if(window.ResizeObserver){ let t; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(()=>{ if(pre.querySelector('canvas.rframe')!==cv) return; if(busy) dirty=true; else draw(); },80); }).observe(pre); }
 }
 

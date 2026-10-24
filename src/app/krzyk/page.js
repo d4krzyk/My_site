@@ -4,16 +4,19 @@ import { asset } from '@/lib/base';
 
 export const metadata = { title: 'Krzyk — KRZYK', description: 'Krzyk: muzyka, obraz, persony. Sztuka z chaosu.' };
 
-// dział Krzyk: kolaż przechodzący w ciemne tła, pole wyborów z modelami 3D i podrozdziały z ciemnej tektury (treść w budowie)
-const LOREM = [
-  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
-  'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-];
+// dział Krzyk: kolaż przechodzący w ciemne tła, pod nim od razu pole wyborów z modelami 3D, potem podrozdziały z ciemnej tektury (treść w budowie);
+// pole wyborów i każdy podrozdział zajmują pełny ekran
 // pole wyborów: model 3D, podpis, dopisek
 const PICKS = [
   ['walkman', 'muzyka', 'klipy · taśmy · odtwarzacz'],
   ['heads', 'persony', 'trzy maski, trzy nastroje'],
   ['minidv', 'obraz', 'kaseta miniDV · aparat DSC-V1'],
+];
+// persony: trzy części sekcji; maski lewitują u góry (scena 3D), przy części danej persony ona wychyla się do przodu
+const PERSONY = [
+  ['lękowa', 'haunted · nawiedzona', 'Boi się i analizuje wszystko po kilka razy. Mówi szybko i dużo, wiecznie przestraszona życiem.'],
+  ['wyluzowana', 'indie sleaze · hyperpop · chilled 2000s', 'Spokojna, cieszy się prostymi chwilami. Energiczna i głośna, czasem zbyt impulsywna; dużo głupotek i goofy momentów.'],
+  ['poważna', 'gotycka · sakralna', 'Skupiona na rozwoju wewnętrznym, nie traci czasu na głupoty. Posępna i zadziorna, patrzy z góry i obserwuje; szuka połączenia ze sobą.'],
 ];
 // podrozdziały (treść później)
 const SUBS = [
@@ -35,12 +38,7 @@ export default function Krzyk() {
         <KrzykLayers />
         <div className="k-body">
           <KrzykFx>
-            <section className="k-intro">
-              <p className="k-lv dos">·÷·──── POZIOM −1 ────·÷·</p>
-              <h1 className="k-title">Krzyk</h1>
-              <p className="k-lede">Sztuka z chaosu. Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.</p>
-            </section>
-            <section className="k-text">{LOREM.map((t, i) => <p key={i}>{t}</p>)}</section>
+            <h1 className="sr-only">Krzyk</h1>
             <nav className="k-choose" aria-label="Podrozdziały">
               <p className="k-choose-h dos" data-type="" data-seed="3">·÷·── wybierz ──·÷·</p>
               <div className="k-trio">
@@ -58,7 +56,21 @@ export default function Krzyk() {
                 <span className="k-pick-s dos">zadzwoń · napisz</span>
               </button>
             </nav>
-            {SUBS.map(([id, code, h, txt]) => (
+            {SUBS.map(([id, code, h, txt]) => id === 'k-persony' ? (
+              <section className="k-sub k-persony" id={id} key={id}>
+                <span className="k-code dos">{code}</span>
+                <h2 data-type="" data-seed={code.charCodeAt(1)}>{h}</h2>
+                <div className="kp-stage" aria-hidden="true"><canvas /></div>
+                {PERSONY.map(([n, tag, d], i) => (
+                  <div className="kp-part" data-p={i} key={n}>
+                    <h3 data-type="" data-seed={30 + i}>{n}</h3>
+                    <p className="kp-tag dos">{tag}</p>
+                    <p>{d}</p>
+                  </div>
+                ))}
+                <p className="k-wip dos">▓ w budowie</p>
+              </section>
+            ) : (
               <section className="k-sub" id={id} key={id}>
                 <span className="k-code dos">{code}</span>
                 <h2 data-type="" data-seed={code.charCodeAt(1)}>{h}</h2>

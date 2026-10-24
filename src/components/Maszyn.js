@@ -16,10 +16,12 @@ export default function Maszyn() {
       if (alive && ref.current) initMaszyn(ref.current, { assets: { ornL: asset('/maszyn/ornL.png'), ornR: asset('/maszyn/ornR.png') } });
     });
     import('@/engine/redframe').then(({ redFrame }) => { if (alive && ref.current) ref.current.querySelectorAll('.rf').forEach(redFrame); });
+    let offPager = null;
+    import('@/engine/klatki').then(({ initPager }) => { if (alive && ref.current) offPager = initPager(ref.current); });   // przewijanie wierszami jak `more`
     import('@/engine/term').then(({ initTerm }) => {
-      if (alive && ref.current) initTerm(ref.current.querySelector('.term'), { go: k => router.push(HREF[k] || '/') });
+      if (alive && ref.current) initTerm(ref.current.querySelector('.term'), { go: k => k === 'sigen' ? import('@/engine/veil').then(({ veilGo }) => veilGo('/sigen/', 'sigen', h => router.push(h))) : router.push(HREF[k] || '/') });
     });
-    return () => { alive = false; };
+    return () => { alive = false; if (offPager) offPager(); };
   }, [router]);
   return (
     <>
@@ -30,13 +32,13 @@ export default function Maszyn() {
         <div className="cracktro" aria-hidden="true"><canvas id="demo" width="320" height="200" /></div>
         <div className="m-panel rf">
           <div className="nfo-wrap">
-            <img id="ornL" alt="" draggable="false" />
+            <canvas id="ornL" className="orn-img" aria-hidden="true" />
             <div className="nfo-mid">
               <div className="nfo-title" aria-hidden="true">Maszynologia</div>
               <div className="nfo-sub dos">[ IT ] · RELEASE INFO · REV.2026</div>
               <pre id="nfo" className="selectable" />
             </div>
-            <img id="ornR" alt="" draggable="false" />
+            <canvas id="ornR" className="orn-img" aria-hidden="true" />
           </div>
         </div>
         <section className="m-panel rf term" aria-label="Terminal">

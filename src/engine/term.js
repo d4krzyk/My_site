@@ -266,6 +266,7 @@ export function initTerm(root, { go } = {}) {
       case 'matrix': case 'cmatrix': return rain();
       case 'banner': case 'figlet': return print(banner(args.join(' ') || 'krzyk'), 'red pre');
       case 'brama': case 'krzyk': case 'maszynologia': if (go) { await print([`przechodzę: ${cmd}…`]); setTimeout(() => go(cmd), 400); } return;
+      case 'sigen': if (go) { await print(['sigen: proces ukryty, inicjalizacja…', '[▓▓▓▓▓▓▓▓░░] ładowanie modułów: rama · symetria · znaki · rdzeń', '[▓▓▓▓▓▓▓▓▓▓] gotowe. otwieram generator.']); setTimeout(() => go('sigen'), 500); } return;   // nie ma go w help
       case 'exit': case 'logout': case 'quit': if (go) { await print(['logout', 'Do zobaczenia przy bramie.']); setTimeout(() => go('brama'), 600); } return;
       case 'hello': case 'cześć': case 'czesc': case 'hej': return print(['Cześć. Wpisz help, żeby zobaczyć, co tu można.']);
       default: return print([`${cmd0}: nie znaleziono polecenia. Wpisz help.`], 'err');

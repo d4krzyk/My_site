@@ -29,9 +29,6 @@ export default function Gate() {
         <canvas className="tun" id="tun" width="480" height="270" />
         <canvas className="tab l" id="sunT" aria-hidden="true" />
         <canvas className="tab r" id="moonT" aria-hidden="true" />
-        <div className="lang dos" role="group" aria-label="Język">
-          ·÷·[<button type="button" id="lPL" aria-pressed="true">PL</button>]·÷·[<button type="button" id="lEN" aria-pressed="false">EN</button>]·÷·
-        </div>
         <div className="layer entry"><div className="frame dos" id="gFrame" /></div>
         <div className="layer intro">
           <div>

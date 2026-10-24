@@ -27,10 +27,14 @@ export default function KrzykFx({ children }) {
     let off = [], alive = true;
     const sec = ref.current.closest('.krzyk');
     import('@/engine/krzykfx').then(({ initKrzykFx }) => { if (alive) off.push(initKrzykFx(sec, { pieces: n => asset(`/krzyk/pieces/${n}`) })); });
-    import('@/engine/psx').then(({ initRooms }) => {
+    // przewijanie sekcjami: wariant B (skok blokowy); ?klatki=a — taśma filmowa
+    import('@/engine/klatki').then(({ initKlatki }) => { if (alive) off.push(initKlatki(sec, { mode: new URLSearchParams(location.search).get('klatki') === 'a' ? 'film' : 'block' })); });
+    import('@/engine/psx').then(({ initRooms, initPersonaStage }) => {
       if (!alive) return;
-      const go = kind => { const el = document.getElementById(TARGET[kind]); if (!el) return;
-        el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      const stage = sec.querySelector('.kp-stage canvas'); if (stage) off.push(initPersonaStage(stage, [...sec.querySelectorAll('.kp-part')]));
+      // instant: skok bez przewijania (gdy ekran zasłania animacja przejścia, np. słuchawki albo portal person)
+      const go = (kind, instant) => { const el = document.getElementById(TARGET[kind]); if (!el) return;
+        el.scrollIntoView({ behavior: instant || matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
         history.replaceState(null, '', '#' + TARGET[kind]); };
       off.push(initRooms(ref.current, { go, assets: {
         walkman: asset('/krzyk/3d/walkman.glb'), minidv: asset('/krzyk/3d/minidv.glb'), hc90e: asset('/krzyk/3d/hc90e.glb'),

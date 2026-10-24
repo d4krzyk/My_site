@@ -1,5 +1,7 @@
 // strona Maszynologia: cracktro (listing asm, copper, sine-scroller z dekodowaniem) i plik NFO z ornamentami; przeniesione z planszy
 import { buildOrn, ornCanvas } from './nfoorn';
+import { pixelDecode } from './pixdecode';
+import { pageReady } from './ready';
 import { RM, rnd, clamp, FONTS, loop, N, fbm, bth, oneBit, makeGlyph, drawGlyph } from './core';
 export function initMaszyn(root, opts) {
   const $ = id => root.querySelector('#'+id);
@@ -11,9 +13,9 @@ export function initMaszyn(root, opts) {
 {
   const pre = $('nfo');
   const wrap = pre && pre.closest('.nfo-wrap');
+  // ryciny obrazkowe w rogach (tylko szerokie ekrany): odkodowują się z pikseli, lewa od dołu, prawa od góry
   const oL = $('ornL'), oR = $('ornR');
-  if (oL && ASSETS.ornL) oL.src = ASSETS.ornL;
-  if (oR && ASSETS.ornR) oR.src = ASSETS.ornR;
+  const ornImgs = [oL && ASSETS.ornL && pixelDecode(oL, ASSETS.ornL, { dir: 'up' }), oR && ASSETS.ornR && pixelDecode(oR, ASSETS.ornR, { dir: 'down' })].filter(Boolean);
   if (pre && wrap) {
     const L = {};
     /* ---- pełny profil IT: treść złożona z bloków ---- */
@@ -107,30 +109,33 @@ export function initMaszyn(root, opts) {
           run += esc(g);
         }
         flush();
-        out.push(html.replace(/\s+$/, ''));
+        out.push(dec ? html : html.replace(/\s+$/, ''));     // w trakcie rozkodowania bez obcinania spacji: szerokość wierszy nie skacze
       }
       pre.innerHTML = out.join('\n');
     };
     const avail = () => { const cs = getComputedStyle(wrap); let w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      wrap.querySelectorAll(':scope > img').forEach(im => { if (getComputedStyle(im).display !== 'none') w -= im.offsetWidth + 6; }); return w; };
+      wrap.querySelectorAll(':scope > .orn-img').forEach(im => { if (getComputedStyle(im).display !== 'none') w -= im.offsetWidth + 6; }); return w; };
     const pick = () => avail() >= L.full.cols * parseFloat(getComputedStyle(pre).fontSize) * .5 ? 'full' : 'compact';   // znak DOS = pół wysokości kroju
     // ryciny boczne: płótno nad <pre> w siatce znaków (kolumna = 4 px, wiersz = 8 px)
     const cv = document.createElement('canvas'); cv.className = 'nfo-orn'; cv.setAttribute('aria-hidden', 'true');
     pre.parentNode.insertBefore(cv, pre);
     const orn = ornCanvas(cv);
+    const intro = pageReady().then(() => performance.now());
     {
       const G = L.full, W = G.cols * 4, H = G.ch.length * 8;
       orn.set(buildOrn(W, H, [
-        { name: 'L', seed: 1911, x: [4, 86], top: 62, motif: ['pendant', .76], bot: 46, cap: 'volute', clusters: [.1, .62, .88], crosses: [.36] },
-        { name: 'R', seed: 666, smooth: true, motif: ['moon', .44], x: [256, 340], top: 50, bot: 60, cap: 'pendants', clusters: [.28, .5, .9], crosses: [.72] }], G.heads.map(r => r * 8 + 4), opts.ornTone || 'white'));
+        { name: 'L', seed: 1911, grow: 'up', x: [4, 86], top: 62, motif: ['pendant', .76], bot: 46, cap: 'volute', clusters: [.1, .62, .88], crosses: [.36] },
+        { name: 'R', seed: 666, grow: 'down', smooth: true, motif: ['moon', .44], x: [256, 340], top: 50, bot: 60, cap: 'pendants', clusters: [.28, .5, .9], crosses: [.72] }], G.heads.map(r => r * 8 + 4), opts.ornTone || 'white'));
     }
     const place = () => { const on = mode === 'full'; cv.style.display = on ? '' : 'none'; if (!on) return;
       Object.assign(cv.style, { left: pre.offsetLeft + 'px', top: pre.offsetTop + 'px', width: pre.offsetWidth + 'px', height: pre.offsetHeight + 'px' }); };
+    // wspólna oś czasu po zejściu kurtyny (pageReady): 0 ms ramka (redframe), +250 tekst NFO rozkodowuje się znakami,
+    // +600 ryciny wyrastają jak drzewo, +650/+850 ryciny w rogach odkodowują się z pikseli, po wzroście rusza krew
     const decode = () => {
-      if (mode === 'full' && !RM) orn.reveal();
-      if (RM) return render(null);
-      dec = { t0: performance.now(), now: performance.now() };
-      const step = now => { dec.now = now; render(null); if (now - dec.t0 < 1600) requestAnimationFrame(step); else { dec = null; render(null); } };
+      if (RM) { render(null); intro.then(at => { ornImgs.forEach(o => o.start(0)); orn.grow(at); }); return; }
+      dec = { t0: Infinity, now: performance.now() };           // do startu tekst pusty (spacje trzymają szerokość wierszy)
+      intro.then(at => { dec.t0 = at + 250; orn.grow(at + 600); ornImgs.forEach((o, i) => o.start(Math.max(0, at + 650 + i * 200 - performance.now()))); });
+      const step = now => { dec.now = now; render(null); if (!isFinite(dec.t0) || now - dec.t0 < 1600) requestAnimationFrame(step); else { dec = null; render(null); } };
       requestAnimationFrame(step);
     };
     const update = () => {
@@ -189,6 +194,7 @@ ogien:  mov cx,64000
         shr al,2
         stosb
         loop .f
+        call sigen       ; ?
         in al,60h
         dec al
         jnz ogien

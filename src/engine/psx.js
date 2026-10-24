@@ -2,9 +2,10 @@
 // walkman → muzyka, trzy maski → persony, kaseta miniDV (zapada się pod ziemię, potem kamera HC90E) → obraz, telefon → kontakt
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { RM, loop, clamp } from './core';
+import { RM, loop, clamp, makeGlyph, drawGlyph } from './core';
 
 const ease = k => k * k * (3 - 2 * k), easeOut = k => 1 - Math.pow(1 - k, 3);
+const TAU = Math.PI * 2;
 
 /* ---------- wspólny potok PS1 (jak na planszy) ---------- */
 export function ps1(canvas, lowW, lowH, { clear = 0x000000, alpha = 0, fog = null } = {}) {
@@ -16,7 +17,8 @@ export function ps1(canvas, lowW, lowH, { clear = 0x000000, alpha = 0, fog = nul
   const mat = o => { const m = new THREE.MeshLambertMaterial(o); m.onBeforeCompile = sh => { sh.uniforms.uSnap = { value: snap };
     sh.vertexShader = 'uniform vec2 uSnap;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\n vec4 sp=gl_Position; sp.xy=floor(sp.xy/sp.w*uSnap)/uSnap*sp.w; gl_Position=sp;'); }; return m; };
   const tex = c => { const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; return t; };
-  return { r, scene, cam, mat, tex, render: () => r.render(scene, cam) };
+  const resize = (w, h) => { r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); snap.set(w / 2.5, h / 2.5); };
+  return { r, scene, cam, mat, tex, resize, render: () => r.render(scene, cam) };
 }
 
 const GL = new GLTFLoader();
@@ -25,17 +27,17 @@ export function loadPSX(P, url) {
     g.scene.traverse(m => { if (!m.isMesh) return;
       const mats = (Array.isArray(m.material) ? m.material : [m.material]).map(o => { const map = o.map || null;
         if (map) { map.magFilter = THREE.NearestFilter; map.minFilter = THREE.NearestFilter; map.generateMipmaps = false; map.encoding = THREE.LinearEncoding; map.needsUpdate = true; }
-        const mt = P.mat({ map, color: o.color ? o.color.clone().convertLinearToSRGB() : 0xffffff, side: THREE.DoubleSide });
+        const mt = P.mat({ map, color: o.color ? o.color.clone().convertLinearToSRGB() : 0xffffff, side: THREE.DoubleSide }); mt.name = o.name || '';
         if (/white plastic/i.test(o.name || '')) { mt.polygonOffset = true; mt.polygonOffsetFactor = -2; mt.polygonOffsetUnits = -8; } return mt; });
       m.material = mats.length > 1 ? mats : mats[0]; });
     res(g.scene); }, undefined, rej));
 }
 // skaluje obiekt do największego wymiaru `size` i ustawia jego środek w (0,0,0)
-function fit(obj, size) {
+export function fit(obj, size) {
   const g = new THREE.Group(); const b = new THREE.Box3().setFromObject(obj), d = b.getSize(new THREE.Vector3());
   const s = size / Math.max(d.x, d.y, d.z); obj.scale.setScalar(s); obj.position.sub(b.getCenter(new THREE.Vector3()).multiplyScalar(s)); g.add(obj); return g;
 }
-function lights(P, rim = 0x3ff0ff, rim2 = 0xc4121d) {
+export function lights(P, rim = 0x3ff0ff, rim2 = 0xc4121d) {
   P.scene.add(new THREE.AmbientLight(0x7a7f98, .85));
   const k = new THREE.DirectionalLight(0xfff2dc, .9); k.position.set(1.5, 2, 3); P.scene.add(k);
   const a = new THREE.DirectionalLight(rim, .5); a.position.set(-3, 1, -1); P.scene.add(a);
@@ -101,14 +103,13 @@ function maskTex(kind, seed) {
     x.restore();
   }
   if (kind === 'void') {
-    // (ukryta) czerń i krew: szparki oczu, poszarpany uśmiech z zębami, zacieki
     x.fillStyle = '#4a0006'; for (let k = 0; k < 9; k++) x.fillRect(10 + r() * 108, 90 + r() * 20, 2, 20 + r() * 50);
     E.forEach(ex => hole(() => { x.moveTo(ex - 14, EY + 4); x.lineTo(ex + 12, EY - 6); x.lineTo(ex + 10, EY); x.closePath(); }));
     hole(() => { x.moveTo(26, 106); for (let k = 0; k <= 12; k++) x.lineTo(26 + k * 6.3, 106 + (k % 2 ? 14 : 4) + Math.sin(k / 12 * Math.PI) * 14); x.lineTo(102, 106); x.quadraticCurveTo(64, 116, 26, 106); });
   }
   return c;
 }
-function makeMask(P, kind, seed) {
+export function makeMask(P, kind, seed) {
   const g = new THREE.SphereGeometry(1, 14, 12, Math.PI / 2 - 1.15, 2.3, .3, 2.45), p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
     let X = p.getX(i), Y = p.getY(i), Z = p.getZ(i);
@@ -140,15 +141,16 @@ export function initRooms(root, { assets, go }) {
     if (kind === 'walkman') {
       loadPSX(P, assets.walkman).then(m => { const o = fit(m, 1.1); o.rotation.set(-.15, .5, .1); P.scene.add(o);
         P.cam.position.set(0, .15, 2.3); P.cam.lookAt(0, 0, 0);
-        let spin = 0;
-        click = () => { st.busy = true; st.t0 = st.now; spin = 1; setTimeout(() => { st.busy = false; go(kind); }, RM ? 0 : 520); };
-        tick = (t) => { const k = spin ? clamp((t - st.t0) / 520, 0, 1) : 0; if (k >= 1) spin = 0;
-          o.rotation.y = .5 + Math.sin(t / 1600) * (st.hot ? .55 : .3) + easeOut(k) * Math.PI * 2;
+        const phones = []; o.traverse(c => { if (c.isMesh && /^headphone|^headJack/i.test(c.material.name || '')) phones.push(c); });
+        // klik: słuchawki zeskakują z walkmana i zakładają się na ekran (nakładka na cały ekran), potem sekcja muzyki
+        click = () => { if (RM) return go(kind); st.busy = true; phones.forEach(c => { c.visible = false; });
+          headphonesOn(assets, cv, o, () => go(kind, true), () => { phones.forEach(c => { c.visible = true; }); st.busy = false; }); };
+        tick = (t) => { o.rotation.y = .5 + Math.sin(t / 1600) * (st.hot ? .55 : .3);
           o.position.y = Math.sin(t / 900) * .03 + (st.hot ? .06 : 0); o.rotation.z = .1 + Math.sin(t / 2100) * .05; };
       }).catch(() => {});
     }
     if (kind === 'heads') {
-      // trzy maski obok siebie, każda rusza się po swojemu; czwarta, ukryta, siedzi w środku i prawie nigdy się nie pokazuje
+      // trzy maski obok siebie, każda rusza się po swojemu
       const ks = ['haunt', 'sleaze', 'sacral'], ms = ks.map((k, i) => { const m = makeMask(P, k, 11 + i * 7); m.scale.setScalar(.31); m.position.x = (i - 1) * .6; P.scene.add(m); return m; });
       const cold = new THREE.PointLight(0x7fe8ff, .8, 1.6); cold.position.set(-.64, .1, .6); P.scene.add(cold);
       const pink = new THREE.PointLight(0xff3fb4, .7, .7); pink.position.set(0, -.2, .6); P.scene.add(pink);
@@ -169,7 +171,9 @@ export function initRooms(root, { assets, go }) {
         a3.position.set(.6, .03 + (ph3 < 1 ? .012 : 0), 0);
         a3.rotation.set(-.18, p0[0] + (p1[0] - p0[0]) * k3, p0[1] + (p1[1] - p0[1]) * k3);
       };
-      click = () => { st.busy = true; setTimeout(() => { st.busy = false; go(kind); }, RM ? 0 : 380); };
+      // klik: maski wylatują z karty, krążą w kręgu i otwierają heksagonalny portal, za którym jest sekcja person
+      click = () => { if (RM) return go(kind); st.busy = true; ms.forEach(m => { m.visible = false; });
+        personaPortal(cv, ms.map(m => m.position.x), () => go(kind, true), () => { ms.forEach(m => { m.visible = true; }); st.busy = false; }); };
     }
     if (kind === 'minidv') {
       const fc = grime(96, 96, [14, 12, 11], 18, 5), fx = fc.getContext('2d'), fd = fx.getImageData(0, 0, 96, 96);
@@ -179,7 +183,11 @@ export function initRooms(root, { assets, go }) {
       const hole = new THREE.Mesh(new THREE.CircleGeometry(.42, 10), P.mat({ color: 0x000000 })); hole.rotation.x = -Math.PI / 2; hole.position.y = .003; hole.scale.setScalar(.001); P.scene.add(hole);
       const crumbs = []; const cg = new THREE.BoxGeometry(.03, .03, .03);
       for (let i = 0; i < 40; i++) { const m = new THREE.Mesh(cg, P.mat({ color: i % 3 ? 0x2a2420 : 0x5a5048 })); m.visible = false; P.scene.add(m); crumbs.push({ m, v: new THREE.Vector3(), t: 0 }); }
+      // wszystko poniżej poziomu podłoża jest odcinane: kaseta naprawdę znika w otworze, zamiast przenikać przez teksturę
+      P.r.localClippingEnabled = true; const under = [new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)];
+      crumbs.forEach(c => { c.m.material.clippingPlanes = under; });
       loadPSX(P, assets.minidv).then(m => { const o = fit(m, 1.05), tp = new THREE.Group(); tp.add(o); P.scene.add(tp);
+        o.traverse(n => { if (n.isMesh) (Array.isArray(n.material) ? n.material : [n.material]).forEach(mt => { mt.clippingPlanes = under; }); });
         const lift = -new THREE.Box3().setFromObject(o).min.y; o.position.y += lift;
         P.cam.position.set(0, .62, 2.25); P.cam.lookAt(0, .32, 0);
         let sink = false;
@@ -198,14 +206,14 @@ export function initRooms(root, { assets, go }) {
       }).catch(() => {});
     }
     if (kind === 'phone') {
-      loadPSX(P, assets.phone).then(m => { const d = new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3());
-        if (d.x >= d.y && d.x >= d.z) m.rotation.z = Math.PI / 2; else if (d.z >= d.y) m.rotation.x = Math.PI / 2;
-        const up = new THREE.Group(); up.add(m); up.rotation.z = Math.PI;                         // model stał do góry nogami
-        const o = fit(up, 1.1); P.scene.add(o); P.cam.position.set(0, 0, 1.75); P.cam.lookAt(0, 0, 0);
+      loadPSX(P, assets.phone).then(m => {
+        // w pliku ekran patrzy w +Y, a telefon leży wzdłuż X górą (słuchawka, antena) ku −X: najpierw ekran do kamery, potem góra do góry
+        m.rotation.set(Math.PI / 2, 0, -Math.PI / 2, 'ZYX');
+        const o = fit(m, 1.1); P.scene.add(o); P.cam.position.set(0, 0, 1.75); P.cam.lookAt(0, 0, 0);
         let ring = 0;
         click = () => { st.busy = true; ring = 1; st.t0 = st.now; setTimeout(() => { st.busy = false; ring = 0; go(kind); }, RM ? 0 : 600); };
         tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0;
-          o.rotation.set(.15 + Math.sin(t / 2000) * .08, Math.sin(t / 1500) * (st.hot ? .9 : .5) + r, -.25 + r * .5 + (st.hot ? Math.sin(t / 60) * .03 : 0));
+          o.rotation.set(.1 + Math.sin(t / 2000) * .06, Math.sin(t / 1500) * (st.hot ? .8 : .45) + r, -.06 + r * .5 + (st.hot ? Math.sin(t / 60) * .03 : 0));
           o.position.y = Math.sin(t / 1000) * .02; };
       }).catch(() => {});
     }
@@ -214,23 +222,197 @@ export function initRooms(root, { assets, go }) {
   return () => stop.forEach(f => f());
 }
 
+/* ---------- persony: przejście jak krąg czarownic. Maski krążą, kredą rysuje się podwójny krąg z runami i pentakl,
+   maski stają na wierzchołkach, zapalają się świece; potem znak zajmuje się ogniem od środka (żar → krew → węgiel),
+   pękają szczeliny i wylewa się ciemność; po skoku do sekcji ciemność rozpada się na odłamki z płonącymi brzegami ---------- */
+let ppBusy = false;
+function personaPortal(pickCv, xs, arrive, done) {
+  if (ppBusy) return; ppBusy = true;
+  const ov = document.createElement('div'); ov.className = 'pp-ov'; ov.innerHTML = '<canvas class="pp-hex"></canvas><canvas class="pp-3d"></canvas>'; document.body.appendChild(ov);
+  const [pc, cv] = ov.querySelectorAll('canvas'), W = Math.ceil(innerWidth / 3), H = Math.ceil(innerHeight / 3), CX = W / 2, CY = H / 2;
+  const P = ps1(cv, W, H, { alpha: 0 }); lights(P); P.cam.position.set(0, 0, 3); P.cam.lookAt(0, 0, 0);
+  pc.width = W; pc.height = H; const x = pc.getContext('2d'); x.imageSmoothingEnabled = false;
+  const ms = ['haunt', 'sleaze', 'sacral'].map((k, i) => { const m = makeMask(P, k, 11 + i * 7); P.scene.add(m); return m; });
+  const HW = 3 * Math.tan(17.5 * Math.PI / 180), toW = (px, py) => [(px - CX) / (H / 2) * HW, -(py - CY) / (H / 2) * HW];
+  const r = pickCv.getBoundingClientRect(), s0 = (r.height / (2 * 2.9 * Math.tan(17.5 * Math.PI / 180))) / (innerHeight / (2 * HW));
+  const c0 = [(r.left + r.width / 2) / innerWidth * W, (r.top + r.height / 2) / innerHeight * H], pxPerW = (H / 2) / HW;
+  const START = xs.map(xw => [c0[0] + xw * s0 * pxPerW, c0[1]]), R = Math.min(W, H) * .34, MS = Math.min(.12, R / pxPerW * .18);
+  const hsh = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const B4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5], bt = (a, b) => (B4[(b & 3) * 4 + (a & 3)] + .5) / 16, seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+  const px = (a, b, c) => { x.fillStyle = c; x.fillRect(Math.round(a), Math.round(b), 1, 1); };
+  const CH = '#e9e2cf', CH2 = '#8f897a';
+  let br = -1;                                                           // promień ognia (od środka); punkt w jego zasięgu płonie zamiast kredy
+  const ink = (xx, yy, h) => { if (br >= 0) { const d = Math.hypot(xx - CX, yy - CY); if (d < br) { const age = (br - d) / R * 1000;
+      return age < 110 ? '#fff1c1' : age < 280 ? '#ff7a1a' : age < 620 ? '#a8161f' : (hsh(Math.round(xx), Math.floor(performance.now() / 80)) < .1 ? '#ff5a1a' : '#3a1210'); } }
+    return h < .3 ? CH2 : CH; };
+  const chalk = (x0, y0, x1, y1, frac, sd) => { const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 2); for (let i = 0; i <= n * frac; i++) { const t = i / n, h = hsh(i + sd, sd * 3.1); if (h < .1) continue;
+    const xx = x0 + (x1 - x0) * t + (hsh(i, sd) - .5) * .7, yy = y0 + (y1 - y0) * t + (hsh(sd, i) - .5) * .7, c = ink(xx, yy, h); px(xx, yy, c); if (c === '#fff1c1' || c === '#ff7a1a') px(xx, yy + 1, '#5a1206'); } };
+  const circ = (rr, frac, rot, sd) => { const n = Math.ceil(TAU * rr * 2); for (let i = 0; i <= n * frac; i++) { const a = rot + i / n * TAU, h = hsh(i + sd, 7); if (h < .1) continue;
+    const xx = CX + Math.cos(a) * (rr + (h - .5) * .6), yy = CY + Math.sin(a) * (rr + (h - .5) * .6); px(xx, yy, ink(xx, yy, h)); } };
+  const vert = (rr, k, rot = 0) => { const a = -Math.PI / 2 + k * TAU / 5 + rot; return [CX + Math.cos(a) * rr, CY + Math.sin(a) * rr]; };
+  const glyphs = Array.from({ length: 24 }, () => { let g; do g = makeGlyph(); while (g.st.length < 2); const c = document.createElement('canvas'); c.width = c.height = 7; const gx = c.getContext('2d'); gx.strokeStyle = CH; gx.lineWidth = 1; drawGlyph(g, gx, .5, .5, 6); return c; });
+  const black = f => { const img = x.getImageData(0, 0, W, H), D = img.data; for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) { const v = f(xx, yy); if (v <= 0) continue;
+    if (v >= 1 || bt(xx, yy) < v) { const i = (yy * W + xx) * 4; D[i] = 2; D[i + 1] = 1; D[i + 2] = 4; D[i + 3] = 255; } } x.putImageData(img, 0, 0); };
+  const cracks = Array.from({ length: 9 }, (_, k) => { const pts = []; let a = hsh(k, 9) * TAU, xx = CX, yy = CY; for (let q = 0; q < Math.hypot(W, H); q++) { a += (hsh(k, q) - .5) * .5; xx += Math.cos(a); yy += Math.sin(a); pts.push([xx, yy]); } return pts; });
+  // odłamki: pierścienie trójkątów pokrywające cały ekran, od środka na zewnątrz
+  const maxD = Math.hypot(W, H) / 2 + 10, RW = Math.max(18, H / 5), shards = [];
+  for (let ring = 0; ring * RW < maxD; ring++) { const n = 6 + ring * 6; for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU, r0 = ring * RW, r1 = (ring + 1) * RW, q = [[a0, r0], [a1, r0], [a1, r1], [a0, r1]].map(([a, rr]) => [CX + Math.cos(a) * rr, CY + Math.sin(a) * rr]);
+    for (const tri of [[0, 1, 2], [0, 2, 3]]) { const pts = tri.map(j => q[j]), mx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3, my = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
+      shards.push({ pts: pts.map(([a, b]) => [a - mx, b - my]), mx, my, del: ring * .07 + hsh(k, ring) * .12, rot: (hsh(k, ring + 7) - .5) * 3, ox: (hsh(ring, k) - .5) * 50 }); } } }
+  const wrapA = d => Math.atan2(Math.sin(d), Math.cos(d)), SH = 2380;
+  let goal = null, frags = null;
+  // pęknięcie maski na ok. 28 kawałków (po kilka sąsiednich trójkątów siatki), każdy z własnym środkiem
+  const shatter = m => { const mesh = m.children[0], gm = mesh.geometry, pos = gm.attributes.position, nor = gm.attributes.normal, uv = gm.attributes.uv, tri = pos.count / 3, per = Math.ceil(tri / 28);
+    const G = new THREE.Group(); G.position.copy(m.position); G.rotation.copy(m.rotation); G.scale.copy(m.scale); P.scene.add(G); G.updateMatrixWorld(true);
+    const target = G.worldToLocal(new THREE.Vector3(0, 0, -.6)), parts = [];
+    for (let t = 0; t < tri; t += per) { const n = Math.min(per, tri - t) * 3, P3 = new Float32Array(n * 3), N3 = new Float32Array(n * 3), U2 = new Float32Array(n * 2), c = new THREE.Vector3();
+      for (let j = 0; j < n; j++) c.add(new THREE.Vector3(pos.getX(t * 3 + j), pos.getY(t * 3 + j), pos.getZ(t * 3 + j))); c.divideScalar(n);
+      for (let j = 0; j < n; j++) { const v = t * 3 + j; P3.set([pos.getX(v) - c.x, pos.getY(v) - c.y, pos.getZ(v) - c.z], j * 3); N3.set([nor.getX(v), nor.getY(v), nor.getZ(v)], j * 3); U2.set([uv.getX(v), uv.getY(v)], j * 2); }
+      const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.BufferAttribute(P3, 3)); bg.setAttribute('normal', new THREE.BufferAttribute(N3, 3)); bg.setAttribute('uv', new THREE.BufferAttribute(U2, 2));
+      const fm = new THREE.Mesh(bg, mesh.material); fm.position.copy(c); G.add(fm);
+      parts.push({ m: fm, p0: c.clone(), del: Math.random() * 220, sw: .25 + Math.random() * .5, side: new THREE.Vector3(-c.y, c.x, 0).normalize(), r0: new THREE.Euler(),
+        spin: new THREE.Vector3((Math.random() - .5) * 9, (Math.random() - .5) * 9, (Math.random() - .5) * 9) }); }
+    return { G, target, parts }; };
+  let finished = false, jumped = false, t0 = null;
+  const end = () => { if (finished) return; finished = true; ov.remove(); P.r.dispose(); ppBusy = false; done(); };
+  loop(cv, 30, t => { if (finished) return; if (t0 === null) t0 = t; const e = t - t0;
+    x.clearRect(0, 0, W, H);
+    const g = ease(seg(e, 0, 700)), toV = ease(seg(e, 1500, 1900)), burnt = seg(e, 2150, 2500), rot = e / 4000;
+    // krąg: maski krążą do 1,5 s, potem każda idzie do najbliższego wolnego wierzchołka pentaklu najkrótszym łukiem
+    if (e >= 1500 && !goal) { goal = []; const used = new Set(), a0 = ms.map((_, i) => 1.4 * 1.5 + i * TAU / 3 - Math.PI / 2);
+      ms.forEach((_, i) => { let best = -1, bd = 9; for (let k = 0; k < 5; k++) { if (used.has(k)) continue; const d = Math.abs(wrapA(-Math.PI / 2 + k * TAU / 5 - a0[i])); if (d < bd) { bd = d; best = k; } } used.add(best); goal.push(best); }); }
+    ms.forEach((m, i) => { if (e > SH) { m.visible = false; return; } m.visible = true;
+      let a = 1.4 * Math.min(e, 1500) / 1000 + i * TAU / 3 - Math.PI / 2, rr = 1;
+      if (goal) { const ta = -Math.PI / 2 + goal[i] * TAU / 5 + rot * .3; a += wrapA(ta - a) * toV; rr = 1 - (1 - .8 / 1.1) * toV; }
+      const ex = CX + Math.cos(a) * R * 1.1 * rr, ey = CY + Math.sin(a) * R * 1.1 * rr;
+      const [wx, wy] = toW(START[i][0] + (ex - START[i][0]) * g, START[i][1] + (ey - START[i][1]) * g);
+      m.position.set(wx, wy, 0); m.scale.setScalar(.31 * s0 + (MS - .31 * s0) * g); m.rotation.set(0, Math.sin(e / 500 + i) * .2, Math.sin(e / 700 + i * 2) * .06);
+      const ember = burnt * (.75 + .25 * Math.sin(e / 45 + i)); m.children[0].material.color.setRGB(1 - ember * .55, 1 - ember * .85, 1 - ember * .92); });   // zwęglają się, żar pulsuje
+    // rozpad: maska pęka na wielokąty, które wirując wpadają do środka znaku i gasną
+    if (e > SH && !frags) frags = ms.map(shatter);
+    if (frags) frags.forEach(F => F.parts.forEach(q => { const k = clamp((e - SH - q.del) / 520, 0, 1), kk = k * k;
+      q.m.position.lerpVectors(q.p0, F.target, kk).addScaledVector(q.side, Math.sin(k * Math.PI) * q.sw);
+      q.m.rotation.set(q.r0.x + q.spin.x * k, q.r0.y + q.spin.y * k, q.r0.z + q.spin.z * k); q.m.scale.setScalar(Math.max(.001, 1 - kk)); q.m.visible = k < 1; }));
+    P.render();
+    if (e < 3250) {
+      br = e > 2000 ? seg(e, 2000, 2700) * R * 1.25 : -1;
+      if (e > 400) { circ(R, seg(e, 400, 1000), -Math.PI / 2, 1); circ(R * .82, seg(e, 700, 1200), Math.PI / 2, 2); }
+      const nr = Math.floor(24 * seg(e, 900, 1600)); for (let k = 0; k < nr; k++) { const a = rot + k * TAU / 24, rr = R * .91, gx = CX + Math.cos(a) * rr, gy = CY + Math.sin(a) * rr;
+        if (br >= 0 && Math.hypot(gx - CX, gy - CY) < br) continue;          // runy spłonęły
+        x.globalAlpha = .55 + .45 * hsh(k, Math.floor(e / 120)); x.drawImage(glyphs[k], Math.round(gx - 3), Math.round(gy - 3)); } x.globalAlpha = 1;
+      const pf = seg(e, 1300, 1900); for (let k = 0; k < 5; k++) { const [a0, b0] = vert(R * .8, k * 2, rot * .3), [a1, b1] = vert(R * .8, k * 2 + 2, rot * .3); chalk(a0, b0, a1, b1, clamp(pf * 5 - k, 0, 1), k * 9); }
+      if (e > 1700 && e < 2600) for (let k = 0; k < 5; k++) { const [vx, vy] = vert(R * .8, k, rot * .3); if (!seg(e, 1700 + k * 50, 1800 + k * 50)) continue;
+        for (let yy = 0; yy < 4; yy++) { px(vx, vy + 1 + yy, '#cfc6b0'); px(vx + 1, vy + 1 + yy, '#9d9480'); }
+        const fl = 1 + Math.floor(hsh(k, Math.floor(e / 70)) * 3) + (e > 2100 ? 2 : 0); for (let yy = 0; yy < fl; yy++) px(vx + (yy && hsh(k, e) > .5 ? 1 : 0), vy - yy, yy ? '#ffb347' : '#ff6a1a');
+        for (let d = 0; d < 10; d++) { const a = hsh(d, k) * TAU, rr = 2 + hsh(k, d) * 4; if (hsh(d, Math.floor(e / 90) + k) < .3) px(vx + Math.cos(a) * rr, vy - 2 + Math.sin(a) * rr, '#8a0b16'); } }
+      const cr = seg(e, 2450, 2950); if (cr > 0) cracks.forEach((c, k) => { const L = Math.floor(cr * c.length * (.4 + hsh(k, 3) * .6)); for (let q = 0; q < L; q++) { px(c[q][0], c[q][1], q > L - 6 ? '#ff5a1a' : '#1a0505'); if (q & 1) px(c[q][0] + 1, c[q][1], '#5a0a0a'); } });
+      const fl = seg(e, 2700, 3200) * maxD * 1.3; if (fl > 0) black((xx, yy) => { const d = Math.hypot(xx - CX, yy - CY) + hsh(xx >> 2, yy >> 2) * 30; return d < fl - 10 ? 1 : d < fl + 10 ? .5 : 0; });
+    } else {
+      if (!jumped) { jumped = true; arrive(); }
+      // czarne odłamki opadają z płonącymi brzegami, w szczelinach żar
+      const k0 = seg(e, 3250, 4150), flick = Math.floor(e / 70);
+      shards.forEach((sh, j) => { const f = Math.max(0, (k0 - sh.del) / .55), dy = f * f * H * 1.5; if (dy > H * 1.4) return;
+        x.save(); x.translate(sh.mx + sh.ox * f, sh.my + dy); x.rotate(sh.rot * f); x.beginPath(); sh.pts.forEach(([a, b], q) => q ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath();
+        x.fillStyle = '#040306'; x.fill(); x.strokeStyle = f > 0 ? (hsh(j, flick) < .5 ? '#ff6a1a' : '#c4121d') : '#2a0a08'; x.lineWidth = 1; x.stroke(); x.restore();
+        if (f > 0 && hsh(j, flick + 3) < .25) px(sh.mx + sh.ox * f + (hsh(j, 1) - .5) * 6, sh.my + dy - 4 - hsh(j, flick) * 8, '#ffb347'); });
+      if (e > 4200) end();
+    } });
+}
+
+/* ---------- sekcja person: trzy maski lewitują u góry; przy części danej persony ona wychyla się na wprost,
+   a pozostałe cofają się w cień jak nieodblokowane postacie ---------- */
+export function initPersonaStage(cv, parts) {
+  // niska rozdzielczość w proporcjach płótna (minimum 120 px szerokości bez zmiany proporcji, inaczej maski się rozciągają)
+  const dims = () => { const w = cv.clientWidth / 4 || 120, h = cv.clientHeight / 4 || 60, k = Math.max(1, 120 / w); return [Math.round(w * k), Math.max(30, Math.round(h * k))]; };
+  let [W, Hh] = dims();
+  const P = ps1(cv, W, Hh); lights(P); P.cam.position.set(0, .02, 3); P.cam.lookAt(0, 0, 0);
+  const ms = ['haunt', 'sleaze', 'sacral'].map((k, i) => { const m = makeMask(P, k, 11 + i * 7); P.scene.add(m); return m; });
+  let span = Math.min(1.25, 1.4 * W / Hh / 4.2);
+  // płótno mierzone przed ułożeniem strony miało złe proporcje (rozciągnięte maski na telefonie): przeliczamy przy każdej zmianie rozmiaru
+  const ro = new ResizeObserver(() => { const [w, h] = dims(); if (w === W && h === Hh) return; W = w; Hh = h; P.resize(W, Hh); span = Math.min(1.25, 1.4 * W / Hh / 4.2); }); ro.observe(cv);
+  const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 }));
+  let active = -1;
+  const io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) active = +e.target.dataset.p; else if (+e.target.dataset.p === active) active = -1; }); },
+    { rootMargin: '-40% 0px -40% 0px' });
+  parts.forEach(p => io.observe(p));
+  loop(cv, RM ? 4 : 24, t => {
+    ms.forEach((m, i) => {
+      const on = active === i, off = active >= 0 && !on, tg = { z: on ? .7 : off ? -1 : 0, s: on ? .48 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
+      for (const k in tg) c[k] += (tg[k] - c[k]) * .12;
+      let x = (i - 1) * span, y = c.y + Math.sin(t / 900 + i * 2) * .05, rx = 0, ry = 0, rz = 0;
+      if (i === 0) { x += (Math.random() - .5) * .01; ry = (Math.floor(t / 1300) % 3 - 1) * .3; rz = Math.sin(t / 333) * .03; }          // lękowa: drży, rozgląda się nerwowo
+      if (i === 1) { y += Math.abs(Math.sin(t / 380)) * .06; rz = Math.sin(t / 520) * .2; ry = Math.sin(t / 1400) * .2; }                  // wyluzowana: podskakuje, kiwa się
+      if (i === 2) { const st = Math.floor(t / 1500), pose = k => [[-.28, .06], [0, 0], [.24, -.05], [0, .03]][((k % 4) + 4) % 4], k3 = Math.min(1, (t % 1500) / 90);
+        const p0 = pose(st - 1), p1 = pose(st); rx = -.18; ry = p0[0] + (p1[0] - p0[0]) * k3; rz = p0[1] + (p1[1] - p0[1]) * k3; }     // poważna: szarpnięcia manekina
+      if (on) rx -= .12;                                                                                                                 // wychyla się ku widzowi
+      // wąski ekran: mniejsze maski, żeby się nie nakładały
+      m.position.set(x, y, c.z); m.scale.setScalar(c.s * Math.min(1, Math.max(.55, W / Hh / 2.4))); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
+    });
+    P.render();
+  });
+  return () => { io.disconnect(); ro.disconnect(); };
+}
+
+/* ---------- walkman → muzyka: słuchawki wylatują z karty, obracają się wokół osi nauszników (pałąk idzie do tyłu, jakby
+   zakładały się na głowę), nauszniki dochodzą do brzegów ekranu, ekran gaśnie ditherem i odsłania sekcję ---------- */
+let hpBusy = false;
+function headphonesOn(assets, pickCv, pickObj, arrive, done) {
+  if (hpBusy) return; hpBusy = true;
+  const ov = document.createElement('div'); ov.className = 'hp-ov'; ov.innerHTML = '<canvas></canvas><canvas class="hp-dim"></canvas>'; document.body.appendChild(ov);
+  const [cv, dimC] = ov.querySelectorAll('canvas'), lw = Math.ceil(innerWidth / 3), lh = Math.ceil(innerHeight / 3);
+  const P = ps1(cv, lw, lh, { alpha: 0 }); lights(P); P.cam.position.set(0, 0, 3); P.cam.lookAt(0, 0, 0);
+  dimC.width = Math.ceil(lw / 2); dimC.height = Math.ceil(lh / 2); const dx = dimC.getContext('2d');
+  let finished = false;
+  const end = () => { if (finished) return; finished = true; ov.classList.add('out'); setTimeout(() => { ov.remove(); P.r.dispose(); hpBusy = false; done(); }, 380); };
+  loadPSX(P, assets.walkman).then(m => {
+    const o = fit(m, 1.1); o.traverse(c => { if (c.isMesh && !/^headphone|^headJack/i.test(c.material.name || '')) c.visible = false; });
+    // oś obrotu: przez środki nauszników (przy zerowym obrocie, w układzie walkmana)
+    o.updateMatrixWorld(true); const cups = new THREE.Box3(); o.traverse(c => { if (c.isMesh && /^headphoneOrange/i.test(c.material.name || '')) cups.expandByObject(c); });
+    const pc = cups.getCenter(new THREE.Vector3()), piv = new THREE.Group(); piv.position.copy(pc); o.add(piv);
+    [...o.children].forEach(c => { if (c !== piv) piv.attach(c); });
+    const T = new THREE.Group(); T.add(o); o.position.sub(pc); T.position.copy(pc); P.scene.add(T);   // T obraca się wokół osi nauszników
+    // start dokładnie tam, gdzie słuchawki były w karcie: pozycja na ekranie i skala z rozmiaru płótna karty
+    const r = pickCv.getBoundingClientRect(), H = 3 * Math.tan(17.5 * Math.PI / 180), Wd = H * innerWidth / innerHeight;
+    const sx = ((r.left + r.width / 2) / innerWidth * 2 - 1) * Wd, sy = -((r.top + r.height / 2) / innerHeight * 2 - 1) * H;
+    const s0 = (r.height / (2 * 2.3 * Math.tan(17.5 * Math.PI / 180))) / (innerHeight / (2 * H));
+    const R0 = pickObj.rotation.clone(), start = new THREE.Vector3(sx, sy, 0).add(pc.clone().multiplyScalar(s0)), s1 = 2.6 * Math.min(1, innerWidth / innerHeight);
+    let t0 = null;
+    loop(cv, 30, t => { if (finished) return; if (t0 === null) t0 = t; const e = t - t0;
+      const up = easeOut(clamp(e / 450, 0, 1)), put = ease(clamp((e - 380) / 1150, 0, 1));
+      T.scale.setScalar(s0 + (s1 - s0) * put);
+      T.position.set(start.x * (1 - put), start.y * (1 - put) + up * .5 * s0 * (1 - put) - .06 * put, put * 1.7);
+      T.rotation.set(R0.x * (1 - put), R0.y * (1 - put), R0.z * (1 - put));
+      piv.rotation.x = 1.3 * ease(clamp((e - 520) / 1000, 0, 1));                   // pałąk przechodzi nad głową widza (ku kamerze i w górę), nauszniki na boki
+      P.render();
+      const d = clamp((e - 1250) / 380, 0, 1); dx.clearRect(0, 0, dimC.width, dimC.height);
+      if (d > 0) { const img = dx.createImageData(dimC.width, dimC.height), D = img.data; for (let yy = 0; yy < dimC.height; yy++) for (let xx = 0; xx < dimC.width; xx++) if (bthC(xx, yy) < d) D[(yy * dimC.width + xx) * 4 + 3] = 255; dx.putImageData(img, 0, 0); }
+      if (e > 1680) { arrive(); end(); } });
+  }).catch(() => { arrive(); end(); });
+}
+const BAYC = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5], bthC = (x, y) => (BAYC[(y & 3) * 4 + (x & 3)] + .5) / 16;
+
 /* ---------- przejście miniDV → HC90E: ciemność, kamera wjeżdża, najazd na LCD w NightShot, ekran nabiera koloru i odsłania dział ---------- */
 let hcBusy = false;
 function hc90e(assets, arrive, done) {
   if (hcBusy) return; hcBusy = true;
   const ov = document.createElement('div'); ov.className = 'hc-ov'; ov.innerHTML = '<canvas></canvas><span class="hc-skip dos">[ Esc ] pomiń</span>'; document.body.appendChild(ov);
-  const cv = ov.querySelector('canvas'); const P = ps1(cv, 384, 216, { clear: 0x000000, alpha: 1 });
+  // pionowy ekran (telefon): cały widok obrócony o 90°, kamera trzymana pionowo, obraz na LCD w formacie 9:16
+  const portrait = innerHeight > innerWidth;
+  const cv = ov.querySelector('canvas'); const P = ps1(cv, portrait ? 216 : 384, portrait ? 384 : 216, { clear: 0x000000, alpha: 1 });
   const lcdC = document.createElement('canvas'); lcdC.width = 256; lcdC.height = 144; const x = lcdC.getContext('2d'); x.imageSmoothingEnabled = false;
+  const LW = portrait ? 144 : 256, LH = portrait ? 256 : 144;   // logiczny układ ekranu LCD (po obrocie)
   const img = new Image(); img.src = assets.lcd;
   const tc = ms => { const s = Math.floor(ms / 1000), f = Math.floor(ms / 40) % 25; return `0:${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}:${String(f).padStart(2, '0')}`; };
   const txt = (s, px, py, col) => { x.font = '16px "Krzyk DOS"'; x.textBaseline = 'top'; x.fillStyle = '#000'; x.fillText(s, px + 1, py + 1); x.fillStyle = col; x.fillText(s, px, py); };
-  const lcd = (re, ns) => { x.fillStyle = '#000'; x.fillRect(0, 0, 256, 144); if (img.complete) x.drawImage(img, 0, 0, 256, 144);
+  const lcd = (re, ns) => { x.setTransform(1, 0, 0, 1, 0, 0); x.fillStyle = '#000'; x.fillRect(0, 0, 256, 144);
+    if (portrait) x.setTransform(0, 1, -1, 0, 256, 0);           // rysujemy pionowo; obrót kamery stawia obraz z powrotem prosto
+    if (img.complete) { if (portrait) { const sw = img.naturalHeight * 9 / 16, sx = (img.naturalWidth - sw) / 2; x.drawImage(img, sx, 0, sw, img.naturalHeight, 0, 0, LW, LH); } else x.drawImage(img, 0, 0, 256, 144); }
     if (ns > 0) { const id = x.getImageData(0, 0, 256, 144), d = id.data;
       for (let i = 0; i < d.length; i += 4) { const L = (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11) / 255, v = clamp(L * 1.8 + (Math.random() - .5) * .3, 0, 1);
         d[i] = d[i] * (1 - ns) + v * 40 * ns; d[i + 1] = d[i + 1] * (1 - ns) + (30 + v * 225) * ns; d[i + 2] = d[i + 2] * (1 - ns) + v * 80 * ns; }
       x.putImageData(id, 0, 0); }
-    x.globalAlpha = Math.max(ns, .25); txt('● REC', 6, 4, Math.floor(re / 500) % 2 ? '#ff3030' : '#7a1010'); txt(tc(re), 150, 4, '#d8ffe0');
-    x.globalAlpha = ns; if (Math.floor(re / 350) % 2) txt('NIGHTSHOT', 6, 124, '#b6ffc8'); x.globalAlpha = 1; screenT.needsUpdate = true; };
+    x.globalAlpha = Math.max(ns, .25); txt('● REC', 6, 4, Math.floor(re / 500) % 2 ? '#ff3030' : '#7a1010'); txt(tc(re), LW - 106, portrait ? 22 : 4, '#d8ffe0');
+    x.globalAlpha = ns; if (Math.floor(re / 350) % 2) txt('NIGHTSHOT', 6, LH - 20, '#b6ffc8'); x.globalAlpha = 1; screenT.needsUpdate = true; };
   const screenT = P.tex(lcdC);
   let finished = false;
   const end = () => { if (finished) return; finished = true; arrive(); ov.classList.add('out'); setTimeout(() => { ov.remove(); P.r.dispose(); hcBusy = false; done(); }, 450); window.removeEventListener('keydown', key); };
@@ -244,6 +426,7 @@ function hc90e(assets, arrive, done) {
     const glow = new THREE.PointLight(0x5dff8a, 0, 1.4); P.scene.add(glow); P.scene.add(new THREE.AmbientLight(0x6a7088, .05));
     const lcdW = new THREE.Vector3(-.19, -.127, -.203), camA = new THREE.Vector3(.05, .02, 1.9), camB = new THREE.Vector3(-.19, -.127, .14), camC = new THREE.Vector3(-.19, -.127, -.03);
     const OFF = 2.15; let t0 = null;
+    if (portrait) P.cam.up.set(1, 0, 0);                               // kamera obrócona o 90°: dłuższy bok LCD idzie w pionie
     loop(cv, 24, (t) => { if (finished) return; if (t0 === null) t0 = t; const e = t - t0;
       const k1 = easeOut(clamp((e - 300) / 1300, 0, 1)), r = 1 - k1;
       g.position.set(r * OFF, -r * .05, 0); g.rotation.set(0, -r * .5, r * .05);
