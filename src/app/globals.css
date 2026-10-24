@@ -175,7 +175,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .tw{opacity:0;display:inline-block;white-space:pre;transform:translate(var(--dx,0),var(--dy,0))}
 .tw.on{opacity:var(--ink,1)}
 .tw.hit{text-shadow:0 0 .12em currentColor;filter:brightness(1.4)}
-.k-stamp{position:absolute;left:35.55cqw;top:max(24cqw,min(39.14cqw,calc(100svh - 28.5cqw)));width:58.75cqw;z-index:2;pointer-events:none;opacity:0;user-select:none}
+.k-stamp{--sw:min(50cqw,98svh);position:absolute;left:calc(94.3cqw - var(--sw));top:max(18cqw,min(41cqw,calc(100svh - var(--sw) * .4375 - 22px)));width:var(--sw);z-index:2;pointer-events:none;opacity:0;user-select:none}
 .k-safe{position:absolute;left:0;top:0;width:100cqw;height:86cqw;z-index:2;pointer-events:none;opacity:0;mix-blend-mode:screen;
   background:radial-gradient(60% 45% at 66% 52%,rgba(150,12,8,.28),transparent 70%)}
 .dev .k-stamp{animation:k-develop 3.4s .35s both cubic-bezier(.35,.1,.3,1)}
@@ -192,7 +192,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
   /* telefon: kolaż dzielony na pół, prawa połówka (od x=455 px kolażu) na całą szerokość: skala 720/825 */
   .k-motto{left:-55.15cqw;width:155.15cqw;height:87.27cqw}
   .k-asm{height:306.4cqw}
-  .k-stamp{left:0;top:60.73cqw;width:91.15cqw}
+  .k-stamp{left:4cqw;top:64cqw;width:84cqw}
   .k-safe{height:135cqw;background:radial-gradient(70% 40% at 50% 60%,rgba(150,12,8,.28),transparent 70%)}
 }
 
