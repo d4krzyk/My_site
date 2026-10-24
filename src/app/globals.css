@@ -149,18 +149,13 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
   background-position:top center,center var(--toph);background-size:100% auto}
 .k-foot{position:relative;z-index:1;height:55cqw;margin-top:-10cqw;background:var(--bb) center bottom/100% 100% no-repeat;pointer-events:none}
 .k-body{position:relative;z-index:2;width:84%;margin:0 auto;padding:var(--pad) 0 0}
-.k-body :is(p,h1,h2,.k-lv){text-shadow:0 0 6px #000,0 0 14px #000,1px 1px 0 #000}
+.k-body :is(p,h1,h2){text-shadow:0 0 6px #000,0 0 14px #000,1px 1px 0 #000}
 @media (max-width:700px){
   .sec.krzyk{--toph:675cqw;--pad:285cqw}
   .k-bgs{background-image:var(--btp),var(--bmp)}
   .k-foot{background-image:var(--bbp)}
   .k-body{width:92%}
 }
-.k-intro{margin:0 0 22px}
-.k-lv{color:var(--blood-hi);margin:0 0 6px}
-.k-title{font-family:var(--f-goth);font-weight:400;font-size:clamp(44px,8vw,84px);line-height:1;margin:0;color:var(--silver);-webkit-font-smoothing:none}
-.k-lede{max-width:52ch;margin:10px 0 0}
-.k-text{max-width:60ch;margin:0 0 28px}.k-text p{margin:0 0 12px}
 /* Krzyk: warstwy nad tłem (w układzie kolażu 1280 px = 100cqw) */
 .k-lines{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;mix-blend-mode:screen;
   -webkit-mask:var(--dust-l) 0 0/100% auto repeat;mask:var(--dust-l) 0 0/100% auto repeat}
@@ -202,7 +197,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 }
 
 /* pole wyborów: modele 3D na kawałkach ciemnej tektury */
-.k-choose{margin:34px 0 60px;text-align:center}
+.k-choose{min-height:100svh;box-sizing:border-box;padding:4svh 0 6svh;display:flex;flex-direction:column;justify-content:center;text-align:center}
 .k-choose-h{color:var(--blood-hi);margin:0 0 14px}
 .k-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,2.4vw,30px)}
 .k-pick{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;padding:6% 6% 9%;
@@ -219,8 +214,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 @media (max-width:700px){.k-pick-s{display:none}.k-pick{padding:5% 4% 8%}.k-pick-phone{width:84%}.k-pick-phone .k-pick-s{display:block}}
 
 /* podrozdziały: ciemna, gruba tektura z poszarpanym brzegiem i odsłoniętymi falami */
-.k-sub{position:relative;margin:70px 0;padding:30px clamp(18px,4vw,44px) 40px;background:var(--board) 0 0/360px auto repeat;color:#e3d6b4;
-  scroll-margin-top:60px;box-shadow:0 14px 30px rgba(0,0,0,.6)}
+.k-sub{position:relative;margin:68px 0;min-height:calc(100svh - 136px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;padding:30px clamp(18px,4vw,44px) 40px;background:var(--board) 0 0/640px auto repeat;color:#e3d6b4;
+  scroll-margin-top:68px;box-shadow:0 14px 30px rgba(0,0,0,.6)}
 .k-sub::before,.k-sub::after{content:"";position:absolute;left:0;right:0;height:34px;background:var(--board-t) center bottom/100% 100% no-repeat;bottom:100%}
 .k-sub::after{background-image:var(--board-b);background-position:center top;top:100%;bottom:auto}
 .k-sub:nth-of-type(2n){transform:rotate(.35deg)}.k-sub:nth-of-type(2n+1){transform:rotate(-.3deg)}
