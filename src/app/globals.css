@@ -247,10 +247,9 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .hp-ov canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
 .hp-ov.out{opacity:0}
 .hc-skip{position:absolute;right:16px;bottom:14px;color:#5d8a68;font-size:14px}
-/* Maszynologia: pasek stanu pagera (jak `more`/`less`: odwrócone kolory), błysk przy skoku */
+/* Maszynologia: pasek stanu pagera (jak `more`/`less`: odwrócone kolory) */
 .pager{position:fixed;left:12px;bottom:10px;z-index:60;padding:2px 7px;background:var(--silver);color:#000;font-size:16px;line-height:1.1;opacity:0;pointer-events:none;transition:opacity .2s}
 .pager.on{opacity:1}
-.sec.maszyn.pg-flick{filter:brightness(1.18) contrast(1.05)}
 
 /* Maszynologia: demoscena — CRT, cracktro i plik NFO */
 .sec.maszyn{max-width:1480px;position:relative}
@@ -348,7 +347,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 @keyframes t-shake{0%,100%{transform:none}20%{transform:translate(-6px,2px)}40%{transform:translate(5px,-3px)}60%{transform:translate(-4px,3px)}80%{transform:translate(3px,-1px)}}
 @media (prefers-reduced-motion:reduce){.tl .tb{clip-path:none}.tl::before{display:none}.term.shake{animation:none}}
 @media (max-width:700px){.t-out{height:56vh;font-size:14px}.t-ps,.t-in{font-size:16px}.t-ps{max-width:46%;overflow:hidden;text-overflow:ellipsis}.m-panel{padding:30px 12px 16px}}
-body:has(.maszyn){background:radial-gradient(120% 60% at 50% 0%, #07103a 0%, #02030a 55%, #000 100%) fixed, #000}
+body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło Maszynologii jest czarne */
 @media (max-width:700px){ .sec.maszyn{padding:72px 10px 60px} .m-prompt{font-size:13px} .cracktro{margin-bottom:14px} }
 
 /* SIGEN: ukryty generator sigili (podgląd po lewej, panel modułów po prawej; na telefonie jedno pod drugim) */

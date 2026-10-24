@@ -87,16 +87,29 @@ export function initKlatki(sec, { mode = 'film' } = {}) {
   return () => { off(); ov.kill(); };
 }
 
-// Maszynologia: pager w stylu `more` — przewija skokami o całe wiersze, na dole pasek stanu z procentem
+// Maszynologia: pager w stylu `more`: kółko i strzałki przewijają co jedną linię tekstu (położenie zawsze równe wielokrotności
+// wysokości linii), PgDn/PgUp/spacja o ekran bez 3 linii; pasek stanu na dole. Bez blokad między krokami i bez filtrów na stronie
 export function initPager(root) {
   const bar = document.createElement('div'); bar.className = 'pager dos'; bar.setAttribute('aria-hidden', 'true'); document.body.appendChild(bar);
-  let hideT = 0; const lh = () => { const pre = root.querySelector('#nfo'); return pre ? parseFloat(getComputedStyle(pre).fontSize) || 16 : 16; };
+  let hideT = 0, rest = 0;
+  const lh = () => { const pre = root.querySelector('#nfo'); return Math.round(pre ? parseFloat(getComputedStyle(pre).fontSize) || 16 : 16); };
   const show = () => { const max = document.documentElement.scrollHeight - innerHeight, p = max > 0 ? Math.round(scrollY / max * 100) : 100;
     bar.textContent = p >= 100 ? '(KONIEC)' : `-- WIĘCEJ -- (${p}%)`; bar.classList.add('on'); clearTimeout(hideT); hideT = setTimeout(() => bar.classList.remove('on'), 1400); };
-  // kółko: 6 wierszy; PgDn/spacja: ekran bez 3 wierszy (jak `more`); strzałki: 2 wiersze
-  const go = (d, kind) => { const L = lh(), n = kind === 'page' ? Math.max(4, Math.floor(innerHeight / L) - 3) : kind === 'line' ? 2 : 6;
-    jump(scrollY + d * n * L); show();
-    root.classList.add('pg-flick'); return new Promise(r => setTimeout(() => { root.classList.remove('pg-flick'); r(); }, 70)); };
-  const off = driver(go);
-  return () => { off(); bar.remove(); };
+  const move = lines => { const L = lh(), max = document.documentElement.scrollHeight - innerHeight, to = Math.max(0, Math.min(max, Math.round(scrollY / L) * L + lines * L));
+    if (to !== scrollY) { window.scrollTo({ top: to, behavior: 'instant' }); show(); } };
+  const wheel = e => {
+    if (!fine() || RM || busyUI() || e.ctrlKey || ownScroll(e.target, e.deltaY)) return;
+    e.preventDefault();
+    // gładzik wysyła wiele drobnych zdarzeń: sumujemy piksele i przesuwamy o tyle pełnych linii, ile się uzbierało
+    // ząbek kółka (100 px) = 3 linie, jak w terminalu
+    rest += (e.deltaMode === 1 ? e.deltaY * lh() : e.deltaY) * .6; const n = Math.trunc(rest / lh()); if (n) { rest -= n * lh(); move(n); }
+  };
+  const key = e => {
+    if (!fine() || RM || busyUI() || typing(e) || e.altKey || e.ctrlKey || e.metaKey) return;
+    const k = e.key, page = Math.max(4, Math.floor(innerHeight / lh()) - 3);
+    const n = k === 'ArrowDown' ? 1 : k === 'ArrowUp' ? -1 : k === 'PageDown' || (k === ' ' && !e.shiftKey) ? page : k === 'PageUp' || (k === ' ' && e.shiftKey) ? -page : 0;
+    if (n) { e.preventDefault(); move(n); }
+  };
+  addEventListener('wheel', wheel, { passive: false }); addEventListener('keydown', key);
+  return () => { removeEventListener('wheel', wheel); removeEventListener('keydown', key); bar.remove(); };
 }

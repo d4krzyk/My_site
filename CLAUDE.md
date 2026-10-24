@@ -28,3 +28,14 @@ ani w opisach commitów i PR-ów — szczegóły zna tylko autor.
 
 Na ekranie LCD kamery jest na razie zastępcze zdjęcie (`public/krzyk/lcd.webp`). Gdy powstanie sekcja ze zdjęciami,
 podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja jest obrócona o 90°, a obraz na LCD ma format 9:16.
+
+## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
+
+- **Kontakt (telefon): animacja wejścia.** Najazd na telefon; telefon dzwoni, z jego przycisków bije światło. Wyskakuje pikselowy
+  dymek z liniami od telefonu, jak od kogoś, kto krzyczy do słuchawki, z napisem „HALO? CZY TO KRZYK?!”. Odpowiedzią są trzy kropki
+  („...”), które dodają grozy. Potem ditherowy przeskok do sekcji kontaktu (jak w przejściach walkman → muzyka i persony). Na telefonie ta sama animacja.
+- **Persony, sekcja: błędy sceny z maskami.** Przy powrocie na górę (przewijanie wstecz) kolejność części się psuje; czasem środkowa
+  persona nie wychodzi na wprost, a pozostałe nie ciemnieją. Do naprawy: aktywną personę wybierać z położenia części względem środka
+  ekranu przy każdym przewinięciu (a nie ze zdarzeń przecięcia), z wygładzonym przejściem.
+- **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
+- **Przewijanie sekcjami (Krzyk, wariant B – skok blokowy):** sprawdzić na gładziku (Mac) i ewentualnie dodać punkt zatrzymania w środku kolażu.
