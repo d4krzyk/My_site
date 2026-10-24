@@ -46,5 +46,6 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
 - **Przełącznik PL/EN na telefonie: lepsze umiejscowienie.** Na telefonie klawisze języka (prawy górny róg, obok kart) zasłaniają dużo treści.
   Znaleźć miejsce, które nic nie zasłania (np. wmontowane w układ strony albo chowane przy przewijaniu), zachowując spójność między bramą a podstronami.
 - **Kurtyna przejścia przy kartach (telefon): rozciągnięte piksele.** Na telefonie przy przejściu z kart (kurtyna z sigili/pikseli) piksele
-  się rozciągają: ich wysokość i szerokość nie zachowują proporcji. Do naprawy w `src/engine/veil.js`: piksel płótna (stała `PX`, szerokość kolumny `CW`)
-  liczony osobno dla szerokości i wysokości ekranu, więc na wąskim, wysokim ekranie wychodzą rozciągnięte; trzeba utrzymać kwadratowe piksele.
+  się rozciągają: ich wysokość i szerokość nie zachowują proporcji. Do sprawdzenia w `src/engine/veil.js`. Prawdopodobna przyczyna (niepotwierdzona):
+  płótno liczone z `innerHeight`, a rozciągane CSS-em do `100svh`; na telefonie te wartości różnią się przez pasek przeglądarki, więc piksele wychodzą
+  prostokątne. Trzeba utrzymać kwadratowe piksele (rozmiar płótna i rozmiar wyświetlania z tej samej wysokości).
