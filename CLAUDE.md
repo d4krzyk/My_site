@@ -49,3 +49,6 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
   się rozciągają: ich wysokość i szerokość nie zachowują proporcji. Do sprawdzenia w `src/engine/veil.js`. Prawdopodobna przyczyna (niepotwierdzona):
   płótno liczone z `innerHeight`, a rozciągane CSS-em do `100svh`; na telefonie te wartości różnią się przez pasek przeglądarki, więc piksele wychodzą
   prostokątne. Trzeba utrzymać kwadratowe piksele (rozmiar płótna i rozmiar wyświetlania z tej samej wysokości).
+- **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).
+  Autor dośle zdjęcia; wtedy zaproponować warianty (np. próg + dither Bayera w czerni i krwi, z żarzącymi się oczami, rozpad w piksele przy odkodowaniu
+  razem z resztą animacji wejścia). Używać tylko zdjęć dostarczonych przez autora i bez innych osób; zdjęcie ma być częścią animowanego odkodowania strony.
