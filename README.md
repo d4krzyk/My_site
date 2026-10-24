@@ -29,5 +29,9 @@ pod `/My_site` (zmienna `PAGES=1` ustawia `basePath`). W ustawieniach repozytori
 
 ## Licencje fontów
 
-`Alagard PL` i `Krzyk DOS` są w `public/fonts/`. Przed publikacją trzeba potwierdzić ich licencje.
-Fonty tylko do użytku osobistego (np. Archive Stamp, HVD Poster, Eroded) nie są dołączone.
+- `Alagard PL` — Alagard (Hewett Tsoi, 100% free) z dorysowanymi polskimi znakami.
+- `Krzyk DOS` — oparty na Modern DOS 8×16 (CC0), z dorysowanymi polskimi znakami.
+- Martian Mono i VT323 — Google Fonts (SIL OFL).
+- Napis KRZYK w kolażu jest wyrenderowany do obrazu fontami do użytku osobistego (Archive Stamp, Zombie-Noize,
+  Retro Rock Poster, Handful of Nothing, NeoPrint M319); kolaż jest niekomercyjną prezentacją twórczości,
+  a plików tych fontów nie ma w repozytorium.
