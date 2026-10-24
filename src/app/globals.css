@@ -247,10 +247,9 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .hp-ov canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
 .hp-ov.out{opacity:0}
 .hc-skip{position:absolute;right:16px;bottom:14px;color:#5d8a68;font-size:14px}
-/* Maszynologia: pasek stanu pagera (jak `more`/`less`: odwrócone kolory), błysk przy skoku */
+/* Maszynologia: pasek stanu pagera (jak `more`/`less`: odwrócone kolory) */
 .pager{position:fixed;left:12px;bottom:10px;z-index:60;padding:2px 7px;background:var(--silver);color:#000;font-size:16px;line-height:1.1;opacity:0;pointer-events:none;transition:opacity .2s}
 .pager.on{opacity:1}
-.sec.maszyn.pg-flick{filter:brightness(1.18) contrast(1.05)}
 
 /* Maszynologia: demoscena — CRT, cracktro i plik NFO */
 .sec.maszyn{max-width:1480px;position:relative}
