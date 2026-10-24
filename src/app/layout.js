@@ -21,7 +21,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pl" className={`${martian.variable} ${vt.variable}`}>
       <head><style dangerouslySetInnerHTML={{ __html: faces }} /></head>
-      <body>{children}</body>
+      <body>{children}<div id="veil" aria-hidden="true" /></body>
     </html>
   );
 }

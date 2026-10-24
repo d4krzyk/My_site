@@ -7,6 +7,7 @@ export function KrzykLayers() {
   return (
     <>
       <div className="k-lines" aria-hidden="true" />
+      <canvas className="k-asm" aria-hidden="true" />
       <div className="k-safe" aria-hidden="true" />
       <div className="k-motto">
         <p data-t="" className="m1">sztuka z chaosu.</p>
@@ -25,7 +26,7 @@ export default function KrzykFx({ children }) {
   useEffect(() => {
     let off = [], alive = true;
     const sec = ref.current.closest('.krzyk');
-    import('@/engine/krzykfx').then(({ initKrzykFx }) => { if (alive) off.push(initKrzykFx(sec)); });
+    import('@/engine/krzykfx').then(({ initKrzykFx }) => { if (alive) off.push(initKrzykFx(sec, { pieces: n => asset(`/krzyk/pieces/${n}`) })); });
     import('@/engine/psx').then(({ initRooms }) => {
       if (!alive) return;
       const go = kind => { const el = document.getElementById(TARGET[kind]); if (!el) return;

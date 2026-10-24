@@ -118,7 +118,7 @@ const HELP = [
   'history · which <cmd> .... historia poleceń · ścieżka polecenia',
   'man <polecenie> .......... krótki opis polecenia',
   '', '— zabawa —',
-  'neofetch · cowsay <tekst> · sl · matrix · banner <tekst>',
+  'neofetch · cowsay <tekst> · matrix · banner <tekst>',
   '', '— strona —',
   'brama · krzyk ............ przejście do innego działu',
   'clear (Ctrl+L) ........... czyści ekran',
@@ -166,16 +166,11 @@ export function initTerm(root, { go } = {}) {
     return queue;
   };
   const link = async url => { await print([[seg('otwieram ', 'dim'), seg(url, 'dir')]]); window.open(url, '_blank', 'noopener'); };
-  // wiersze bez dekodowania, do animacji klatkowych (sl, matrix)
+  // wiersze bez dekodowania, do animacji klatkowych (matrix)
   const raw = (n, cls) => { const rows = Array.from({ length: n }, () => { const r = document.createElement('div'); r.className = 'tl on pre plain ' + cls; out.appendChild(r); return r; }); out.scrollTop = out.scrollHeight; return rows; };
   const anim = (ms, fps, f) => new Promise(done => { if (RM) { f(1); return done(); } const t0 = performance.now(); let last = 0;
     const st = now => { if (now - last >= 1000 / fps) { last = now; f(Math.min(1, (now - t0) / ms)); } if (now - t0 < ms) requestAnimationFrame(st); else { f(1); done(); } }; requestAnimationFrame(st); });
   const cols = () => Math.max(20, Math.floor(out.clientWidth / (parseFloat(getComputedStyle(out).fontSize) * .5)) - 2);
-  const TRAIN = ['      ====        ________                ___________ ', '  _D _|  |_______/        \\__I_I_____===__|_________| ', '   |(_)---  |   H\\________/ |   |        =|___ ___| ',
-    '   /     |  |   H  |  |     |   |         ||_| |_|| ', '  |      |  |   H  |__--------------------| [___] | ', '  | ________|___H__/__|_____/[][]~\\_______|       | ', '  |/ |   |-----------I_____I [][] []  D   |=======|__', '__/ =| o |=-~~\\  /~~\\  /~~\\  /~~\\ ____Y___________|__', ' |/-=|___|=    ||    ||    ||    |_____/~\\___/       ', '  \\_/      \\O=====O=====O=====O_/      \\_/            '];
-  const train = () => queue = queue.then(() => { const rows = raw(TRAIN.length, ''), W = cols(), TW = TRAIN[0].length;
-    return anim(3600, 20, k => { const off = Math.round(W - k * (W + TW)); rows.forEach((r, i) => { const l = TRAIN[i]; r.textContent = off >= 0 ? ' '.repeat(off) + l.slice(0, Math.max(0, W - off)) : l.slice(-off, -off + W); }); })
-      .then(() => rows.forEach(r => r.remove())); });
   const GL = '01ABCDEFGHJKLMNPRSTUVWXYZ0123456789#$%&@*+=<>?░▒▓';
   const rain = () => queue = queue.then(() => { const H = 12, W = cols(), rows = raw(H, 'green'), drops = Array.from({ length: W }, () => Math.random() * -H * 1.5), sp = drops.map(() => .25 + Math.random() * .6), g = [];
     for (let y = 0; y < H; y++) g.push(Array.from({ length: W }, () => ' '));
@@ -270,7 +265,6 @@ export function initTerm(root, { go } = {}) {
         const R = [seg(`${ME}@${HOST}`, 'dir'), seg('------------------', 'dim'), seg('OS: KrzykOS 2026'), seg('Kernel: 6.6.6-krzyk'), seg('Shell: bash 5.2'), seg('Stack: python · pytorch · docker · linux'), seg('Projekty: ' + PROJ.length), seg(''), seg('')];
         return print(L.map(([t, c], k) => [seg(t.padEnd(13), c), R[k]]), 'pre'); }
       case 'cowsay': { const t = args.join(' ') || 'muu'; return print([' ' + '_'.repeat(t.length + 2), `< ${t} >`, ' ' + '-'.repeat(t.length + 2), '        \\   ^__^', '         \\  (oo)\\_______', '            (__)\\       )\\/\\', '                ||----w |', '                ||     ||']); }
-      case 'sl': return train();
       case 'matrix': case 'cmatrix': return rain();
       case 'banner': case 'figlet': return print(banner(args.join(' ') || 'krzyk'), 'red pre');
       case 'brama': case 'krzyk': case 'maszynologia': if (go) { await print([`przechodzę: ${cmd}…`]); setTimeout(() => go(cmd), 400); } return;
@@ -285,7 +279,7 @@ export function initTerm(root, { go } = {}) {
   const submit = async v => { if (busy.v) return; busy.v = true; inp.value = ''; try { await run(v); await queue; } finally { busy.v = false; } };
   form.addEventListener('submit', e => { e.preventDefault(); submit(inp.value); });
   root.addEventListener('click', e => { const b = e.target.closest('[data-cmd]'); if (b) { e.preventDefault(); submit(b.dataset.cmd); } else if (e.target.closest('.t-out')) inp.focus({ preventScroll: true }); });
-  const CMDS = ['help', 'ls', 'cd', 'pwd', 'cat', 'tree', 'find', 'grep', 'head', 'tail', 'wc', 'file', 'cv', 'projekty', 'open', 'kontakt', 'o-mnie', 'whoami', 'id', 'hostname', 'uname', 'uptime', 'date', 'cal', 'ps', 'top', 'df', 'free', 'env', 'echo', 'history', 'man', 'clear', 'neofetch', 'cowsay', 'sl', 'matrix', 'banner', 'brama', 'krzyk', 'exit'];
+  const CMDS = ['help', 'ls', 'cd', 'pwd', 'cat', 'tree', 'find', 'grep', 'head', 'tail', 'wc', 'file', 'cv', 'projekty', 'open', 'kontakt', 'o-mnie', 'whoami', 'id', 'hostname', 'uname', 'uptime', 'date', 'cal', 'ps', 'top', 'df', 'free', 'env', 'echo', 'history', 'man', 'clear', 'neofetch', 'cowsay', 'matrix', 'banner', 'brama', 'krzyk', 'exit'];
   inp.addEventListener('keydown', e => {
     if (e.key === 'ArrowUp') { e.preventDefault(); if (hi > 0) { hi--; inp.value = hist[hi]; } }
     else if (e.key === 'ArrowDown') { e.preventDefault(); if (hi < hist.length) { hi++; inp.value = hist[hi] || ''; } }

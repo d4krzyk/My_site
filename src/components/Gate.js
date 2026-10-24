@@ -18,7 +18,7 @@ export default function Gate() {
   useEffect(() => {
     let alive = true;
     import('@/engine/gate').then(({ initGate }) => {
-      if (alive && ref.current) { const lang = getLang(); document.documentElement.lang = lang; initGate(ref.current, { assets: GATE_ASSETS, lang, setLang, onPath: i => router.push(PATHS[i]) }); }
+      if (alive && ref.current) { const lang = getLang(); document.documentElement.lang = lang; initGate(ref.current, { assets: GATE_ASSETS, lang, setLang, onPath: i => import('@/engine/veil').then(({ veilGo }) => veilGo(PATHS[i], ['krzyk', 'maszynologia'][i], h => router.push(h))) }); }
     });
     return () => { alive = false; };          // pętle animacji same się kończą, gdy brama zniknie z dokumentu
   }, [router]);

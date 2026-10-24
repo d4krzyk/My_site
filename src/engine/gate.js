@@ -341,8 +341,9 @@ function gateOuter(pre){
     const im=x.getImageData(0,0,w,h), d=im.data; for(let i=3;i<d.length;i+=4) d[i]=255;
     return {w,h,d,fr};
   }
-  gate.addEventListener('descend',()=>{
-    reset(); const f=gate.querySelector('#gFrame'); if(!f) return;
+  // pęknięcie dowolnego elementu bramy (okno przy wejściu, przycisk drogi przy wyborze działu)
+  const shatter=(f,quick)=>{
+    reset(); if(!f) return;
     if(RM){ f.style.visibility='hidden'; return; }
     const R=raster(f), {w,h,d,fr}=R, gr=gate.getBoundingClientRect();
     // kawałki: komórki Woronoja z poszarpanymi krawędziami
@@ -358,7 +359,7 @@ function gateOuter(pre){
       sx.putImageData(si,0,0);
       const mx=(x0+x1)/2-w/2, my=(y0+y1)/2-h/2;
       P.push({sc,sw,sh,x:(fr.left-gr.left)/2+x0,y:(fr.top-gr.top)/2+y0,vx:0,vy:0,rot:0,vr:(Math.random()<.5?-1:1)*(1+Math.floor(Math.random()*2))*Math.PI/12,
-        delay:6+Math.floor(Math.random()*5+(1-(my/h+.5))*3),   // w krokach; górne kawałki spadają nieco później, dolne pierwsze
+        delay:quick?1+Math.floor(Math.random()*3):6+Math.floor(Math.random()*5+(1-(my/h+.5))*3),   // w krokach; górne kawałki spadają nieco później, dolne pierwsze
         mx,my,age:-1,sca:1,jx:0,jy:0}); }
     ov=document.createElement('canvas'); const OW=Math.ceil(gr.width/2), OH=Math.ceil(gr.height/2); ov.width=OW; ov.height=OH;
     ov.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;image-rendering:pixelated;pointer-events:none;z-index:4'; gate.appendChild(ov);
@@ -382,7 +383,9 @@ function gateOuter(pre){
         if(!alive){ ov.remove(); ov=null; raf=0; return; } }
       raf=requestAnimationFrame(step); };
     raf=requestAnimationFrame(step);
-  });
+  };
+  gate.addEventListener('descend',()=>shatter(gate.querySelector('#gFrame')));
+  gate.addEventListener('shatter',e=>shatter(e.detail,true));
 })();
 
 /* ---------- I: brama ---------- */
@@ -408,7 +411,10 @@ FONTS().then(()=>{
     $('lPL').setAttribute('aria-pressed',lang==='pl'); $('lEN').setAttribute('aria-pressed',lang==='en'); };
   $('lPL').onclick=()=>{lang='pl'; opts.setLang('pl'); frame();}; $('lEN').onclick=()=>{lang='en'; opts.setLang('en'); frame();};
   frame();
-  gate.querySelectorAll('.path').forEach((b,i)=>b.addEventListener('click',()=>{ b.classList.add('zap'); setTimeout(()=>opts.onPath&&opts.onPath(i), RM?0:420); }));
+  // wybór drogi: przycisk pęka i spada jak okno bramy, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
+  let picked=false;
+  gate.querySelectorAll('.path').forEach((b,i)=>b.addEventListener('click',()=>{ if(picked) return; picked=true; b.classList.add('zap');
+    gate.dispatchEvent(new CustomEvent('shatter',{detail:b})); setTimeout(()=>{ opts.onPath&&opts.onPath(i); },RM?0:700); }));
   // kursor blokowy w przycisku
   loop(gate,2,(t)=>{ const cu=gate.querySelector('.enter .cur'); if(cu) cu.style.visibility=(Math.floor(t/500)%2)?'hidden':'visible'; });
   let falling=false, calm=false, f0=0, phase=0, done=false;
