@@ -1,12 +1,13 @@
 // czerwona wersja zewnętrznej oprawy bramy (narożniki z zawijasem, romb ze skrzydłami, krzyżyk w pnączach, ciemna płyta z fakturą) dla ramek Maszynologii
-import { bth } from './core';
+import { bth, RM } from './core';
 
 export function redFrame(pre){
   if(!pre) return;
   const PX=2, COL={'#':'#e3313c',s:'#a8161f',d:'#6e0d14',D:'#3c070b',w:'#ffd9d4',c:'#ff5a3c',t:'#8c1018',T:'#4a080c'};
   const old=pre.querySelector('canvas.rframe'); if(old) old.remove();
   const cv=document.createElement('canvas'); cv.className='rframe'; pre.prepend(cv);
-  function draw(){
+  let shown = false, busy = false;
+  function draw(anim){
     const r=pre.getBoundingClientRect(); if(!r.width) return;
     // nieparzysta szerokość (piksel środka) i płótno wyśrodkowane na oknie co do pół piksela, żeby ozdoby były symetryczne względem tekstu
     let W=Math.floor(r.width/PX); if(!(W%2)) W--; const H=Math.floor(r.height/PX);
@@ -62,10 +63,26 @@ export function redFrame(pre){
       if(e<6 && e/6<=th) continue;                                   // poszarpany ditherem brzeg płyty
       const tx=vn(px,py,7)*.4+fib[py*W+px]*.9-.08;
       if(tx>th+.18){ D[k]=44; D[k+1]=9; D[k+2]=13; } D[k+3]=242; }
-    x.clearRect(0,0,W,H); x.putImageData(im,0,0);
-    for(const [k,c] of M){ const [a,b]=k.split(',').map(Number); x.fillStyle=COL[c]; x.fillRect(a,b,1,1); }
+    const orn=[...M].map(([k,c])=>{ const [a,b]=k.split(',').map(Number); return [a,b,c,Math.min(Math.hypot(a,b),Math.hypot(W-a,H-b),Math.hypot(a-cx,b)*.8,Math.hypot(a-cx,H-b)*.8)]; }).sort((p,q)=>p[3]-q[3]);
+    const final=()=>{ x.clearRect(0,0,W,H); x.putImageData(im,0,0); for(const [a,b,c] of orn){ x.fillStyle=COL[c]; x.fillRect(a,b,1,1); } };
+    if(!anim||RM){ final(); return; }
+    busy=true;
+    // pojawianie się: płyta wyłania się ditherem (próg Bayera, od góry ku dołowi), ozdoby rosną od narożników i rombu, w niskich klatkach
+    const src=new Uint8ClampedArray(D), fr=x.createImageData(W,H), F=fr.data, DUR=1100, t0=performance.now();
+    let last=0;
+    const step=now=>{ if(now-last<1000/18){ requestAnimationFrame(step); return; } last=now; const k=Math.min(1,(now-t0)/DUR);
+      for(let py=0;py<H;py++){ const lim=k*1.7-(py/H)*.7; for(let px=0;px<W;px++){ const i=(py*W+px)*4; const on=bth(px,py)<lim;
+        F[i]=src[i]; F[i+1]=src[i+1]; F[i+2]=src[i+2]; F[i+3]=on?src[i+3]:0;
+        if(on && bth(px,py)>lim-.08 && src[i+3]) { F[i]=110; F[i+1]=14; F[i+2]=20; } } }   // świeży brzeg ditheru rozjarzony czerwienią
+      x.clearRect(0,0,W,H); x.putImageData(fr,0,0);
+      const n=Math.floor(orn.length*Math.min(1,k*1.25)); for(let j=0;j<n;j++){ const [a,b,c]=orn[j]; x.fillStyle=j>n-24?COL.c:COL[c]; x.fillRect(a,b,1,1); }
+      if(k<1) requestAnimationFrame(step); else { busy=false; final(); } };
+    requestAnimationFrame(step);
   }
-  draw();
-  if(window.ResizeObserver){ let t; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(()=>{ if(pre.querySelector('canvas.rframe')===cv) draw(); },80); }).observe(pre); }
+  // rysuj od razu niewidoczne; animacja startuje, gdy ramka wjedzie w kadr
+  draw(false); cv.style.visibility='hidden';
+  const io=new IntersectionObserver(es=>{ if(!es[0].isIntersecting||shown) return; shown=true; io.disconnect(); cv.style.visibility=''; draw(true); },{threshold:.15});
+  io.observe(pre);
+  if(window.ResizeObserver){ let t; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(()=>{ if(pre.querySelector('canvas.rframe')===cv && !busy) draw(); },80); }).observe(pre); }
 }
 

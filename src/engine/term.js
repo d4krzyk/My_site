@@ -33,7 +33,7 @@ const FILES = {
     'EDUKACJA', '  2024 →  UMK TORUŃ .......... MSc, sztuczna inteligencja', '', 'PROJEKTY', '  visual-echoes-2.0 · wikirooms · remuz.io · musicclubapp · shadowdetection · gameinjava', '',
     'STACK', '  python · pytorch · habitat · docker · linux · rest api · postgresql', '', 'Więcej: ls ~/projekty  ·  cat ~/kontakt.txt'],
   '/home/daniel/o-mnie.txt': ['Dźwięk i obraz. W sztuce i w kodzie.', 'Maszyny, które widzą, słyszą i coś z tego rozumieją.'],
-  '/home/daniel/kontakt.txt': ['e-mail ... (wkrótce)', 'github ... github.com/d4krzyk', '', 'Pełny kontakt pojawi się w dziale Krzyk → kontakt.'],
+  '/home/daniel/kontakt.txt': ['e-mail ... (wkrótce)', 'github ... github.com/d4krzyk', '', 'Więcej w dziale Krzyk → kontakt.'],
   '/home/daniel/umiejetnosci.txt': ['python ......... ████████░░', 'pytorch ........ ███████░░░', 'linux .......... ████████░░', 'docker ......... ██████░░░░', 'rest api ....... ███████░░░', 'postgresql ..... ██████░░░░'],
   '/home/daniel/.bashrc': ['export PS1="\\u@\\h:\\w\\$ "', 'alias cv="cat ~/cv.txt"', 'alias projekty="ls ~/projekty"', '# greetz: wszystkim, którzy jeszcze piszą ręcznie'],
   '/home/daniel/.bash_history': ['ssh noc-01', 'docker ps', 'python train.py --orientations 36', 'git push', 'cat /dev/urandom | head -c 64 | xxd', 'exit'],
@@ -47,7 +47,7 @@ const FILES = {
   '/home/daniel/doswiadczenie/luxolis.txt': ['LUXOLIS · 2023', 'Software engineer.'],
   '/home/daniel/doswiadczenie/pfeifer-langen.txt': ['PFEIFER & LANGEN · 2023', 'Staż IT.'],
   '/home/daniel/edukacja/umk-torun.txt': ['UMK TORUŃ · 2024 →', 'Studia magisterskie: sztuczna inteligencja.'],
-  '/etc/hostname': [HOST], '/etc/motd': ['Witaj w MASZYNOLOGII. Tu nic nie usuniesz.'],
+  '/etc/hostname': [HOST], '/etc/motd': ['KrzykOS 2026'],
   '/etc/os-release': ['NAME="KrzykOS"', 'VERSION="2026 (Zejście)"', 'ID=krzyk', 'PRETTY_NAME="KrzykOS 2026"'],
   '/etc/passwd': ['root:x:0:0:root:/root:/bin/nologin', 'daniel:x:1000:1000:Daniel:/home/daniel:/bin/bash', 'gosc:x:1001:1001:gość:/home/daniel:/bin/rbash'],
   '/proc/cpuinfo': ['model name : Intel 80486DX2 @ 66 MHz (turbo)', 'cache size : 8 KB', 'flags      : fpu vme krzyk'],
@@ -68,20 +68,46 @@ const isFile = p => !!FILES[p] || (() => { const i = p.lastIndexOf('/'), d = FS[
 const read = p => FILES[p] || ['(plik binarny albo pusty)'];
 const short = p => p === HOME ? '~' : p.startsWith(HOME + '/') ? '~' + p.slice(HOME.length) : p;
 
-const SCREAM = ['███ K R Z Y K ███', 'BRAK UPRAWNIEŃ!!! Ten system jest tylko do odczytu.', 'Nic tu nie przeniesiesz, nie skasujesz i nie zmienisz.'];
+const SCREAM = ['███ K R Z Y K ███', 'BRAK UPRAWNIEŃ!!!'];
 const DENY = new Set(['rm', 'rmdir', 'mv', 'cp', 'mkdir', 'touch', 'chmod', 'chown', 'chgrp', 'ln', 'dd', 'mkfs', 'kill', 'killall', 'pkill', 'shutdown', 'reboot', 'halt', 'poweroff',
   'apt', 'apt-get', 'pacman', 'dnf', 'yum', 'pip', 'npm', 'useradd', 'userdel', 'passwd', 'mount', 'umount', 'fdisk', 'crontab', 'systemctl', 'service', 'iptables', 'truncate', 'shred', 'wget', 'curl', 'scp', 'rsync', 'git']);
 const EDIT = new Set(['nano', 'vim', 'vi', 'emacs', 'ed', 'code']);
 const HELP = [
-  'nawigacja .... ls [-la] · cd <katalog> · pwd · tree · find',
-  'czytanie ..... cat · less · head · tail · grep <słowo> <plik> · wc · file',
-  'skróty ....... cv · projekty · open <projekt> · kontakt · o-mnie',
-  'system ....... whoami · id · hostname · uname -a · uptime · date · cal · ps · top · df -h · free -h · ip a · env',
-  'sieć ......... ping <host> · ssh · traceroute',
-  'zabawa ....... neofetch · fortune · cowsay <tekst> · sl · matrix · banner <tekst> · echo · history · man <cmd>',
-  'strona ....... brama · krzyk (przejście do działów) · clear · exit',
-  '',
-  'Dotknij nazwy pliku albo katalogu w wyniku ls, żeby go otworzyć. Tab dopełnia, ↑↓ historia.',
+  'POLECENIA (dotknij nazwy pliku lub katalogu w wyniku, żeby go otworzyć; Tab dopełnia, ↑↓ historia)', '',
+  '— pliki i katalogi —',
+  'ls [-l] [-a] [ścieżka] ... zawartość katalogu; -l szczegóły, -a ukryte pliki (ll = ls -la)',
+  'cd [ścieżka] ............. zmiana katalogu: cd projekty · cd .. · cd ~ · cd /etc',
+  'pwd ...................... bieżący katalog',
+  'tree [ścieżka] ........... drzewo katalogów',
+  'find [ścieżka] -name x ... szukanie po nazwie, np. find ~ -name readme',
+  'cat <plik> ............... wyświetla plik (też: less, more)',
+  'head <plik> · tail <plik>  pierwsze / ostatnie 5 wierszy',
+  'grep <słowo> <plik> ...... wiersze zawierające słowo, np. grep python cv.txt',
+  'wc <plik> ................ wiersze, słowa, znaki',
+  'file <ścieżka> ........... rodzaj pliku', 'du ....................... zajętość katalogów',
+  '', '— skróty —',
+  'cv ....................... cat ~/cv.txt',
+  'projekty ................. lista projektów',
+  'open <projekt> ........... README projektu, np. open wikirooms',
+  'kontakt · o-mnie ......... cat ~/kontakt.txt · cat ~/o-mnie.txt',
+  '', '— system —',
+  'whoami · id · hostname ... kim i gdzie jesteś',
+  'uname [-a] ............... jądro i system',
+  'uptime · date · cal ...... czas pracy, data, kalendarz',
+  'ps · top ................. procesy',
+  'df -h · free -h .......... dysk i pamięć',
+  'ip a · ifconfig .......... interfejsy sieciowe',
+  'env · echo <tekst> ....... zmienne środowiska · wypisanie tekstu',
+  'history · which <cmd> .... historia poleceń · ścieżka polecenia',
+  'man <polecenie> .......... krótki opis polecenia',
+  '', '— sieć —',
+  'ping <host> · traceroute <host> · ssh <host>',
+  '', '— zabawa —',
+  'neofetch · fortune · cowsay <tekst> · sl · matrix · banner <tekst>',
+  '', '— strona —',
+  'brama · krzyk ............ przejście do innego działu',
+  'clear (Ctrl+L) ........... czyści ekran',
+  'exit ..................... wyjście do bramy',
 ];
 const MAN = { ls: 'ls — wypisuje zawartość katalogu. -l szczegóły, -a ukryte pliki.', cd: 'cd — zmienia katalog. cd .. w górę, cd ~ do domu.', cat: 'cat — wyświetla plik.', rm: 'rm — w tym systemie: krzyk.', grep: 'grep WZÓR PLIK — wiersze zawierające wzór.', open: 'open PROJEKT — otwiera README projektu.' };
 const FORTUNES = ['Sztuka z chaosu. Kod też.', 'Najpierw działa, potem jest ładne, potem jest szybkie. Czasem w odwrotnej kolejności.', 'Każdy bug to echo jakiejś decyzji.', 'Nasycenie przy 9-12 kierunkach. Reszta to szum.', 'Kto pisze ręcznie, ten pamięta.'];
@@ -157,11 +183,11 @@ export function initTerm(root, { go } = {}) {
     const line = raw.trim(); await print([[seg(prompt() + ' ', 'ps'), seg(line)]], 'echo');
     if (!line) return;
     hist.push(line); hi = hist.length;
-    if (/rm\s+-rf\s+\/(\s|$)/.test(line) || /:\(\)\s*\{/.test(line)) { await scream(); return print(['...i jeszcze raz: NIE.'], 'scream'); }
+    if (/rm\s+-rf\s+\/(\s|$)/.test(line) || /:\(\)\s*\{/.test(line)) return scream();
     const [cmd0, ...args] = line.split(/\s+/); const cmd = cmd0.toLowerCase(); const a = args.filter(x => !x.startsWith('-')), flags = args.filter(x => x.startsWith('-')).join('');
-    if (cmd === 'sudo' || cmd === 'su' || cmd === 'doas') { await scream(); return print([`${cmd}: ${ME} nie jest w pliku sudoers. Ten incydent zostanie zgłoszony. Krzykiem.`], 'err'); }
+    if (cmd === 'sudo' || cmd === 'su' || cmd === 'doas') return scream();
     if (DENY.has(cmd)) return scream();
-    if (EDIT.has(cmd)) return print([`${cmd}: system plików tylko do odczytu. Możesz czytać: cat ${a[0] || 'plik'}`], 'err');
+    if (EDIT.has(cmd)) return scream();
     switch (cmd) {
       case 'help': case '?': return print(HELP);
       case 'ls': case 'dir': case 'll': return print(listing(norm(cwd, a[0] || '.'), cmd === 'll' ? 'la' : flags));
@@ -171,7 +197,7 @@ export function initTerm(root, { go } = {}) {
       case 'head': return print(fileArg(cmd, a[0]).slice(0, 5));
       case 'tail': return print(fileArg(cmd, a[0]).slice(-5));
       case 'wc': { const f = fileArg(cmd, a[0]); return print([`${f.length} ${f.join(' ').split(/\s+/).length} ${f.join('\n').length} ${a[0] || ''}`]); }
-      case 'file': { const p = norm(cwd, a[0] || '.'); return print([`${a[0]}: ${isDir(p) ? 'directory' : isFile(p) ? 'UTF-8 Unicode text, tylko do odczytu' : 'cannot open'}`]); }
+      case 'file': { const p = norm(cwd, a[0] || '.'); return print([`${a[0]}: ${isDir(p) ? 'directory' : isFile(p) ? 'UTF-8 Unicode text' : 'cannot open'}`]); }
       case 'grep': { if (a.length < 2) return print(['użycie: grep WZÓR PLIK'], 'err'); const f = fileArg('grep', a[1]); const hits = f.filter(l => l.toLowerCase().includes(a[0].toLowerCase())); return print(hits.length ? hits : ['(brak dopasowań)']); }
       case 'tree': return print([short(norm(cwd, a[0] || '.')), ...tree(norm(cwd, a[0] || '.'))]);
       case 'find': { const base = norm(cwd, a[0] || '.'); const name = (args[args.indexOf('-name') + 1] || '').replace(/\*/g, ''); return print(allPaths(base).filter(p => p.startsWith(base) && p.includes(name)).map(p => [seg(p, p.endsWith('/') ? 'dir' : 'file', p.endsWith('/') ? `cd ${p}` : `cat ${p}`)])); }
@@ -206,10 +232,10 @@ export function initTerm(root, { go } = {}) {
       case 'ssh': case 'telnet': return print([`${cmd}: połączenie odrzucone. Tu się tylko czyta.`], 'err');
       case 'neofetch': case 'fastfetch': return print([
         [seg('   ▄▄▄▄▄▄▄▄   ', 'red'), seg(`${ME}@${HOST}`, 'dir')], [seg('  █ ▄▄  ▄▄ █  ', 'red'), seg('---------------------', 'dim')], [seg('  █ ██  ██ █  ', 'red'), seg('OS: KrzykOS 2026 (Zejście)')],
-        [seg('  █   ▀▀   █  ', 'red'), seg('Kernel: 6.6.6-krzyk')], [seg('   ▀▄▄▄▄▄▄▀   ', 'red'), seg('Shell: bash 5.2 (tylko do odczytu)')], [seg('    █ ██ █    ', 'red'), seg('Stack: python · pytorch · docker · linux')],
+        [seg('  █   ▀▀   █  ', 'red'), seg('Kernel: 6.6.6-krzyk')], [seg('   ▀▄▄▄▄▄▄▀   ', 'red'), seg('Shell: bash 5.2')], [seg('    █ ██ █    ', 'red'), seg('Stack: python · pytorch · docker · linux')],
         [seg('              '), seg('Projekty: ' + PROJ.length)], [seg('              '), seg('█', 'red'), seg('█', 'dir'), seg('█', 'file'), seg('█', 'dim')]]);
       case 'fortune': return print([FORTUNES[Math.floor(Math.random() * FORTUNES.length)]]);
-      case 'cowsay': { const t = args.join(' ') || 'muu, tylko do odczytu'; return print([' ' + '_'.repeat(t.length + 2), `< ${t} >`, ' ' + '-'.repeat(t.length + 2), '        \\   ^__^', '         \\  (oo)\\_______', '            (__)\\       )\\/\\', '                ||----w |', '                ||     ||']); }
+      case 'cowsay': { const t = args.join(' ') || 'muu'; return print([' ' + '_'.repeat(t.length + 2), `< ${t} >`, ' ' + '-'.repeat(t.length + 2), '        \\   ^__^', '         \\  (oo)\\_______', '            (__)\\       )\\/\\', '                ||----w |', '                ||     ||']); }
       case 'sl': return print(['      ====        ________                ___________', '  _D _|  |_______/        \\__I_I_____===__|_________|', '   |(_)---  |   H\\________/ |   |        =|___ ___|', '   /     |  |   H  |  |     |   |         ||_| |_||', '  |      |  |   H  |__--------------------| [___] |', '  | ________|___H__/__|_____/[][]~\\_______|       |', '  |/ |   |-----------I_____I [][] []  D   |=======|__', 'Literówka w ls? Pociąg przejechał.']);
       case 'matrix': case 'cmatrix': return print(Array.from({ length: 8 }, () => Array.from({ length: 40 }, () => '01ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ'[Math.floor(Math.random() * 36)]).join('')), 'green');
       case 'banner': case 'figlet': return print(banner(args.join(' ') || 'krzyk'), 'red');
@@ -238,6 +264,5 @@ export function initTerm(root, { go } = {}) {
       if (opts.length === 1) { parts[parts.length - 1] = opts[0]; inp.value = parts.join(' '); } else if (opts.length > 1) print([opts.join('   ')], 'dim'); }
   });
   setPs();
-  print(['KrzykOS 2026 (Zejście) tty1', '', ...read('/etc/motd'), 'Wpisz help albo dotknij polecenia poniżej. Pliki i katalogi w wynikach też da się dotknąć.', '']);
-  run('ls');
+  print([[seg('help', 'file', 'help'), seg(' — lista poleceń', 'dim')]]);
 }

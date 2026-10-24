@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import CardsNav from '@/components/CardsNav';
 import { asset } from '@/lib/base';
 
-const CHIPS = ['help', 'ls', 'cd ..', 'projekty', 'cv', 'tree', 'neofetch', 'kontakt'];
 const HREF = { brama: '/', krzyk: '/krzyk/', maszynologia: '/maszynologia/' };
 
 // Maszynologia: cracktro w tle, plik NFO (IT CV) w czerwonej oprawie jak przy bramie, pod nim terminal z wirtualnymi plikami
@@ -43,13 +42,12 @@ export default function Maszyn() {
           {foot}
         </div>
         <section className="m-panel rf term" aria-label="Terminal">
-          <div className="t-head dos"><span>tty1</span><span>/bin/bash · tylko do odczytu</span></div>
+          <div className="t-head dos"><span>tty1</span><span>/bin/bash</span></div>
           <div className="t-out dos selectable" role="log" aria-live="polite" />
           <form className="t-line">
             <label className="t-ps dos" htmlFor="t-in" />
             <input id="t-in" className="t-in dos" type="text" autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck="false" enterKeyHint="send" aria-label="polecenie" />
           </form>
-          <div className="t-chips">{CHIPS.map(c => <button type="button" className="dos" data-cmd={c} key={c}>{c}</button>)}</div>
           {foot}
         </section>
       </main>
