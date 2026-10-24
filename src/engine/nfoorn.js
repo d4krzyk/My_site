@@ -112,6 +112,8 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     crossY.forEach(c => { if (B.smooth) { let b = 1; for (let i = 1; i < anc.length - 1; i++) if (Math.abs(anc[i][1] - c) < Math.abs(anc[b][1] - c)) b = i; anc[b] = [cx, c]; return; }
       for (let i = anc.length - 2; i > 0; i--) if (Math.abs(anc[i][1] - c) < 50) anc.splice(i, 1); anc.push([cx + (B.seed & 1 ? -1 : 1) * bw * .06, c]); });
     anc.sort((p, q) => p[1] - q[1]);
+    // prawa: część pod krzyżem odbita lustrzanie, żeby fala przechodziła przez krzyż jednym esem
+    if (B.smooth && crossY.length) anc.forEach(p => { if (p[1] > crossY[0] + 1) p[0] = 2 * cx - p[0]; });
     const spine = [];
     for (let i = 0; i < anc.length - 1; i++) { const p0 = anc[i], p3 = anc[i + 1], h = (p3[1] - p0[1]) * (B.smooth ? (R(), .45) : .42 + R() * .06); bez(p0, [p0[0], p0[1] + h], [p3[0], p3[1] - h], p3, spine); }
     const CS = 24, [cT, cB] = crossSpan(CS), inCross = p => crossY.some(c => p[1] > c - cT && p[1] < c + cB);
