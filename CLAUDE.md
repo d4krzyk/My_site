@@ -41,3 +41,5 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
 - **Przewijanie sekcjami (Krzyk, wariant B – skok blokowy):** sprawdzić na gładziku (Mac) i ewentualnie dodać punkt zatrzymania w środku kolażu.
 - **Generator sigili (`/sigen/`): styl suwaków i pasków.** Zmienić wygląd pasków (suwaki gęstości i grubości, panel) na bardziej imersyjny,
   w stylistyce pixel haunted (np. pikselowe, ditherowane suwaki w kolorach krwi i kości słoniowej, nawiedzony klimat zamiast domyślnych kontrolek).
+- **Maszynologia na telefonie: znikają ramki.** W wersji na telefon ramki wokół paneli (Release info i terminal) nie są widoczne. Do sprawdzenia i naprawy
+  (m.in. rysowanie ramki na wąskim ekranie i moment jej animacji po wejściu przez kurtynę).
