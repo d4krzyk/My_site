@@ -134,15 +134,15 @@ button{-webkit-user-select:none;user-select:none}
 
 /* Krzyk: tło w trzech warstwach (góra: kolaż z rozdartym dołem i paski zdjęć natury schodzące w dół, środek: ciemne tło z tekstem powtarzane pionowo,
    dół: rozpuszczenie w czerń); wymiary liczone od szerokości strony (cqw), bo obrazy skalują się do 100% szerokości */
-.sec.krzyk{max-width:none;padding:0;position:relative;container-type:inline-size;--toph:225cqw;--pad:60cqw;background:#04050a;min-height:100svh;overflow-x:clip}
+.sec.krzyk{max-width:none;padding:0;position:relative;container-type:inline-size;--toph:337.5cqw;--pad:60cqw;background:#04050a;min-height:100svh;overflow-x:clip}
 .k-bgs{position:absolute;inset:0;pointer-events:none;
   background-image:var(--bt),var(--bm);background-repeat:no-repeat,repeat-y;
   background-position:top center,center var(--toph);background-size:100% auto}
-.k-foot{position:relative;z-index:1;height:55cqw;margin-top:12cqw;background:var(--bb) center bottom/100% 100% no-repeat;pointer-events:none}
+.k-foot{position:relative;z-index:1;height:55cqw;margin-top:-10cqw;background:var(--bb) center bottom/100% 100% no-repeat;pointer-events:none}
 .k-body{position:relative;z-index:2;width:84%;margin:0 auto;padding:var(--pad) 0 0}
 .k-body :is(p,h1,h2,.k-lv){text-shadow:0 0 6px #000,0 0 14px #000,1px 1px 0 #000}
 @media (max-width:700px){
-  .sec.krzyk{--toph:337.5cqw;--pad:93cqw}
+  .sec.krzyk{--toph:450cqw;--pad:93cqw}
   .k-bgs{background-image:var(--btp),var(--bmp)}
   .k-foot{background-image:var(--bbp)}
   .k-body{width:92%}
