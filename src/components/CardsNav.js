@@ -21,7 +21,7 @@ export default function CardsNav({ current }) {
         minis: [0, 1, 2].map(i => asset(`/cards/mini-${i}.png`)),
         backs: [0, 1, 2].map(i => asset(`/cards/back-${i}.png`)),
         faces: FACE.map(k => asset(`/cards/face-${k}.png`)),
-        onGo: i => router.push(HREF[i]),
+        onGo: i => import('@/engine/veil').then(({ veilGo }) => veilGo(HREF[i], FACE[i], h => router.push(h))),   // po haśle celu spada kurtyna sigili
       });
     });
     return () => { alive = false; };

@@ -6,7 +6,7 @@ const martian = Martian_Mono({ subsets: ['latin', 'latin-ext'], weight: ['300', 
 const vt = VT323({ subsets: ['latin', 'latin-ext'], weight: '400', variable: '--font-vt', display: 'swap' });
 
 export const metadata = {
-  title: 'KRZYK — Zejście',
+  title: 'KRZYK',
   description: 'Krzyk i Maszynologia: sztuka z chaosu, muzyka, obraz i maszyny.',
 };
 
@@ -21,7 +21,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pl" className={`${martian.variable} ${vt.variable}`}>
       <head><style dangerouslySetInnerHTML={{ __html: faces }} /></head>
-      <body>{children}</body>
+      <body>{children}<div id="veil" aria-hidden="true" /></body>
     </html>
   );
 }

@@ -4,7 +4,7 @@ import { RM } from './core';
 
 const BL = '░▒▓';
 const HOME = '/home/daniel';
-const ME = 'daniel', HOST = 'maszynologia';
+const ME = 'gosc', HOST = 'maszynologia';                 // terminal przegląda gość, nie właściciel
 
 /* ---------- pliki ---------- */
 const P = (title, lines) => [`# ${title}`, '', ...lines];
@@ -16,12 +16,12 @@ const FS = {
   '/home': { d: ['daniel'] },
   '/home/daniel': { d: ['projekty', 'doswiadczenie', 'edukacja'], f: ['cv.txt', 'o-mnie.txt', 'kontakt.txt', 'umiejetnosci.txt'], h: ['.bashrc', '.bash_history'] },
   '/home/daniel/projekty': { d: ['visual-echoes-2.0', 'wikirooms', 'remuz.io', 'musicclubapp', 'shadowdetection', 'gameinjava'] },
-  '/home/daniel/projekty/visual-echoes-2.0': { f: ['README.md'] },
-  '/home/daniel/projekty/wikirooms': { f: ['README.md'] },
-  '/home/daniel/projekty/remuz.io': { f: ['README.md'] },
-  '/home/daniel/projekty/musicclubapp': { f: ['README.md'] },
-  '/home/daniel/projekty/shadowdetection': { f: ['README.md'] },
-  '/home/daniel/projekty/gameinjava': { f: ['README.md'] },
+  '/home/daniel/projekty/visual-echoes-2.0': { f: ['README.md', 'github.url'] },
+  '/home/daniel/projekty/wikirooms': { f: ['README.md', 'github.url'] },
+  '/home/daniel/projekty/remuz.io': { f: ['README.md', 'github.url'] },
+  '/home/daniel/projekty/musicclubapp': { f: ['README.md', 'github.url'] },
+  '/home/daniel/projekty/shadowdetection': { f: ['README.md', 'github.url'] },
+  '/home/daniel/projekty/gameinjava': { f: ['README.md', 'github.url'] },
   '/home/daniel/doswiadczenie': { f: ['msk-torman.txt', 'luxolis.txt', 'pfeifer-langen.txt'] },
   '/home/daniel/edukacja': { f: ['umk-torun.txt'] },
   '/proc': { f: ['cpuinfo', 'uptime', 'version'] },
@@ -37,24 +37,41 @@ const FILES = {
   '/home/daniel/umiejetnosci.txt': ['python ......... ████████░░', 'pytorch ........ ███████░░░', 'linux .......... ████████░░', 'docker ......... ██████░░░░', 'rest api ....... ███████░░░', 'postgresql ..... ██████░░░░'],
   '/home/daniel/.bashrc': ['export PS1="\\u@\\h:\\w\\$ "', 'alias cv="cat ~/cv.txt"', 'alias projekty="ls ~/projekty"', '# greetz: wszystkim, którzy jeszcze piszą ręcznie'],
   '/home/daniel/.bash_history': ['ssh noc-01', 'docker ps', 'python train.py --orientations 36', 'git push', 'cat /dev/urandom | head -c 64 | xxd', 'exit'],
-  '/home/daniel/projekty/visual-echoes-2.0/README.md': P('VISUAL ECHOES 2.0', ['Praca magisterska · 2025 → · autor', 'Stack: python · pytorch · habitat', '', 'Agent widzi obraz i słyszy echo.', 'Rozszerzyłem model z 4 do 36 orientacji co 10°', 'i zbadałem, ile kierunków naprawdę się opłaca:', 'krzywa nasyca się przy 9-12.']),
-  '/home/daniel/projekty/wikirooms/README.md': P('WIKIROOMS', TODO),
-  '/home/daniel/projekty/remuz.io/README.md': P('REMUZ.IO', TODO),
-  '/home/daniel/projekty/musicclubapp/README.md': P('MUSICCLUBAPP', TODO),
-  '/home/daniel/projekty/shadowdetection/README.md': P('SHADOWDETECTION', TODO),
-  '/home/daniel/projekty/gameinjava/README.md': P('GAMEINJAVA', TODO),
+  '/home/daniel/projekty/visual-echoes-2.0/README.md': P('VISUAL ECHOES 2.0', ['Praca magisterska · 2025 → · autor', 'Stack: python · pytorch · habitat', '',
+    'Ile orientacji agenta trzeba wyrenderować akustycznie, żeby model przewidujący głębię z obrazu i echa działał dobrze?',
+    'Rozszerzenie VisualEchoes z 4 kierunków do 36 orientacji co 10°.', 'Wynik: krzywa nasyca się przy 9-12 orientacjach; 4 → 9 daje 6,7× więcej niż reszta rozszerzenia do 36.']),
+  '/home/daniel/projekty/wikirooms/README.md': P('WIKIROOMS', ['Projekt badawczo-rozwojowy.', 'Backend: FastAPI · Alembic · PostgreSQL · Docker Compose (z pgAdminem).']),
+  '/home/daniel/projekty/remuz.io/README.md': P('REMUZ.IO', ['Praca dyplomowa: edytor wielościeżkowego audio w przeglądarce.', 'Wavesurfer.js: podgląd i edycja przebiegów fali w czasie rzeczywistym.', 'Stack: javascript · node.js']),
+  '/home/daniel/projekty/musicclubapp/README.md': P('MUSICCLUBAPP', ['Aplikacja do poznawania ludzi o podobnym guście muzycznym.', 'Wspólni artyści i gatunki z katalogu Deezera ustawiają propozycje znajomych; posty, czat, powiadomienia, PL/EN.', 'Stack: spring boot · postgresql · react + vite · docker compose']),
+  '/home/daniel/projekty/shadowdetection/README.md': P('SHADOWDETECTION', ['Szacowanie kierunku źródła światła z geometrii cieni na obrazie, w GIF-ach i wideo.', 'Dane: SBU Shadow Dataset, VIDIT.', 'Stack: python']),
+  '/home/daniel/projekty/gameinjava/README.md': P('GAMEINJAVA', ['Gra w Javie.', 'Stack: java']),
+  '/home/daniel/projekty/visual-echoes-2.0/github.url': ['https://github.com/d4krzyk/MasterWorkVE-2.0'],
+  '/home/daniel/projekty/wikirooms/github.url': ['https://github.com/d4krzyk/WikiRooms-Project'],
+  '/home/daniel/projekty/remuz.io/github.url': ['https://github.com/d4krzyk/Remuz-io'],
+  '/home/daniel/projekty/musicclubapp/github.url': ['https://github.com/d4krzyk/MusicClubApp'],
+  '/home/daniel/projekty/shadowdetection/github.url': ['https://github.com/d4krzyk/ShadowDetection'],
+  '/home/daniel/projekty/gameinjava/github.url': ['https://github.com/d4krzyk/GameInJava'],
   '/home/daniel/doswiadczenie/msk-torman.txt': ['MSK TORMAN · 2025 →', 'Operator NOC: monitoring sieci i usług, reagowanie na incydenty.'],
   '/home/daniel/doswiadczenie/luxolis.txt': ['LUXOLIS · 2023', 'Software engineer.'],
   '/home/daniel/doswiadczenie/pfeifer-langen.txt': ['PFEIFER & LANGEN · 2023', 'Staż IT.'],
   '/home/daniel/edukacja/umk-torun.txt': ['UMK TORUŃ · 2024 →', 'Studia magisterskie: sztuczna inteligencja.'],
   '/etc/hostname': [HOST], '/etc/motd': ['KrzykOS 2026'],
-  '/etc/os-release': ['NAME="KrzykOS"', 'VERSION="2026 (Zejście)"', 'ID=krzyk', 'PRETTY_NAME="KrzykOS 2026"'],
-  '/etc/passwd': ['root:x:0:0:root:/root:/bin/nologin', 'daniel:x:1000:1000:Daniel:/home/daniel:/bin/bash', 'gosc:x:1001:1001:gość:/home/daniel:/bin/rbash'],
+  '/etc/os-release': ['NAME="KrzykOS"', 'VERSION="2026"', 'ID=krzyk', 'PRETTY_NAME="KrzykOS 2026"'],
+  '/etc/passwd': ['root:x:0:0:root:/root:/bin/nologin', 'daniel:x:1000:1000:Daniel:/home/daniel:/bin/bash', 'gosc:x:1001:1001:gość:/home/daniel:/bin/bash'],
   '/proc/cpuinfo': ['model name : Intel 80486DX2 @ 66 MHz (turbo)', 'cache size : 8 KB', 'flags      : fpu vme krzyk'],
   '/proc/version': ['Linux version 6.6.6-krzyk (gcc 13) #1 SMP PREEMPT'],
-  '/var/log/syslog': ['kernel: zejście: podniesiono poziom −2', 'crond: odpalono dekoder sine-scrollera', 'sshd: gość zalogowany z przeglądarki', 'kernel: wykryto próbę rm -rf, odmówiono z krzykiem'],
+  '/var/log/syslog': ['crond: odpalono dekoder sine-scrollera', 'sshd: gość zalogowany z przeglądarki', 'kernel: wykryto próbę rm -rf, odmówiono z krzykiem'],
 };
 const T0 = Date.now();
+const DESC = {
+  '/': 'korzeń systemu', '/bin': 'polecenia', '/etc': 'konfiguracja systemu', '/home': 'katalogi domowe', '/proc': 'procesor i jądro', '/tmp': 'pliki tymczasowe (pusto)',
+  '/usr': 'programy i zasoby', '/usr/bin': 'programy', '/usr/share': 'zasoby', '/var': 'dane zmienne', '/var/log': 'logi systemowe',
+  '/home/daniel': 'katalog domowy · CV, projekty, doświadczenie, kontakt', '/home/daniel/projekty': 'projekty · w każdym README.md i github.url',
+  '/home/daniel/doswiadczenie': 'doświadczenie zawodowe', '/home/daniel/edukacja': 'edukacja',
+  '/home/daniel/projekty/visual-echoes-2.0': 'praca magisterska · echo, obraz i głębia', '/home/daniel/projekty/wikirooms': 'projekt badawczo-rozwojowy · fastapi, postgresql',
+  '/home/daniel/projekty/remuz.io': 'praca dyplomowa · wielościeżkowy edytor audio', '/home/daniel/projekty/musicclubapp': 'ludzie o podobnym guście muzycznym',
+  '/home/daniel/projekty/shadowdetection': 'kierunek światła z geometrii cieni', '/home/daniel/projekty/gameinjava': 'gra w javie',
+};
 
 const norm = (cwd, p) => {
   if (!p || p === '~') return HOME;
@@ -89,6 +106,7 @@ const HELP = [
   'cv ....................... cat ~/cv.txt',
   'projekty ................. lista projektów',
   'open <projekt> ........... README projektu, np. open wikirooms',
+  'cat github.url ........... otwiera repozytorium projektu na GitHubie',
   'kontakt · o-mnie ......... cat ~/kontakt.txt · cat ~/o-mnie.txt',
   '', '— system —',
   'whoami · id · hostname ... kim i gdzie jesteś',
@@ -96,27 +114,24 @@ const HELP = [
   'uptime · date · cal ...... czas pracy, data, kalendarz',
   'ps · top ................. procesy',
   'df -h · free -h .......... dysk i pamięć',
-  'ip a · ifconfig .......... interfejsy sieciowe',
-  'env · echo <tekst> ....... zmienne środowiska · wypisanie tekstu',
+    'env · echo <tekst> ....... zmienne środowiska · wypisanie tekstu',
   'history · which <cmd> .... historia poleceń · ścieżka polecenia',
   'man <polecenie> .......... krótki opis polecenia',
-  '', '— sieć —',
-  'ping <host> · traceroute <host> · ssh <host>',
   '', '— zabawa —',
-  'neofetch · fortune · cowsay <tekst> · sl · matrix · banner <tekst>',
+  'neofetch · cowsay <tekst> · matrix · banner <tekst>',
   '', '— strona —',
   'brama · krzyk ............ przejście do innego działu',
   'clear (Ctrl+L) ........... czyści ekran',
   'exit ..................... wyjście do bramy',
 ];
 const MAN = { ls: 'ls — wypisuje zawartość katalogu. -l szczegóły, -a ukryte pliki.', cd: 'cd — zmienia katalog. cd .. w górę, cd ~ do domu.', cat: 'cat — wyświetla plik.', rm: 'rm — w tym systemie: krzyk.', grep: 'grep WZÓR PLIK — wiersze zawierające wzór.', open: 'open PROJEKT — otwiera README projektu.' };
-const FORTUNES = ['Sztuka z chaosu. Kod też.', 'Najpierw działa, potem jest ładne, potem jest szybkie. Czasem w odwrotnej kolejności.', 'Każdy bug to echo jakiejś decyzji.', 'Nasycenie przy 9-12 kierunkach. Reszta to szum.', 'Kto pisze ręcznie, ten pamięta.'];
 
 export function initTerm(root, { go } = {}) {
   const out = root.querySelector('.t-out'), form = root.querySelector('.t-line'), inp = root.querySelector('.t-in'), ps = root.querySelector('.t-ps');
   let cwd = HOME; const hist = []; let hi = 0, queue = Promise.resolve();
   const prompt = () => `${ME}@${HOST}:${short(cwd)}$`;
-  const setPs = () => { ps.textContent = prompt(); };
+  const hp = root.querySelector('.t-path'), hd = root.querySelector('.t-desc');
+  const setPs = () => { ps.textContent = prompt(); if (hp) hp.textContent = short(cwd); if (hd) hd.textContent = DESC[cwd] || ''; };
 
   /* ---------- wyjście: linie wjeżdżają schodkowo, znaki rozkodowują się z bloków ---------- */
   // linia = tablica segmentów {t, c(klasa), cmd(polecenie po dotknięciu)}
@@ -150,6 +165,19 @@ export function initTerm(root, { go } = {}) {
     }));
     return queue;
   };
+  const link = async url => { await print([[seg('otwieram ', 'dim'), seg(url, 'dir')]]); window.open(url, '_blank', 'noopener'); };
+  // wiersze bez dekodowania, do animacji klatkowych (matrix)
+  const raw = (n, cls) => { const rows = Array.from({ length: n }, () => { const r = document.createElement('div'); r.className = 'tl on pre plain ' + cls; out.appendChild(r); return r; }); out.scrollTop = out.scrollHeight; return rows; };
+  const anim = (ms, fps, f) => new Promise(done => { if (RM) { f(1); return done(); } const t0 = performance.now(); let last = 0;
+    const st = now => { if (now - last >= 1000 / fps) { last = now; f(Math.min(1, (now - t0) / ms)); } if (now - t0 < ms) requestAnimationFrame(st); else { f(1); done(); } }; requestAnimationFrame(st); });
+  const cols = () => Math.max(20, Math.floor(out.clientWidth / (parseFloat(getComputedStyle(out).fontSize) * .5)) - 2);
+  const GL = '01ABCDEFGHJKLMNPRSTUVWXYZ0123456789#$%&@*+=<>?░▒▓';
+  const rain = () => queue = queue.then(() => { const H = 12, W = cols(), rows = raw(H, 'green'), drops = Array.from({ length: W }, () => Math.random() * -H * 1.5), sp = drops.map(() => .25 + Math.random() * .6), g = [];
+    for (let y = 0; y < H; y++) g.push(Array.from({ length: W }, () => ' '));
+    return anim(4200, 18, k => { for (let x = 0; x < W; x++) { drops[x] += sp[x]; const hy = Math.floor(drops[x]);
+        for (let y = 0; y < H; y++) { const d = hy - y; g[y][x] = d === 0 ? GL[Math.floor(Math.random() * GL.length)] : d > 0 && d < 7 && k < .85 ? (Math.random() < .15 ? GL[Math.floor(Math.random() * GL.length)] : g[y][x]) : d >= 7 || k >= .85 && d > 0 ? ' ' : g[y][x]; }
+        if (hy - 7 > H && k < .7) drops[x] = Math.random() * -6; }
+      rows.forEach((r, y) => { r.textContent = g[y].join(''); }); }).then(() => rows.forEach(r => r.remove())); });
   const scream = () => {
     root.classList.remove('shake'); void root.offsetWidth; root.classList.add('shake');
     return print(SCREAM, 'scream');
@@ -175,8 +203,14 @@ export function initTerm(root, { go } = {}) {
   };
   const allPaths = (p = '/', acc = []) => { const d = FS[p] || {}; (d.d || []).forEach(n => { const f = (p === '/' ? '' : p) + '/' + n; acc.push(f + '/'); allPaths(f, acc); }); (d.f || []).forEach(n => acc.push((p === '/' ? '' : p) + '/' + n)); return acc; };
   const fileArg = (cmd, a) => { if (!a) return [`${cmd}: brak argumentu`]; const p = norm(cwd, a); if (isDir(p)) return [`${cmd}: ${a}: To jest katalog`]; if (!isFile(p)) return [`${cmd}: ${a}: Nie ma takiego pliku ani katalogu`]; return read(p); };
-  const banner = t => { const B = { a: '▄▀█', b: '█▄▄', c: '█▀▀', d: '█▀▄', e: '█▀▀', k: '█▄▀', r: '█▀█', y: '█▄█', z: '▀█', s: '█▀', i: '█', o: '█▀█', n: '█▄ █', m: '█▀▄▀█', t: '▀█▀', l: '█', u: '█ █', w: '█ █ █', p: '█▀█', g: '█▀▀', h: '█ █' };
-    return [[...t.toLowerCase()].map(ch => B[ch] || (ch === ' ' ? '  ' : ch)).join(' ')]; };
+  // banner: pikselowy krój 3×5 z bloków
+  const FONT5 = { a: '010101111101101', b: '110101110101110', c: '011100100100011', d: '110101101101110', e: '111100110100111', f: '111100110100100', g: '011100101101011', h: '101101111101101', i: '111010010010111',
+    j: '001001001101010', k: '101101110101101', l: '100100100100111', m: '101111111101101', n: '110101101101101', o: '010101101101010', p: '110101110100100', q: '010101101110011', r: '110101110101101',
+    s: '011100010001110', t: '111010010010010', u: '101101101101111', v: '101101101101010', w: '101101111111101', x: '101101010101101', y: '101101010010010', z: '111001010100111',
+    0: '111101101101111', 1: '010110010010111', 2: '110001010100111', 3: '110001010001110', 4: '101101111001001', 5: '111100110001110', 6: '011100110101010', 7: '111001010010010', 8: '010101010101010', 9: '010101011001110', ' ': '000000000000000', '-': '000000111000000', '!': '010010010000010', '.': '000000000000010' };
+  const PL = { ą: 'a', ć: 'c', ę: 'e', ł: 'l', ń: 'n', ó: 'o', ś: 's', ź: 'z', ż: 'z' };
+  const banner = t => { const ch = [...t.toLowerCase().slice(0, 14)].map(c => FONT5[PL[c] || c] || FONT5[' ']);
+    return [0, 1, 2, 3, 4].map(r => ch.map(g => [0, 1, 2].map(k => g[r * 3 + k] === '1' ? '█' : ' ').join('')).join(' ')); };
   const PROJ = Object.keys(FS).filter(k => k.startsWith(HOME + '/projekty/')).map(k => k.split('/').pop());
 
   const run = async raw => {
@@ -193,7 +227,7 @@ export function initTerm(root, { go } = {}) {
       case 'ls': case 'dir': case 'll': return print(listing(norm(cwd, a[0] || '.'), cmd === 'll' ? 'la' : flags));
       case 'pwd': return print([cwd]);
       case 'cd': { const p = norm(cwd, a[0] || '~'); if (!isDir(p)) return print([`cd: ${a[0]}: ${isFile(p) ? 'To nie jest katalog' : 'Nie ma takiego pliku ani katalogu'}`], 'err'); cwd = p; setPs(); return print(listing(cwd, '')); }
-      case 'cat': case 'less': case 'more': case 'bat': return print(fileArg(cmd, a[0]));
+      case 'cat': case 'less': case 'more': case 'bat': { const p = norm(cwd, a[0] || ''); if (p.endsWith('.url') && isFile(p)) return link(read(p)[0]); return print(fileArg(cmd, a[0])); }
       case 'head': return print(fileArg(cmd, a[0]).slice(0, 5));
       case 'tail': return print(fileArg(cmd, a[0]).slice(-5));
       case 'wc': { const f = fileArg(cmd, a[0]); return print([`${f.length} ${f.join(' ').split(/\s+/).length} ${f.join('\n').length} ${a[0] || ''}`]); }
@@ -206,9 +240,10 @@ export function initTerm(root, { go } = {}) {
       case 'kontakt': return print(read(HOME + '/kontakt.txt'));
       case 'o-mnie': case 'about': return print(read(HOME + '/o-mnie.txt'));
       case 'projekty': case 'projects': return print([...listing(HOME + '/projekty', ''), '', 'open <projekt> albo dotknij nazwy.']);
-      case 'open': case 'xdg-open': { const n = (a[0] || '').toLowerCase().replace(/\/$/, ''); const m = PROJ.find(p => p === n || p.startsWith(n)); if (!n || !m) return print([`open: nie znam projektu '${a[0] || ''}'. Dostępne: ${PROJ.join(', ')}`], 'err'); cwd = HOME + '/projekty/' + m; setPs(); return print(read(cwd + '/README.md')); }
-      case 'whoami': return print([ME]);
-      case 'id': return print([`uid=1000(${ME}) gid=1000(${ME}) grupy=1000(${ME}),27(krzyk),66(maszyny)`]);
+      case 'open': case 'xdg-open': { const n = (a[0] || '').toLowerCase().replace(/\/$/, ''); const m = PROJ.find(p => p === n || p.startsWith(n)); if (!n || !m) return print([`open: nie znam projektu '${a[0] || ''}'. Dostępne: ${PROJ.join(', ')}`], 'err'); cwd = HOME + '/projekty/' + m; setPs(); return print([...read(cwd + '/README.md'), '', [seg('github.url', 'file', `cat ${cwd}/github.url`), seg('  → repozytorium na GitHubie', 'dim')]]); }
+      case 'whoami': { const ua = navigator.userAgent, os = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Mac/.test(ua) ? 'macOS' : /Win/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'nieznany system';
+        const br = /Edg\//.test(ua) ? 'Edge' : /Firefox/.test(ua) ? 'Firefox' : /Chrome/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : 'przeglądarka'; return print([ME, `gość odwiedzający stronę · ${br} na ${os}`], ''); }
+      case 'id': return print([`uid=1001(${ME}) gid=1001(${ME}) grupy=1001(${ME}),100(goscie)`]);
       case 'hostname': return print([HOST]);
       case 'uname': return print([flags.includes('a') ? `Linux ${HOST} 6.6.6-krzyk #1 SMP PREEMPT x86_64 KrzykOS` : 'Linux']);
       case 'uptime': { const s = Math.floor((Date.now() - T0) / 1000); return print([` ${new Date().toTimeString().slice(0, 8)} up ${Math.floor(s / 60)} min, 1 user, load average: 0.66, 0.06, 0.13`]); }
@@ -219,7 +254,6 @@ export function initTerm(root, { go } = {}) {
       case 'top': case 'htop': return print(['top - 1 user, load average: 0.66', 'Tasks: 5 total, 1 running', '%Cpu(s): 13.0 us, 6.6 sy, 80.4 id', '  PID USER     %CPU %MEM COMMAND', '  404 daniel   12.0  4.2 cracktro', '  666 daniel    6.6  0.6 krzyk', ' 1337 daniel    0.3  0.1 bash']);
       case 'df': return print(['System plików   Rozm. Użyte Dost. %Uż. Zamont. na', '/dev/kaseta     60M   59M   1M   98% /', 'tmpfs           640K  0     640K  0%  /tmp']);
       case 'free': return print(['              total   used   free', 'Mem:          640K   512K   128K', 'Swap:         0B     0B     0B   (640K powinno każdemu wystarczyć)']);
-      case 'ip': case 'ifconfig': return print(['lo:   inet 127.0.0.1/8', 'eth0: inet 10.66.6.13/24  ether 00:13:37:66:06:66', 'tun0: inet 10.2.0.1/32  (zejście)']);
       case 'env': case 'printenv': return print([`USER=${ME}`, `HOME=${HOME}`, `PWD=${cwd}`, 'SHELL=/bin/bash', 'TERM=vt100-krzyk', 'LANG=pl_PL.UTF-8']);
       case 'export': case 'alias': case 'unalias': return print([`${cmd}: zmiany środowiska nie przetrwają, ale niech ci będzie.`]);
       case 'echo': return print([args.join(' ')]);
@@ -227,18 +261,12 @@ export function initTerm(root, { go } = {}) {
       case 'which': case 'type': return print(a.map(x => `/usr/bin/${x}`));
       case 'man': return print([MAN[a[0]] || (a[0] ? `Brak strony podręcznika dla ${a[0]}. Spróbuj: help` : 'Którą stronę podręcznika? np. man ls')]);
       case 'clear': case 'cls': out.textContent = ''; return;
-      case 'ping': { const h = a[0] || 'zejscie.local'; await print([`PING ${h} (10.66.6.6) 56(84) bajtów danych.`]); for (let i = 1; i <= 4; i++) await print([`64 bajty od ${h}: icmp_seq=${i} ttl=66 czas=${(6 + Math.random() * 7).toFixed(1)} ms`]); return print([`--- ${h} ping --- 4 wysłane, 4 odebrane, 0% strat`]); }
-      case 'traceroute': return print([`traceroute do ${a[0] || 'krzyk'}`, ' 1  brama (10.0.0.1)  1.3 ms', ' 2  poziom-1 (10.0.1.1)  6.6 ms', ' 3  poziom-2 (10.0.2.1)  13.0 ms', ' 4  * * *  (dalej nie schodzimy)']);
-      case 'ssh': case 'telnet': return print([`${cmd}: połączenie odrzucone. Tu się tylko czyta.`], 'err');
-      case 'neofetch': case 'fastfetch': return print([
-        [seg('   ▄▄▄▄▄▄▄▄   ', 'red'), seg(`${ME}@${HOST}`, 'dir')], [seg('  █ ▄▄  ▄▄ █  ', 'red'), seg('---------------------', 'dim')], [seg('  █ ██  ██ █  ', 'red'), seg('OS: KrzykOS 2026 (Zejście)')],
-        [seg('  █   ▀▀   █  ', 'red'), seg('Kernel: 6.6.6-krzyk')], [seg('   ▀▄▄▄▄▄▄▀   ', 'red'), seg('Shell: bash 5.2')], [seg('    █ ██ █    ', 'red'), seg('Stack: python · pytorch · docker · linux')],
-        [seg('              '), seg('Projekty: ' + PROJ.length)], [seg('              '), seg('█', 'red'), seg('█', 'dir'), seg('█', 'file'), seg('█', 'dim')]]);
-      case 'fortune': return print([FORTUNES[Math.floor(Math.random() * FORTUNES.length)]]);
+      case 'neofetch': case 'fastfetch': { const L = [['~≈~≈~≈~≈~≈~', 'sky'], ['  ▄▀▀▀▀▀▄', 'red'], [' █ ▀█ █▀ █', 'red'], ['▐▌   ▄   ▐▌', 'red'], ['█▌  ▐█▌  ▐█', 'red'], ['▐▌  ▀▀▀  ▐▌', 'red'], [' ▀▄     ▄▀', 'red'], ['   ▀▄ ▄▀', 'red'], ['    █ █', 'red']];
+        const R = [seg(`${ME}@${HOST}`, 'dir'), seg('------------------', 'dim'), seg('OS: KrzykOS 2026'), seg('Kernel: 6.6.6-krzyk'), seg('Shell: bash 5.2'), seg('Stack: python · pytorch · docker · linux'), seg('Projekty: ' + PROJ.length), seg(''), seg('')];
+        return print(L.map(([t, c], k) => [seg(t.padEnd(13), c), R[k]]), 'pre'); }
       case 'cowsay': { const t = args.join(' ') || 'muu'; return print([' ' + '_'.repeat(t.length + 2), `< ${t} >`, ' ' + '-'.repeat(t.length + 2), '        \\   ^__^', '         \\  (oo)\\_______', '            (__)\\       )\\/\\', '                ||----w |', '                ||     ||']); }
-      case 'sl': return print(['      ====        ________                ___________', '  _D _|  |_______/        \\__I_I_____===__|_________|', '   |(_)---  |   H\\________/ |   |        =|___ ___|', '   /     |  |   H  |  |     |   |         ||_| |_||', '  |      |  |   H  |__--------------------| [___] |', '  | ________|___H__/__|_____/[][]~\\_______|       |', '  |/ |   |-----------I_____I [][] []  D   |=======|__', 'Literówka w ls? Pociąg przejechał.']);
-      case 'matrix': case 'cmatrix': return print(Array.from({ length: 8 }, () => Array.from({ length: 40 }, () => '01ﾊﾐﾋｰｳｼﾅﾓﾆｻﾜﾂｵﾘｱﾎﾃﾏｹﾒｴｶｷﾑﾕﾗｾﾈｽﾀﾇﾍ'[Math.floor(Math.random() * 36)]).join('')), 'green');
-      case 'banner': case 'figlet': return print(banner(args.join(' ') || 'krzyk'), 'red');
+      case 'matrix': case 'cmatrix': return rain();
+      case 'banner': case 'figlet': return print(banner(args.join(' ') || 'krzyk'), 'red pre');
       case 'brama': case 'krzyk': case 'maszynologia': if (go) { await print([`przechodzę: ${cmd}…`]); setTimeout(() => go(cmd), 400); } return;
       case 'exit': case 'logout': case 'quit': if (go) { await print(['logout', 'Do zobaczenia przy bramie.']); setTimeout(() => go('brama'), 600); } return;
       case 'hello': case 'cześć': case 'czesc': case 'hej': return print(['Cześć. Wpisz help, żeby zobaczyć, co tu można.']);
@@ -251,7 +279,7 @@ export function initTerm(root, { go } = {}) {
   const submit = async v => { if (busy.v) return; busy.v = true; inp.value = ''; try { await run(v); await queue; } finally { busy.v = false; } };
   form.addEventListener('submit', e => { e.preventDefault(); submit(inp.value); });
   root.addEventListener('click', e => { const b = e.target.closest('[data-cmd]'); if (b) { e.preventDefault(); submit(b.dataset.cmd); } else if (e.target.closest('.t-out')) inp.focus({ preventScroll: true }); });
-  const CMDS = ['help', 'ls', 'cd', 'pwd', 'cat', 'tree', 'find', 'grep', 'head', 'tail', 'wc', 'file', 'cv', 'projekty', 'open', 'kontakt', 'o-mnie', 'whoami', 'id', 'hostname', 'uname', 'uptime', 'date', 'cal', 'ps', 'top', 'df', 'free', 'ip', 'env', 'echo', 'history', 'man', 'clear', 'ping', 'traceroute', 'neofetch', 'fortune', 'cowsay', 'sl', 'matrix', 'banner', 'brama', 'krzyk', 'exit'];
+  const CMDS = ['help', 'ls', 'cd', 'pwd', 'cat', 'tree', 'find', 'grep', 'head', 'tail', 'wc', 'file', 'cv', 'projekty', 'open', 'kontakt', 'o-mnie', 'whoami', 'id', 'hostname', 'uname', 'uptime', 'date', 'cal', 'ps', 'top', 'df', 'free', 'env', 'echo', 'history', 'man', 'clear', 'neofetch', 'cowsay', 'matrix', 'banner', 'brama', 'krzyk', 'exit'];
   inp.addEventListener('keydown', e => {
     if (e.key === 'ArrowUp') { e.preventDefault(); if (hi > 0) { hi--; inp.value = hist[hi]; } }
     else if (e.key === 'ArrowDown') { e.preventDefault(); if (hi < hist.length) { hi++; inp.value = hist[hi] || ''; } }

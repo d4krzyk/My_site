@@ -224,7 +224,7 @@ export function initMaszyn(root, opts) {
     const pick = () => {
       const cs = getComputedStyle(wrap);
       const inner = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      return inner >= L.full.cols * 8 ? 'full' : 'compact';
+      return inner >= L.full.cols * parseFloat(getComputedStyle(pre).fontSize) * .5 ? 'full' : 'compact';   // znak DOS = pół wysokości kroju
     };
     const decode = () => {
       if (RM) return render(null);

@@ -1,4 +1,6 @@
-# KRZYK — Zejście: notatki projektu
+# KRZYK: notatki projektu
+
+Nie nazywaj projektu „Zejście” — nigdzie (teksty, nagłówki, tytuły, komentarze).
 
 Portfolio Daniela (d4krzyk): Next.js (eksport statyczny) na GitHub Pages. Działy: Brama (strona główna), Krzyk, Maszynologia.
 Tła i grafiki działu Krzyk powstają ze skryptów generujących (kolaż, tła, tektura); w repozytorium są gotowe pliki w `public/krzyk/`.

@@ -21,7 +21,6 @@ export default function Maszyn() {
     });
     return () => { alive = false; };
   }, [router]);
-  const foot = <p className="rf-foot gb dos" aria-hidden="true"><span className="w">D. K.</span><span className="gx" /><span className="yr">2026</span></p>;
   return (
     <>
       <CardsNav current={2} />
@@ -39,16 +38,14 @@ export default function Maszyn() {
             </div>
             <img id="ornR" alt="" draggable="false" />
           </div>
-          {foot}
         </div>
         <section className="m-panel rf term" aria-label="Terminal">
-          <div className="t-head dos"><span>tty1</span><span>/bin/bash</span></div>
+          <div className="t-head dos"><span className="t-path" /><span className="t-desc" /></div>
           <div className="t-out dos selectable" role="log" aria-live="polite" />
           <form className="t-line">
             <label className="t-ps dos" htmlFor="t-in" />
             <input id="t-in" className="t-in dos" type="text" autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck="false" enterKeyHint="send" aria-label="polecenie" />
           </form>
-          {foot}
         </section>
       </main>
     </>
