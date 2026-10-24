@@ -1,45 +1,72 @@
 import CardsNav from '@/components/CardsNav';
+import KrzykFx, { KrzykLayers } from '@/components/KrzykFx';
 import { asset } from '@/lib/base';
 
 export const metadata = { title: 'Krzyk — Zejście', description: 'Krzyk: muzyka, obraz, persony. Sztuka z chaosu.' };
 
-// szkic działu: tło to kolaż rozpadający się ditherem w rozdartą kartkę, na której leży treść (treść pokojów w budowie)
+// dział Krzyk: kolaż przechodzący w ciemne tła, pole wyborów z modelami 3D i podrozdziały z ciemnej tektury (treść w budowie)
 const LOREM = [
   'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.',
   'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
-  'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.',
 ];
-const ROOMS = [
-  ['A1', 'muzyka · taśmy', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.'],
-  ['A2', 'persony', 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi.'],
-  ['A3', 'kolaż · okładka', 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum.'],
+// pole wyborów: model 3D, podpis, dopisek
+const PICKS = [
+  ['walkman', 'muzyka', 'klipy · taśmy · odtwarzacz'],
+  ['heads', 'persony', 'trzy twarze, trzy nastroje'],
+  ['minidv', 'obraz', 'kaseta miniDV · aparat DSC-V1'],
+];
+// podrozdziały (treść później)
+const SUBS = [
+  ['k-muzyka', 'A1', 'muzyka · taśmy', 'Tu będą klipy w odtwarzaczu z planszy „Zejście”.'],
+  ['k-persony', 'A2', 'persony', 'Tu zamieszkają trzy persony.'],
+  ['k-obraz', 'A3', 'obraz · DSC-V1', 'Tu będzie aparat Sony DSC-V1 do przeglądania zdjęć.'],
+  ['k-kontakt', 'A4', 'kontakt', 'Tu będzie kontakt.'],
 ];
 
 export default function Krzyk() {
-  const bg = n => `url(${asset(`/krzyk/bg-${n}.webp`)})`, bgp = n => `url(${asset(`/krzyk/bg-${n}-p.webp`)})`;
+  const bg = n => `url(${asset(`/krzyk/bg-${n}.webp`)})`, bgp = n => `url(${asset(`/krzyk/bg-${n}-p.webp`)})`, u = p => `url(${asset(p)})`;
   return (
     <>
       <CardsNav current={1} />
-      <main className="sec krzyk" style={{ '--bt': bg('top'), '--bm': bg('mid'), '--bb': bg('bot'), '--btp': bgp('top'), '--bmp': bgp('mid'), '--bbp': bgp('bot') }}>
-        <div className="k-bgs" role="img" aria-label="Kolaż z napisem KRZYK, z którego schodzą w dół rozdarte paski zdjęć natury" />
+      <main className="sec krzyk" style={{ '--bt': bg('top'), '--bm': bg('mid'), '--bb': bg('bot'), '--btp': bgp('top'), '--bmp': bgp('mid'), '--bbp': bgp('bot'),
+        '--dust-m': u('/krzyk/dust-motto.png'), '--dust-l': u('/krzyk/dust-lines.png'), '--board': u('/krzyk/board.webp'),
+        '--board-t': u('/krzyk/board-top.webp'), '--board-b': u('/krzyk/board-bot.webp') }}>
+        <div className="k-bgs" role="img" aria-label="Kolaż z napisem KRZYK, przycięty nierówno, przechodzący w ciemne zdjęcia natury" />
+        <KrzykLayers />
         <div className="k-body">
-          <section className="k-intro">
-            <p className="k-lv dos">·÷·──── POZIOM −1 ────·÷·</p>
-            <h1 className="k-title">Krzyk</h1>
-            <p className="k-lede">Sztuka z chaosu. Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.</p>
-          </section>
-          <section className="k-text">{LOREM.map((t, i) => <p key={i}>{t}</p>)}</section>
-          <section className="k-rooms" aria-label="Pokoje">
-            {ROOMS.map(([code, name, txt]) => (
-              <article className="k-room" key={code}>
+          <KrzykFx>
+            <section className="k-intro">
+              <p className="k-lv dos">·÷·──── POZIOM −1 ────·÷·</p>
+              <h1 className="k-title">Krzyk</h1>
+              <p className="k-lede">Sztuka z chaosu. Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.</p>
+            </section>
+            <section className="k-text">{LOREM.map((t, i) => <p key={i}>{t}</p>)}</section>
+            <nav className="k-choose" aria-label="Podrozdziały">
+              <p className="k-choose-h dos" data-type="" data-seed="3">·÷·── wybierz ──·÷·</p>
+              <div className="k-trio">
+                {PICKS.map(([k, t, s], i) => (
+                  <button type="button" className="k-pick" data-room={k} key={k} style={{ '--plate': u(`/krzyk/plate-${i}.webp`) }} aria-label={`${t}: ${s}`}>
+                    <canvas />
+                    <span className="k-pick-t" data-type="" data-seed={10 + i}>{t}</span>
+                    <span className="k-pick-s dos">{s}</span>
+                  </button>
+                ))}
+              </div>
+              <button type="button" className="k-pick k-pick-phone" data-room="phone" style={{ '--plate': u('/krzyk/plate-3.webp') }} aria-label="kontakt">
+                <canvas />
+                <span className="k-pick-t" data-type="" data-seed="14">kontakt</span>
+                <span className="k-pick-s dos">zadzwoń · napisz</span>
+              </button>
+            </nav>
+            {SUBS.map(([id, code, h, txt]) => (
+              <section className="k-sub" id={id} key={id}>
                 <span className="k-code dos">{code}</span>
-                <h2>{name}</h2>
+                <h2 data-type="" data-seed={code.charCodeAt(1)}>{h}</h2>
                 <p>{txt}</p>
-                <span className="k-wip dos">▓ w budowie</span>
-              </article>
+                <p className="k-wip dos">▓ w budowie</p>
+              </section>
             ))}
-          </section>
-          <section className="k-text" style={{ marginTop: 40 }}>{LOREM.concat(LOREM).map((t, i) => <p key={i}>{t}</p>)}</section>
+          </KrzykFx>
         </div>
         <div className="k-foot" aria-hidden="true" />
       </main>
