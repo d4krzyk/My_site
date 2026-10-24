@@ -53,7 +53,7 @@ function grime(w, h, base, v, seed = 1) {
 function maskTex(kind, seed) {
   const W = 128, H = 160, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  const base = { haunt: '#dfe4e2', sleaze: '#f4e9f0', sacral: '#2e2636', void: '#120607' }[kind];
+  const base = { haunt: '#dfe4e2', sleaze: '#f4e9f0', sacral: '#e6e2e4', void: '#120607' }[kind];
   x.fillStyle = base; x.fillRect(0, 0, W, H);
   for (let i = 0; i < 1600; i++) { x.fillStyle = r() < .5 ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.07)'; x.fillRect(Math.floor(r() * W), Math.floor(r() * H), 2, 1); }
   const hole = (f) => { x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.beginPath(); f(); x.fill(); x.restore(); };
@@ -78,13 +78,15 @@ function maskTex(kind, seed) {
     x.fillStyle = '#ff3fb4'; x.fillRect(100, 30, 8, 8); x.fillStyle = '#fff36a'; x.fillRect(102, 32, 4, 4);   // naklejka
   }
   if (kind === 'sacral') {
-    // czarna z płatkami złota, wąskie oczy z ciężką powieką patrzą z góry, zaciśnięte usta, złoty krzyż na czole
-    for (let i = 0; i < 70; i++) { x.fillStyle = `rgba(${200 + r() * 40},${160 + r() * 30},${60 + r() * 30},${.3 + r() * .5})`; x.fillRect(Math.floor(r() * W), Math.floor(r() * H), 2 + Math.floor(r() * 4), 1 + Math.floor(r() * 3)); }
-    x.fillStyle = '#d9b25a'; x.fillRect(62, 14, 4, 26); x.fillRect(54, 22, 20, 4);
-    x.strokeStyle = '#d9b25a'; x.lineWidth = 2; E.forEach(ex => { x.beginPath(); x.moveTo(ex - 15, EY - 3); x.quadraticCurveTo(ex, EY - 10, ex + 15, EY - 3); x.stroke(); });
-    E.forEach(ex => hole(() => { x.moveTo(ex - 12, EY); x.quadraticCurveTo(ex, EY - 3, ex + 12, EY); x.quadraticCurveTo(ex, EY + 6, ex - 12, EY); }));
-    x.fillStyle = '#d9b25a'; x.fillRect(50, 120, 28, 3);
-    x.fillStyle = 'rgba(217,178,90,.8)'; for (let k = 0; k < 3; k++) x.fillRect(40 + k * 22, 140, 4, 4);
+    // biała jak dwie pozostałe, z gotyckim makijażem: ciemne cienie z wyciągniętą kreską, ostre brwi, czarne usta zaciśnięte w poważną minę, mały krzyż na czole
+    x.fillStyle = '#1a1018';
+    E.forEach((ex, i) => { const d = i ? 1 : -1;
+      x.beginPath(); x.moveTo(ex - 15, EY - 2); x.quadraticCurveTo(ex, EY - 15, ex + 15, EY - 2); x.lineTo(ex + d * 22, EY - 8 + (i ? 0 : 0)); x.quadraticCurveTo(ex, EY + 13, ex - 15, EY - 2); x.fill();
+      x.fillRect(ex - 2, EY + 8, 2, 10 + Math.floor(r() * 10)); });
+    x.fillStyle = '#120a10'; x.fillRect(28, 46, 24, 3); x.fillRect(48, 49, 6, 3); x.fillRect(76, 46, 24, 3); x.fillRect(74, 49, 6, 3);   // brwi ściągnięte w dół do środka
+    x.fillStyle = '#1a1018'; x.fillRect(62, 18, 4, 18); x.fillRect(56, 23, 16, 4);
+    x.fillStyle = '#140a12'; x.beginPath(); x.moveTo(48, 121); x.quadraticCurveTo(64, 117, 80, 121); x.quadraticCurveTo(64, 128, 48, 121); x.fill();
+    E.forEach(ex => hole(() => { x.moveTo(ex - 11, EY); x.quadraticCurveTo(ex, EY - 4, ex + 11, EY); x.quadraticCurveTo(ex, EY + 6, ex - 11, EY); }));
   }
   if (kind === 'void') {
     // (ukryta) czerń i krew: szparki oczu, poszarpany uśmiech z zębami, zacieki
@@ -139,7 +141,7 @@ export function initRooms(root, { assets, go }) {
       const ks = ['haunt', 'sleaze', 'sacral'], ms = ks.map((k, i) => { const m = makeMask(P, k, 11 + i * 7); m.scale.setScalar(.31); m.position.x = (i - 1) * .6; P.scene.add(m); return m; });
       const hid = makeMask(P, 'void', 97); hid.scale.setScalar(.31); hid.visible = false; P.scene.add(hid);
       const cold = new THREE.PointLight(0x7fe8ff, .8, 1.6); cold.position.set(-.64, .1, .6); P.scene.add(cold);
-      const pink = new THREE.PointLight(0xff3fb4, .7, 1.6); pink.position.set(0, -.2, .6); P.scene.add(pink);
+      const pink = new THREE.PointLight(0xff3fb4, .7, .9); pink.position.set(0, -.2, .6); P.scene.add(pink);
       const gold = new THREE.PointLight(0xffd27a, .8, 1.6); gold.position.set(.64, .4, .6); P.scene.add(gold);
       P.cam.position.set(0, .05, 2.9); P.cam.lookAt(0, 0, 0);
       let hoverFrom = null, flashAt = null, flashed = false;
