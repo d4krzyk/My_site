@@ -78,23 +78,29 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     const pendant = (x, y, l) => { dashed('b', line(x, y, x, y + l), 3, 2.4); const yy = y + l;
       dot('a', x, yy + 2, .9); const d = [[x, yy + 4], [x + 3.4, yy + 10], [x, yy + 16], [x - 3.4, yy + 10], [x, yy + 4]];
       for (let i = 0; i < 4; i++) stroke('a', line(d[i][0], d[i][1], d[i + 1][0], d[i + 1][1]), () => .45); dot('r', x, yy + 10, .8); dashed('b', line(x, yy + 17, x, yy + 24), 1.5, 2); dot('a', x, yy + 26, .6); };
-        // gotycki krzyż na łodydze: proste ramiona zakończone liliami (szpic i dwa zawinięte płatki), czteroliść z akcentem
-    // w środku, na dole stopniowana podstawa; łodyga wchodzi w szczyt krzyża i wychodzi spod podstawy
-    const fleur = (ex, ey, dx, dy) => { const a = Math.atan2(dy, dx);
-      stroke('a', line(ex, ey, ex + dx * 6.5, ey + dy * 6.5), t => 1.05 * (1 - t) + .15); dot('a', ex, ey, 1.05);
-      for (const q of [-1, 1]) { const p = leafPath(ex - dx, ey - dy, a + q * 1.25, -q, 4.4, .62); stroke('a', p, t => .85 * (1 - t) + .3); const e = p[p.length - 1]; dot('a', e[0], e[1], .7); } };
-    const crossSpan = s => [s * .85 + 6, s * 1.5 + 6];
+        // gotycki krzyż wpleciony w gałęzie: konturowe ramiona rozszerzające się ku końcom, zakończone szpicem z płatkami,
+    // w środku medalion z akcentem; łodyga wchodzi w szczyt i wychodzi spod stopy, spod ramion wyrastają zawijasy
+    const outline = (P, r = .5) => { for (let i = 0; i < P.length - 1; i++) stroke('a', line(P[i][0], P[i][1], P[i + 1][0], P[i + 1][1]), () => r); };
+    const crossSpan = s => [s * .75 + 8, s * 1.45 + 8];
     const cross = (y, s) => {
-      const x = sx(y)[0], top = y - s * .85, bot = y + s * 1.5;
-      stroke('a', line(x, top, x, y - 6), () => .75); stroke('a', line(x, y + 6, x, bot), () => .75); fleur(x, top, 0, -1);
-      for (const dx of [-1, 1]) { stroke('a', line(x + dx * 6, y, x + dx * s * .75, y), () => .7); fleur(x + dx * s * .75, y, dx, 0); }
-      // podstawa: dwa stopnie, szersze ku dołowi
-      stroke('a', line(x - s * .2, bot, x + s * .2, bot), () => .9); stroke('a', line(x - s * .34, bot + 3, x + s * .34, bot + 3), () => .9);
-      const ring = []; for (let a = 0; a < TAU; a += .07) ring.push([x + Math.cos(a) * 5.4, y + Math.sin(a) * 5.4, a]); stroke('a', ring, () => .55);
-      for (let k = 0; k < 4; k++) { const a = k * PI / 2 + PI / 4; dot('a', x + Math.cos(a) * 7.6, y + Math.sin(a) * 7.6, .75); }
-      dot('r', x, y, 1.9);
-      // łodyga: od szczytu lilii w górę i spod podstawy w dół
-      const up = sx(top - 9), dn = sx(bot + 6); stroke('a', line(x, top - 5, up[0], up[1]), () => .65); stroke('a', line(x, bot + 3, dn[0], dn[1]), () => .6);
+      const x = sx(y)[0];
+      const arm = (dx, dy, l) => { const px = -dy, py = dx, P = (d, w) => [x + dx * d + px * w, y + dy * d + py * w];
+        const side = q => [P(6.2, 1.4 * q), P(l * .62, 1.6 * q), P(l - 2.6, 3.6 * q), P(l - 1, 2.1 * q), P(l + .8, 3.3 * q), P(l + 5, 0)];
+        outline(side(1)); outline(side(-1));
+        stroke('b', line(x + dx * 7.5, y + dy * 7.5, x + dx * (l - 3), y + dy * (l - 3)), () => .45);   // żyłka w osi ramienia
+        dot('a', x + dx * (l - 1.2), y + dy * (l - 1.2), .7); };
+      arm(0, -1, s * .75); arm(-1, 0, s * .68); arm(1, 0, s * .68); arm(0, 1, s * 1.45);
+      const ring = []; for (let a = 0; a < TAU; a += .07) ring.push([x + Math.cos(a) * 6, y + Math.sin(a) * 6, a]); stroke('a', ring, () => .55);
+      for (let k = 0; k < 4; k++) { const a = k * PI / 2 + PI / 4; dot('a', x + Math.cos(a) * 3.3, y + Math.sin(a) * 3.3, .6); }
+      dot('r', x, y, 1.7);
+      const top = y - s * .75 - 5, foot = y + s * 1.45 + 5;
+      const up = sx(top - 4), dn = sx(foot + 4); stroke('a', line(x, top, up[0], up[1]), () => .65); stroke('a', line(x, foot, dn[0], dn[1]), () => .65);
+      // gałęzie oplatające krzyż: duży zawijas spod ramienia zwija się pod nim, mniejszy po drugiej stronie, listki przy szczycie
+      const q = B.seed & 1 ? 1 : -1;
+      scroll(x + q * 3.5, y + 9, PI / 2 - q * .55, -q, s * .62, 1);
+      scroll(x - q * 3.5, y + s * .75, PI / 2 + q * .5, q, s * .42, 0);
+      scroll(up[0], up[1] + 1, -PI / 2 - q * .6, -q, s * .4, 0);
+      flick([x - q * 2.2, y - s * .4, -PI / 2], -q, 3.5);
     };
     // łodyga: łańcuch łuków Béziera naprzemiennie w lewo i w prawo od osi pasa
     const anc = []; let yy = y0, sd = R() < .5 ? -1 : 1;
@@ -107,7 +113,7 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     anc.sort((p, q) => p[1] - q[1]);
     const spine = [];
     for (let i = 0; i < anc.length - 1; i++) { const p0 = anc[i], p3 = anc[i + 1], h = (p3[1] - p0[1]) * (B.smooth ? (R(), .45) : .38 + R() * .2); bez(p0, [p0[0], p0[1] + h], [p3[0], p3[1] - h], p3, spine); }
-    const CS = 22, [cT, cB] = crossSpan(CS), inCross = p => crossY.some(c => p[1] > c - cT && p[1] < c + cB);
+    const CS = 24, [cT, cB] = crossSpan(CS), inCross = p => crossY.some(c => p[1] > c - cT && p[1] < c + cB);
     stroke('a', spine.filter(p => !inCross(p)), (t, a) => Math.max(.42, 1 * nib(a) * Math.min(1, t * len / 30 + .2, (1 - t) * len / 40 + .2)));
     const sxI = y => { let b = 0; for (let i = 1; i < spine.length; i++) if (Math.abs(spine[i][1] - y) < Math.abs(spine[b][1] - y)) b = i; return b; }, sx = y => spine[sxI(y)];
 
