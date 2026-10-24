@@ -200,7 +200,8 @@ export function initRooms(root, { assets, go }) {
     if (kind === 'phone') {
       loadPSX(P, assets.phone).then(m => { const d = new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3());
         if (d.x >= d.y && d.x >= d.z) m.rotation.z = Math.PI / 2; else if (d.z >= d.y) m.rotation.x = Math.PI / 2;
-        const o = fit(m, 1.1); P.scene.add(o); P.cam.position.set(0, 0, 1.75); P.cam.lookAt(0, 0, 0);
+        const up = new THREE.Group(); up.add(m); up.rotation.z = Math.PI;                         // model stał do góry nogami
+        const o = fit(up, 1.1); P.scene.add(o); P.cam.position.set(0, 0, 1.75); P.cam.lookAt(0, 0, 0);
         let ring = 0;
         click = () => { st.busy = true; ring = 1; st.t0 = st.now; setTimeout(() => { st.busy = false; ring = 0; go(kind); }, RM ? 0 : 600); };
         tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0;
