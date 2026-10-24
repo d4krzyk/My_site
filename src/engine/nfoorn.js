@@ -78,8 +78,7 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     const pendant = (x, y, l) => { dashed('b', line(x, y, x, y + l), 3, 2.4); const yy = y + l;
       dot('a', x, yy + 2, .9); const d = [[x, yy + 4], [x + 3.4, yy + 10], [x, yy + 16], [x - 3.4, yy + 10], [x, yy + 4]];
       for (let i = 0; i < 4; i++) stroke('a', line(d[i][0], d[i][1], d[i + 1][0], d[i + 1][1]), () => .45); dot('r', x, yy + 10, .8); dashed('b', line(x, yy + 17, x, yy + 24), 1.5, 2); dot('a', x, yy + 26, .6); };
-    const arc = (x, y, r, a0, a1) => { const p = []; for (let a = a0; a < a1; a += .3 / r) p.push([x + Math.cos(a) * r, y + Math.sin(a) * r, a]); dashed('b', p, 4, 3.2); };
-    // gotycki krzyż na łodydze: ramiona zwężane ku środkowi, zakończenia z trzech kropli, pierścień, akcent w środku
+        // gotycki krzyż na łodydze: ramiona zwężane ku środkowi, zakończenia z trzech kropli, pierścień, akcent w środku
     const cross = (x, y, s) => {
       for (const [dx, dy, l] of [[0, -1, s * .8], [0, 1, s * 1.45], [-1, 0, s * .75], [1, 0, s * .75]]) {
         const ex = x + dx * l, ey = y + dy * l; stroke('a', line(x + dx * 5.5, y + dy * 5.5, ex, ey), t => .55 + t * .35);
@@ -91,13 +90,15 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     };
     // łodyga: łańcuch łuków Béziera naprzemiennie w lewo i w prawo od osi pasa
     const anc = []; let yy = y0, sd = R() < .5 ? -1 : 1;
-    while (yy < y1 - 30) { anc.push([cx + sd * bw * (.08 + R() * .2), yy]); sd = -sd; yy += 70 + R() * 80; }
+    // gładka fala (B.smooth): równy krok i wychylenie; inaczej swobodniejszy rytm
+    while (yy < y1 - 30) { const r1 = R(), r2 = R(); anc.push([cx + sd * bw * (B.smooth ? .15 + r1 * .03 : .08 + r1 * .2), yy]); sd = -sd; yy += B.smooth ? 100 + r2 * 16 : 70 + r2 * 80; }
     anc.push([cx + sd * bw * .1, y1]);
     // krzyż na kotwicy: tam łodyga biegnie pionowo, więc przechodzi prosto przez jego ramię
-    crossY.forEach(c => { for (let i = anc.length - 2; i > 0; i--) if (Math.abs(anc[i][1] - c) < 50) anc.splice(i, 1); anc.push([cx + (B.seed & 1 ? -1 : 1) * bw * .06, c]); });
+    crossY.forEach(c => { if (B.smooth) { let b = 1; for (let i = 1; i < anc.length - 1; i++) if (Math.abs(anc[i][1] - c) < Math.abs(anc[b][1] - c)) b = i; anc[b][1] = c; return; }
+      for (let i = anc.length - 2; i > 0; i--) if (Math.abs(anc[i][1] - c) < 50) anc.splice(i, 1); anc.push([cx + (B.seed & 1 ? -1 : 1) * bw * .06, c]); });
     anc.sort((p, q) => p[1] - q[1]);
     const spine = [];
-    for (let i = 0; i < anc.length - 1; i++) { const p0 = anc[i], p3 = anc[i + 1], h = (p3[1] - p0[1]) * (.38 + R() * .2); bez(p0, [p0[0], p0[1] + h], [p3[0], p3[1] - h], p3, spine); }
+    for (let i = 0; i < anc.length - 1; i++) { const p0 = anc[i], p3 = anc[i + 1], h = (p3[1] - p0[1]) * (B.smooth ? (R(), .45) : .38 + R() * .2); bez(p0, [p0[0], p0[1] + h], [p3[0], p3[1] - h], p3, spine); }
     const CS = 19, inCross = p => crossY.some(c => p[1] > c - CS * .8 && p[1] < c + CS * 1.45);   // łodyga przechodzi w pionowe ramię krzyża
     stroke('a', spine.filter(p => !inCross(p)), (t, a) => Math.max(.42, 1 * nib(a) * Math.min(1, t * len / 30 + .2, (1 - t) * len / 40 + .2)));
     const sxI = y => { let b = 0; for (let i = 1; i < spine.length; i++) if (Math.abs(spine[i][1] - y) < Math.abs(spine[b][1] - y)) b = i; return b; }, sx = y => spine[sxI(y)];
@@ -120,7 +121,6 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
       const i = sxI(ay), p = spine[i], side = ax < cx ? 1 : -1; const sc = scroll(p[0], p[1], p[2] + side * (.35 + R() * .25), -side, Math.min(bw * .5, 20 + R() * 6), 1); if (sc) branches.push({ at: i, pts: sc }); });
     // krzyże, przerywane łuki, gwiazdki
     crossY.forEach(y => { const p = sx(y); cross(p[0], y, CS); });
-    clusters.forEach(y => { const p = sx(y); arc(p[0] + (R() - .5) * 18, y, 20 + R() * 12, R() * PI, R() * PI + PI * (.6 + R() * .5)); });
     for (let y = y0 + 30 + R() * 40; y < y1 - 20; y += 70 + R() * 90) { const p = sx(y), side = p[0] < cx ? 1 : -1;
       sparkle(clampv(p[0] + side * (18 + R() * 22), x0 + 6, x1 - 6), y + (R() - .5) * 20, 2.5 + R() * 3); }
     // koraliki przy nagłówkach sekcji
