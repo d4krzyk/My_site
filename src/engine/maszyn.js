@@ -184,8 +184,75 @@ export function initMaszyn(root, opts) {
         "      sssssssssssssssssss"
       ]}
     };
+    /* ---- pełny profil IT: treść złożona z bloków; ornamenty boki z układu powyżej, środkowy fragment (wiersze A..B-1) powtarzany tyle razy, ile trzeba ---- */
+    const BLOCKS = [
+      {kv: [['AUTOR', 'DANIEL KRZYKOWSKI'], ['TYTUŁ', 'MSc COMPUTER SCIENCE (AI)'], ['ROLA', 'PYTHON & ML ENGINEER'], ['UCZELNIA', 'UMK TORUŃ'], ['JĘZYKI', 'PL NATYWNY · EN B2']]},
+      {h: 'PROFIL'},
+      {p: 'Absolwent informatyki, student magisterski sztucznej inteligencji na UMK w Toruniu. Pracuję w centrum operacji sieciowych (NOC) w MSK TORMAN. Praca magisterska rozwija system Visual Echoes 2.0 (pierwotnie z Facebook AI Research): lepsza percepcja 3D dzięki dokładniejszemu modelowaniu orientacji w przestrzeni.'},
+      {h: 'DOŚWIADCZENIE'},
+      {e: ['OPERATOR NOC · MSK TORMAN', '10.2025 → TERAZ', 'Nadzór operacyjny nad siecią MSK TORMAN w środowisku NOC: monitoring sieci i systemów, rozpoznawanie i obsługa incydentów, eskalacja do zespołów technicznych, dokumentowanie zdarzeń.']},
+      {e: ['STAŻ · PFEIFER & LANGEN POLSKA', '08.2023 – 09.2023', 'Helpdesk, pomoc przy zadaniach infrastruktury sieciowej, pierwsze prace z Power BI (wizualizacja i analiza danych).']},
+      {e: ['SOFTWARE ENGINEER · LUXOLIS', '09.2023 – 10.2023', 'Przygotowanie danych, dobór modeli, projekt API, wdrożenie i utrzymanie rozwiązań opartych na AI.']},
+      {h: 'PROJEKT WYBRANY'},
+      {e: ['VISUAL ECHOES 2.0', 'PRACA MAGISTERSKA · 2025 →', 'System percepcji 3D dla agentów autonomicznych: echo jako sygnał nadzorujący przy estymacji głębi z obrazów RGB. Mój wkład: klasyfikacja 4 kierunków zastąpiona modelowaniem 36 orientacji (co 10°) dla drobniejszej rozdzielczości kątowej; krzywa nasyca się przy 9-12 orientacjach.']},
+      {h: 'EDUKACJA'},
+      {e: ['MAGISTER · INFORMATYKA (AI)', 'UMK TORUŃ · 10.2024 → TERAZ', '']},
+      {e: ['INŻYNIER · INFORMATYKA', 'UMK TORUŃ · 10.2020 – 05.2024', '']},
+      {h: 'UMIEJĘTNOŚCI'},
+      {kv: [['JĘZYKI', 'Python · C / C++ · C# / .NET · JavaScript · PHP'], ['WEB', 'REST API · React · Selenium'], ['DANE', 'PostgreSQL / MySQL · NumPy · Pandas · scikit-learn · PyTorch'], ['SYSTEMY', 'Linux / Bash · Git · Docker'], ['IT OPS', 'Network Monitoring · Incident Management · IT Operations']]},
+      {h: 'MIĘKKIE'},
+      {p: 'Charyzma i komunikacja · współpraca · kreatywność · adaptacja do projektu · dbałość o szczegóły · rozwiązywanie problemów · myślenie analityczne i krytyczne · priorytetyzacja zadań i czasu'},
+      {h: 'INNE RELEASY'},
+      {c: ['WIKIROOMS ·÷· REMUZ.IO ·÷· MUSICCLUBAPP', 'SHADOWDETECTION ·÷· GAMEINJAVA']},
+      {h: 'ZAINTERESOWANIA'},
+      {c: ['IT · MUZYKA · FOTOGRAFIA · DIY · BIEGANIE']},
+      {h: 'KONTAKT'},
+      {kv: [['GITHUB', 'github.com/d4krzyk'], ['LINKEDIN', 'linkedin.com/in/d4krzyk']]},
+      {c: ['', 'DŹWIĘK I OBRAZ  //  W SZTUCE I W KODZIE']},
+    ];
+    const wrapText = (t, w) => { const out = []; let cur = ''; for (const wd of t.split(/\s+/)) { if (!wd) continue; if (!cur) cur = wd; else if ((cur + ' ' + wd).length <= w) cur += ' ' + wd; else { out.push(cur); cur = wd; } } if (cur) out.push(cur); return out; };
+    // wiersze treści: [tekst, klasy] o szerokości do w
+    const compose = (w, gap = 0) => {
+      const rows = []; const add = (t, k) => rows.push([t, k || ' '.repeat(t.length)]);
+      const mid = (t, k) => { const pad = Math.max(0, Math.floor((w - t.length) / 2)); add(' '.repeat(pad) + t, ' '.repeat(pad) + (k || 's'.repeat(t.length))); };
+      for (const b of BLOCKS) {
+        if (b.h) { for (let g = 0; g <= gap; g++) rows.push(['', '']); const t = `─═ ${b.h} ═─`; mid(t, 'dd' + 'd' + 'h'.repeat(b.h.length) + 'ddd'); rows.push(['', '']); }
+        else if (b.p) wrapText(b.p, w).forEach(l => add(l, 's'.repeat(l.length)));
+        else if (b.c) b.c.forEach(l0 => wrapText(l0, w).forEach(l => mid(l, 's'.repeat(l.length))));
+        else if (b.kv) { const kc = Math.min(11, Math.floor(w * .34)); for (const [k, v] of b.kv) { if (Math.max(...v.split(' ').map(x => x.length)) > w - kc) { add(k, 'd'.repeat(k.length)); wrapText(v, w - 2).forEach(l => add('  ' + l, '  ' + 's'.repeat(l.length))); continue; } const vl = wrapText(v, w - kc - 1); vl.forEach((l, i) => { const key = i ? ' '.repeat(kc) : (k + ' ' + '.'.repeat(Math.max(1, kc - k.length - 2)) + ' ').padEnd(kc); const t = key + l; add(t.slice(0, w), (i ? ' '.repeat(kc) : 'd'.repeat(Math.min(kc, key.length))) + 's'.repeat(Math.max(0, t.length - kc))); }); } }
+        else if (b.e) { const [t1, t2, tx] = b.e; wrapText(t1, w).forEach(l => add(l, 's'.repeat(l.length))); add('  ' + t2, '  ' + 'd'.repeat(t2.length)); wrapText(tx, w - 2).forEach(l => add('  ' + l, '  ' + 's'.repeat(l.length))); if (tx) rows.push(['', '']); }
+      }
+      return rows;
+    };
+    {
+      const A = 9, B = 26, TW = 40, X0 = 23, SRC = L.full, N0 = SRC.ch.length;
+      let body = compose(TW); while (body.length && !body[0][0]) body.shift();
+      const ROW0 = 3, TAIL = 11;
+      const loops = Math.max(0, Math.ceil((ROW0 + body.length + 3 - (A + TAIL)) / (B - A)));
+      const total = A + loops * (B - A) + (N0 - B), slack = total - 1 - ROW0 - body.length - 2, heads = BLOCKS.filter(b => b.h).length;
+      if (slack >= heads) { body = compose(TW, Math.floor(slack / heads)); while (body.length && !body[0][0]) body.shift(); }
+      const idx = []; for (let i = 0; i < A; i++) idx.push(i); for (let l = 0; l < loops; l++) for (let i = A; i < B; i++) idx.push(i); for (let i = B; i < N0; i++) idx.push(i);
+      const ch = [], cl = [];
+      idx.forEach((si, ri) => {
+        let r = [...SRC.ch[si].padEnd(86)], k = [...SRC.cl[si].padEnd(86)];
+        if (ri >= 2 && ri < idx.length - 1) {
+          // środek wymieniamy na nasz tekst (wiersz 2 to napis nagłówka, który podmieniamy też)
+          for (let c = X0; c < X0 + TW; c++) { r[c] = ' '; k[c] = ' '; }
+          const ln = body[ri - ROW0];
+          if (ri === 2) { const t = '·─═≡ P R O F I L   I T ≡═─·'; const pad = X0 + Math.floor((TW - t.length) / 2); [...t].forEach((c, i) => { r[pad + i] = c; k[pad + i] = c === ' ' ? ' ' : /[A-Z]/.test(c) ? 'h' : 'd'; }); }
+          else if (ln) [...ln[0]].forEach((c, i) => { r[X0 + i] = c; k[X0 + i] = ln[1][i] || ' '; });
+        }
+        ch.push(r.join('')); cl.push(k.join(''));
+      });
+      L.full = { cols: 86, ch, cl, off: idx.length - N0 };
+      const cw = 31, cb = compose(cw); while (cb.length && !cb[0][0]) cb.shift();
+      L.compact = { cols: cw, ch: ['    ·─═≡ P R O F I L   I T ≡═─·', ...cb.map(r => r[0])], cl: ['dddddddhhhhhhhhhhhhhdddddd'.padEnd(31, ' '), ...cb.map(r => r[1].padEnd(r[0].length, ' '))] };
+      L.compact.ch = L.compact.ch.map(l => l.slice(0, cw)); L.compact.cl = L.compact.cl.map(l => l.slice(0, cw));
+      var DROPOFF = L.full.off;
+    }
     // spadająca kropla (układ FULL): klatki [wiersz, kolumna, znak, klasa]
     const DROP = [[[33, 75, "▀", "r"], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, "█", "r"], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, "▄", "r"], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, "▀", "r"], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, "▄", "r"], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, "▀", "r"], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, "▄", "r"], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, "▀", "r"]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]]];
+    DROP.forEach(f => f.forEach(c => { c[0] += DROPOFF; }));
     const CLASS = {d: 'd', h: 'h', o: 'o', q: 'q', r: 'r'};
     const esc = g => g === '&' ? '&amp;' : g === '<' ? '&lt;' : g === '>' ? '&gt;' : g;
     let mode = null, dec = null;
@@ -221,11 +288,9 @@ export function initMaszyn(root, opts) {
       }
       pre.innerHTML = out.join('\n');
     };
-    const pick = () => {
-      const cs = getComputedStyle(wrap);
-      const inner = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      return inner >= L.full.cols * parseFloat(getComputedStyle(pre).fontSize) * .5 ? 'full' : 'compact';   // znak DOS = pół wysokości kroju
-    };
+    const avail = () => { const cs = getComputedStyle(wrap); let w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      wrap.querySelectorAll(':scope > img').forEach(im => { if (getComputedStyle(im).display !== 'none') w -= im.offsetWidth + 6; }); return w; };
+    const pick = () => avail() >= L.full.cols * parseFloat(getComputedStyle(pre).fontSize) * .5 ? 'full' : 'compact';   // znak DOS = pół wysokości kroju
     const decode = () => {
       if (RM) return render(null);
       dec = { t0: performance.now(), now: performance.now() };
