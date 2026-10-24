@@ -39,3 +39,5 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
   ekranu przy każdym przewinięciu (a nie ze zdarzeń przecięcia), z wygładzonym przejściem.
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
 - **Przewijanie sekcjami (Krzyk, wariant B – skok blokowy):** sprawdzić na gładziku (Mac) i ewentualnie dodać punkt zatrzymania w środku kolażu.
+- **Generator sigili (`/sigen/`): styl suwaków i pasków.** Zmienić wygląd pasków (suwaki gęstości i grubości, panel) na bardziej imersyjny,
+  w stylistyce pixel haunted (np. pikselowe, ditherowane suwaki w kolorach krwi i kości słoniowej, nawiedzony klimat zamiast domyślnych kontrolek).
