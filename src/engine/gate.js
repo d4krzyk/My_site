@@ -390,10 +390,10 @@ FONTS().then(()=>{
   const gate=$('gate'), c=$('tun'), x=c.getContext('2d'); c.width=GW; c.height=GH; const W=c.width, H=c.height;
   const tints={red:{hi:[150,18,30],lo:[70,8,16]}}; const tint='red';
   const T={
-    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',l1:'·÷·──── POZIOM -1 ────·÷·',l2:'·÷·──── POZIOM -2 ────·÷·',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
-    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',l1:'·÷·──── LEVEL -1 ────·÷·',l2:'·÷·──── LEVEL -2 ────·÷·',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology'}
+    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',l1:'·÷·──── POZIOM -1 ────·÷·',l2:'·÷·──── POZIOM -2 ────·÷·',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia',replay:'↺ OD NOWA'},
+    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',l1:'·÷·──── LEVEL -1 ────·÷·',l2:'·÷·──── LEVEL -2 ────·÷·',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology',replay:'↺ REPLAY'}
   };
-  let lang='pl';
+  let lang=opts.lang;
   const frame=()=>{ const s=T[lang]; const w=40; const ctr=(str,ch=' ')=>{const n=[...str.replace(/\uFE0E/g,'')].length; const l=Math.floor((w-n)/2); return ch.repeat(Math.max(0,l))+str+ch.repeat(Math.max(0,w-n-l));};
     $('gFrame').innerHTML=
       `<button type="button" class="enter" id="gEnter">${s.enter}<span class="cur"></span></button>\n`+
@@ -401,9 +401,9 @@ FONTS().then(()=>{
       `<span class="gl gb"><span class="w">D. K.</span><span class="gx"></span><span class="yr">2026</span></span>`;
     gateOuter($('gFrame'));
     $('gEnter').onclick=()=>go(false); $('gCalm').onclick=()=>go(true);
-    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gL1').textContent=s.l1; $('gL2').textContent=s.l2; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach;
+    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gL1').textContent=s.l1; $('gL2').textContent=s.l2; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; $('gReplay').textContent=s.replay;
     $('lPL').setAttribute('aria-pressed',lang==='pl'); $('lEN').setAttribute('aria-pressed',lang==='en'); };
-  $('lPL').onclick=()=>{lang='pl'; frame();}; $('lEN').onclick=()=>{lang='en'; frame();};
+  $('lPL').onclick=()=>{lang='pl'; opts.setLang('pl'); frame();}; $('lEN').onclick=()=>{lang='en'; opts.setLang('en'); frame();};
   frame();
   gate.querySelectorAll('.path').forEach((b,i)=>b.addEventListener('click',()=>{ b.classList.add('zap'); setTimeout(()=>opts.onPath&&opts.onPath(i), RM?0:420); }));
   // kursor blokowy w przycisku

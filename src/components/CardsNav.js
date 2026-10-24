@@ -2,6 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { asset } from '@/lib/base';
+import { getLang, setLang, CARD_TEXT } from '@/lib/lang';
 
 const HREF = ['/', '/krzyk/', '/maszynologia/'];
 const FACE = ['brama', 'krzyk', 'maszynologia'];
@@ -11,11 +12,12 @@ export default function CardsNav({ current }) {
   const ref = useRef(null);
   const router = useRouter();
   useEffect(() => {
+    document.documentElement.lang = getLang();
     let alive = true;
     import('@/engine/cards').then(({ initCards }) => {
       if (!alive || !ref.current) return;
       initCards(ref.current, {
-        current,
+        current, text: CARD_TEXT, lang: getLang, setLang,
         minis: [0, 1, 2].map(i => asset(`/cards/mini-${i}.png`)),
         backs: [0, 1, 2].map(i => asset(`/cards/back-${i}.png`)),
         faces: FACE.map(k => asset(`/cards/face-${k}.png`)),

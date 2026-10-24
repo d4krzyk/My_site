@@ -35,3 +35,10 @@ export function makeGlyph(){ const n=[[0,0],[1,0],[2,0],[0,1],[1,1],[2,1],[0,2],
   return {st, ring:Math.random()<.22, dot:Math.random()<.4?n[Math.floor(Math.random()*9)]:null}; }
 export function drawGlyph(g,x,gx,gy,s){ x.beginPath(); g.st.forEach(([a,b])=>{x.moveTo(gx+a[0]*s/2,gy+a[1]*s/2); x.lineTo(gx+b[0]*s/2,gy+b[1]*s/2);});
   if(g.ring){x.moveTo(gx+s*.5+s*.3,gy+s*.5); x.arc(gx+s*.5,gy+s*.5,s*.3,0,Math.PI*2);} x.stroke(); if(g.dot) x.fillRect(gx+g.dot[0]*s/2-1,gy+g.dot[1]*s/2-1,2,2); }
+
+export function oneBit(ctx,w,h,col,opts={}){
+  const id=ctx.getImageData(0,0,w,h), d=id.data, bias=opts.bias||0;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const k=(y*w+x)*4; const v=(d[k]+d[k+1]+d[k+2])/765*(d[k+3]/255);
+    if(v+bias>bth(x,y)){ d[k]=col[0]; d[k+1]=col[1]; d[k+2]=col[2]; d[k+3]=255; } else { d[k]=d[k+1]=d[k+2]=0; d[k+3]=opts.keepBg?255:0; } }
+  ctx.putImageData(id,0,0);
+}
