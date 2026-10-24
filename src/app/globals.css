@@ -142,7 +142,7 @@ button{-webkit-user-select:none;user-select:none}
 .k-body{position:relative;z-index:2;width:84%;margin:0 auto;padding:var(--pad) 0 0}
 .k-body :is(p,h1,h2,.k-lv){text-shadow:0 0 6px #000,0 0 14px #000,1px 1px 0 #000}
 @media (max-width:700px){
-  .sec.krzyk{--toph:450cqw;--pad:74cqw}
+  .sec.krzyk{--toph:675cqw;--pad:285cqw}
   .k-bgs{background-image:var(--btp),var(--bmp)}
   .k-foot{background-image:var(--bbp)}
   .k-body{width:92%}
@@ -158,7 +158,7 @@ button{-webkit-user-select:none;user-select:none}
 .k-line{position:absolute;white-space:nowrap;font-family:"Liberation Serif K","Liberation Serif","Times New Roman",serif;line-height:1}
 .k-line.l{left:0;transform:translateX(calc(-1 * var(--shift)))}
 .k-line.r{right:0;transform:translateX(var(--shift))}
-.k-motto{position:absolute;left:0;top:0;width:100cqw;height:56.25cqw;z-index:2;pointer-events:none;
+.k-motto{position:absolute;left:0;top:0;width:100cqw;height:56.25cqw;z-index:2;pointer-events:none;container-type:inline-size;
   -webkit-mask:var(--dust-m) 0 0/100% 100% no-repeat;mask:var(--dust-m) 0 0/100% 100% no-repeat}
 .k-motto p{position:absolute;margin:0;font-family:"Special Elite K",monospace;line-height:1;white-space:nowrap}
 .k-motto .m1{left:45.3cqw;top:26.05cqw;font-size:2.656cqw;color:#e3d6b4;opacity:.95}
@@ -179,6 +179,12 @@ button{-webkit-user-select:none;user-select:none}
   100%{opacity:1;filter:none}}
 @keyframes k-safelight{0%{opacity:0}12%{opacity:1}22%{opacity:.7}30%{opacity:1}70%{opacity:.8}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.k-stamp{opacity:1}.dev .k-stamp,.dev .k-safe{animation:none}}
+@media (max-width:700px){
+  /* telefon: kolaż dzielony na pół, prawa połówka (od x=455 px kolażu) na całą szerokość: skala 720/825 */
+  .k-motto{left:-55.15cqw;width:155.15cqw;height:87.27cqw}
+  .k-stamp{left:0;top:60.73cqw;width:91.15cqw}
+  .k-safe{height:135cqw;background:radial-gradient(70% 40% at 50% 60%,rgba(150,12,8,.28),transparent 70%)}
+}
 
 /* pole wyborów: modele 3D na kawałkach ciemnej tektury */
 .k-choose{margin:34px 0 60px;text-align:center}

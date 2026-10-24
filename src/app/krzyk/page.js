@@ -12,13 +12,13 @@ const LOREM = [
 // pole wyborów: model 3D, podpis, dopisek
 const PICKS = [
   ['walkman', 'muzyka', 'klipy · taśmy · odtwarzacz'],
-  ['heads', 'persony', 'trzy twarze, trzy nastroje'],
+  ['heads', 'persony', 'trzy maski, trzy nastroje'],
   ['minidv', 'obraz', 'kaseta miniDV · aparat DSC-V1'],
 ];
 // podrozdziały (treść później)
 const SUBS = [
   ['k-muzyka', 'A1', 'muzyka · taśmy', 'Tu będą klipy w odtwarzaczu z planszy „Zejście”.'],
-  ['k-persony', 'A2', 'persony', 'Tu zamieszkają trzy persony.'],
+  ['k-persony', 'A2', 'persony', 'Tu zamieszkają trzy persony: lękowa, wyluzowana i poważna.'],
   ['k-obraz', 'A3', 'obraz · DSC-V1', 'Tu będzie aparat Sony DSC-V1 do przeglądania zdjęć.'],
   ['k-kontakt', 'A4', 'kontakt', 'Tu będzie kontakt.'],
 ];
