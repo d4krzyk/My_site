@@ -43,3 +43,5 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
   w stylistyce pixel haunted (np. pikselowe, ditherowane suwaki w kolorach krwi i kości słoniowej, nawiedzony klimat zamiast domyślnych kontrolek).
 - **Maszynologia na telefonie: znikają ramki.** W wersji na telefon ramki wokół paneli (Release info i terminal) nie są widoczne. Do sprawdzenia i naprawy
   (m.in. rysowanie ramki na wąskim ekranie i moment jej animacji po wejściu przez kurtynę).
+- **Przełącznik PL/EN na telefonie: lepsze umiejscowienie.** Na telefonie klawisze języka (prawy górny róg, obok kart) zasłaniają dużo treści.
+  Znaleźć miejsce, które nic nie zasłania (np. wmontowane w układ strony albo chowane przy przewijaniu), zachowując spójność między bramą a podstronami.
