@@ -407,9 +407,9 @@ FONTS().then(()=>{
       `<span class="gl gb"><span class="w">D. K.</span><span class="gx"></span><span class="yr">2026</span></span>`;
     gateOuter($('gFrame'));
     $('gEnter').onclick=()=>go(false); $('gCalm').onclick=()=>go(true);
-    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gL1').textContent=s.l1; $('gL2').textContent=s.l2; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach;
-    $('lPL').setAttribute('aria-pressed',lang==='pl'); $('lEN').setAttribute('aria-pressed',lang==='en'); };
-  $('lPL').onclick=()=>{lang='pl'; opts.setLang('pl'); frame();}; $('lEN').onclick=()=>{lang='en'; opts.setLang('en'); frame();};
+    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gL1').textContent=s.l1; $('gL2').textContent=s.l2; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; };
+  // język zmienia wspólny przełącznik w rogu (LangKeys)
+  const onLang=e=>{ if(!gate.isConnected){ removeEventListener('krzyk-lang',onLang); return; } lang=e.detail; frame(); }; addEventListener('krzyk-lang',onLang);
   frame();
   // wybór drogi: przycisk pęka i spada jak okno bramy, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
   let picked=false;

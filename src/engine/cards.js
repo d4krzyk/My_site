@@ -111,11 +111,9 @@ function slitTo(stage, title, sub, back){
   const sp=document.createElement('div'); sp.className='spread'; sp.setAttribute('role','dialog'); sp.setAttribute('aria-label',L.dialog); sp.hidden=true;
   const dim=document.createElement('canvas'); dim.className='sdim'; sp.appendChild(dim);
   const cards=[0,1,2].map(i=>{ const b=document.createElement('button'); b.type='button'; b.className='scard'; b.innerHTML=`<img alt="" src="${opts.backs[i]}"><span class="sn"></span><span class="sr dos"></span>`; sp.appendChild(b); return b; });
-  const lg=document.createElement('div'); lg.className='slang dos'; lg.setAttribute('role','group'); lg.setAttribute('aria-label',L.switch);
-  lg.innerHTML='·÷·[<button type="button" data-l="pl">PL</button>]·÷·[<button type="button" data-l="en">EN</button>]·÷·'; sp.appendChild(lg);
-  const syncLang=()=>{ L=opts.text[opts.lang()]; NAMES=L.names; ROADS=L.roads; sp.setAttribute('aria-label',L.dialog); lg.setAttribute('aria-label',L.switch);
-    btn.setAttribute('aria-label',L.dialog); lg.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===opts.lang())); label(); };
-  lg.querySelectorAll('button').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); opts.setLang(b.dataset.l); syncLang(); }));
+  // język zmienia wspólny przełącznik w rogu (LangKeys); karty tylko przepisują podpisy
+  const syncLang=()=>{ L=opts.text[opts.lang()]; NAMES=L.names; ROADS=L.roads; sp.setAttribute('aria-label',L.dialog); btn.setAttribute('aria-label',L.dialog); label(); };
+  const onLang=()=>{ if(!st.isConnected){ removeEventListener('krzyk-lang',onLang); return; } syncLang(); }; addEventListener('krzyk-lang',onLang);
   st.appendChild(sp);
   const sleep=ms=>new Promise(r=>setTimeout(r,RM?0:ms)); const FR=1000/12;
   // pozycje w łuku (środek sceny), start w rogu przy ikonce

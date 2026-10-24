@@ -48,9 +48,6 @@ button{-webkit-user-select:none;user-select:none}
 .path:hover .orn,.path:focus-visible .orn{color:var(--blood-hi)}
 .path:hover .nm,.path:focus-visible .nm{background:var(--silver);color:#000}
 .path:hover .nm small{color:#000}
-.lang{position:absolute;top:12px;right:14px;z-index:5;display:flex;align-items:center;color:var(--ink-dim)}
-.lang button{all:unset;cursor:pointer;padding:2px 3px;color:var(--ink-dim)}
-.lang button[aria-pressed="true"]{color:#000;background:var(--silver)}
 .tint{position:absolute;top:12px;left:14px;z-index:5;display:flex;gap:6px;color:var(--ink-dim)}
 .tint button{all:unset;cursor:pointer;padding:2px 4px;color:var(--ink-dim);border:1px solid var(--line)}
 .tint button[aria-pressed="true"]{color:var(--silver);border-color:var(--silver)}
@@ -96,6 +93,16 @@ button{-webkit-user-select:none;user-select:none}
 
 /* ===== nawigacja kartami (podstrony): warstwa nad stroną, ikonka w prawym górnym rogu ===== */
 .cards-nav{position:fixed;inset:0;z-index:50;pointer-events:none}
+/* przełącznik języka: pikselowe klawisze obok kart, wciśnięty = aktywny, w kolorze działu */
+.lang-keys{--acc:#dfe2e8;--acc-d:#6e717d;position:fixed;top:30px;right:156px;z-index:55;display:flex;gap:6px;font-family:var(--f-dos);font-size:16px;line-height:1}
+.lang-keys.krzyk{--acc:#3ff0ff;--acc-d:#0e7c8a}
+.lang-keys.maszyn{--acc:#ff3a3a;--acc-d:#a8161f}
+.lang-keys button{all:unset;cursor:pointer;box-sizing:border-box;min-width:34px;height:27px;padding:3px 5px 0;text-align:center;letter-spacing:1px;
+  color:#9a9cab;background:#14151c;border:2px solid #44465a;border-bottom-width:6px;transform:translateY(0);-webkit-font-smoothing:none;
+  clip-path:polygon(2px 0,calc(100% - 2px) 0,100% 2px,100% calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,0 calc(100% - 2px),0 2px)}
+.lang-keys button:hover{color:#fff;border-color:var(--acc-d)}
+.lang-keys button[aria-pressed="true"]{color:#000;background:var(--acc);border-color:var(--acc-d);border-bottom-width:2px;transform:translateY(4px)}
+.lang-keys button:focus-visible{outline:2px dashed var(--acc);outline-offset:2px}
 .cards-nav .deck{all:unset;pointer-events:auto;cursor:pointer;position:fixed;right:10px;top:8px;z-index:6;width:136px;height:84px}
 .cards-nav .deck canvas{width:100%;height:100%;display:block}
 .cards-nav .deck:focus-visible{outline:1px dashed var(--cyan);outline-offset:2px}
@@ -117,11 +124,9 @@ button{-webkit-user-select:none;user-select:none}
 @media (max-width:700px){
   .spread.stack .scard .sr{left:calc(100% + 12px);right:auto;top:50%;transform:translateY(-50%);text-align:left;font-size:13px}
   .cards-nav .deck{right:2px;top:2px}
+  .lang-keys{top:24px;right:146px}
 }
 /* przełącznik języka w rozkładzie */
-.slang{position:absolute;top:12px;left:14px;z-index:2;color:var(--ink-dim);display:flex;align-items:center}
-.slang button{all:unset;cursor:pointer;padding:2px 3px;color:var(--ink-dim)}
-.slang button[aria-pressed="true"]{color:#000;background:var(--silver)}
 /* szczelina: nowa strona wyłania się przez poziome rozcięcie */
 .pgnew{position:fixed;inset:0;z-index:60;background:#030308;display:grid;place-content:center;justify-items:center;gap:6px;text-align:center;pointer-events:auto}
 .pgnew .pgt{font-family:var(--f-goth);font-size:clamp(28px,4.5vw,48px);color:var(--silver);-webkit-font-smoothing:none}
