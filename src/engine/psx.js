@@ -85,19 +85,19 @@ function maskTex(kind, seed) {
     for (let i = 0; i < 900; i++) { x.fillStyle = r() < .5 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.06)'; x.fillRect(r() * W, r() * H, 1, .5); }
     const shade = (x0, y0, x1, y1, w, a) => { x.strokeStyle = `rgba(55,50,58,${a})`; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
     E.forEach((ex, i) => { const d = i ? 1 : -1;
-      x.save(); x.translate(ex, EY); x.scale(1, .42); const g = x.createRadialGradient(0, 0, 4, 0, 0, 19); g.addColorStop(0, 'rgba(20,16,22,.9)'); g.addColorStop(1, 'rgba(20,16,22,0)');
+      x.save(); x.translate(ex, EY); x.scale(1, .7); const g = x.createRadialGradient(0, 0, 4, 0, 0, 19); g.addColorStop(0, 'rgba(20,16,22,.9)'); g.addColorStop(1, 'rgba(20,16,22,0)');
       x.fillStyle = g; x.beginPath(); x.arc(0, 0, 19, 0, 7); x.fill(); x.restore();                   // płaski, przydymiony cień wzdłuż oka
       x.fillStyle = '#0b080b'; x.beginPath();                                                           // ostra, krótka kreska
-      x.moveTo(ex - d * 14, EY); x.lineTo(ex + d * 13, EY - 2); x.lineTo(ex + d * 20, EY - 3); x.lineTo(ex + d * 13, EY + 2); x.lineTo(ex - d * 14, EY + 2.5); x.fill();
+      x.moveTo(ex - d * 14, EY + 1); x.quadraticCurveTo(ex, EY - 13, ex + d * 13, EY - 2); x.lineTo(ex + d * 20, EY - 4); x.lineTo(ex + d * 13, EY + 2); x.quadraticCurveTo(ex, EY + 11, ex - d * 14, EY + 1); x.fill();
       x.beginPath(); x.moveTo(ex - d * 17, EY - 9); x.lineTo(ex + d * 16, EY - 14); x.lineTo(ex + d * 17, EY - 10); x.lineTo(ex - d * 15, EY - 5.5); x.fill();   // ciężka brew nisko nad okiem, opada do środka
     });
     shade(60, 56, 58, 88, 2, .4); shade(68, 56, 70, 88, 2, .4); shade(57, 94, 71, 94, 3, .35);           // kontur nosa
     x.fillStyle = '#0b080b'; x.beginPath(); x.moveTo(48, 119); x.lineTo(80, 119); x.lineTo(76, 124); x.lineTo(52, 124); x.closePath(); x.fill();   // wąskie, proste usta
     const star = (cx, cy, rr) => { x.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = k % 2 ? rr * .3 : rr; x.lineTo(cx + Math.cos(a) * q, cy + Math.sin(a) * q); } x.closePath(); x.fill(); };
     x.fillStyle = '#1a141e'; star(98, 50, 3.6); star(30, 108, 2.8);                                      // dwie drobne gwiazdki
-    x.fillStyle = '#0b080b';                                                                            // pionowe kreski przez oczy, zwężone na końcach (jak na wzorze)
-    E.forEach(ex => { x.beginPath(); x.moveTo(ex - .5, EY - 34); x.quadraticCurveTo(ex + 4, EY, ex + .8, EY + 38); x.lineTo(ex - .8, EY + 38); x.quadraticCurveTo(ex - 4, EY, ex + .5, EY - 34); x.fill(); });
-    E.forEach(ex => hole(() => { x.moveTo(ex - 10, EY + .5); x.quadraticCurveTo(ex, EY - 2.5, ex + 10, EY); x.quadraticCurveTo(ex, EY + 2.5, ex - 10, EY + .5); }));   // zmrużone oczy
+    x.fillStyle = '#0b080b';                                                                            // pionowa kreska tylko przez jedno oko, zwężona na końcach (jak na wzorze)
+    [E[1]].forEach(ex => { x.beginPath(); x.moveTo(ex - .5, EY - 34); x.quadraticCurveTo(ex + 4, EY, ex + .8, EY + 38); x.lineTo(ex - .8, EY + 38); x.quadraticCurveTo(ex - 4, EY, ex + .5, EY - 34); x.fill(); });
+    E.forEach(ex => hole(() => { x.moveTo(ex - 10, EY + .5); x.quadraticCurveTo(ex, EY - 9.5, ex + 10, EY); x.quadraticCurveTo(ex, EY + 8.5, ex - 10, EY + .5); }));   // oczy otwarte, lekko przymrużone
     x.restore();
   }
   if (kind === 'void') {
