@@ -188,7 +188,9 @@ export function initMaszyn(root, opts) {
     const DROP = [[[33, 75, "▀", "r"], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, "█", "r"], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, "▄", "r"], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, "▀", "r"], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, "▄", "r"], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, "▀", "r"], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, "▄", "r"], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, "▀", "r"]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]]];
     const CLASS = {d: 'd', h: 'h', o: 'o', q: 'q', r: 'r'};
     const esc = g => g === '&' ? '&amp;' : g === '<' ? '&lt;' : g === '>' ? '&gt;' : g;
-    let mode = null;
+    let mode = null, dec = null;
+    // rozkodowanie przy wczytaniu (jak w szczelinie): każdy znak przechodzi przez bloki ▓▒░, od góry ku dołowi, w rozrzuconej kolejności
+    const BLK = '▓▒░', dh = (r, c) => { let n = (r * 7919 + c * 104729) ^ 0x5bd1e995; n = Math.imul(n ^ (n >>> 15), 0x2c1b3c6d); return ((n ^ (n >>> 13)) >>> 0) / 4294967296; };
     const render = (fx) => {
       const G = L[mode];
       const ov = {};
@@ -208,6 +210,8 @@ export function initMaszyn(root, opts) {
           let g = row[c] || ' ', k = cls[c] || ' ';
           const o = ov[r * 1000 + c];
           if (o) [g, k] = o;
+          if (dec && g !== ' ') { const t = (dec.now - dec.t0 - (r / G.ch.length) * 900 - dh(r, c) * 420) / 150;
+            if (t < 0) g = ' '; else if (t < 1) { g = BLK[Math.min(2, Math.floor(t * 3))]; k = 'd'; } }
           if (g === ' ' || k === 's') k = ' ';
           if (k !== k0) { flush(); k0 = k; }
           run += esc(g);
@@ -222,12 +226,19 @@ export function initMaszyn(root, opts) {
       const inner = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       return inner >= L.full.cols * 8 ? 'full' : 'compact';
     };
+    const decode = () => {
+      if (RM) return render(null);
+      dec = { t0: performance.now(), now: performance.now() };
+      const step = now => { dec.now = now; render(null); if (now - dec.t0 < 1600) requestAnimationFrame(step); else { dec = null; render(null); } };
+      requestAnimationFrame(step);
+    };
     const update = () => {
       const m = pick();
       if (m === mode) return;
+      const first = mode === null;
       mode = m;
       pre.classList.toggle('compact', m === 'compact');
-      render(null);
+      if (first) decode(); else render(null);
     };
     update();
     if ('ResizeObserver' in window) new ResizeObserver(update).observe(wrap);
@@ -236,7 +247,7 @@ export function initMaszyn(root, opts) {
       // co ~5 s kropla wydłuża się, odrywa i spada w dół (12 kl./s); tylko w układzie FULL
       let last = -1;
       loop(pre, 12, t => {
-        if (mode !== 'full') return;
+        if (mode !== 'full' || dec) return;
         const cyc = t % 5200;
         const f = cyc < 4300 ? -1 : Math.min(DROP.length - 1, Math.floor((cyc - 4300) / 84));
         if (f !== last) { last = f; render(f < 0 ? null : DROP[f]); }
