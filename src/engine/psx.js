@@ -78,25 +78,24 @@ function maskTex(kind, seed) {
     x.fillStyle = '#ff3fb4'; x.fillRect(100, 30, 8, 8); x.fillStyle = '#fff36a'; x.fillRect(102, 32, 4, 4);   // naklejka
   }
   if (kind === 'sacral') {
-    // biała twarz, męski gotycki makijaż: zapadnięte, przydymione oczodoły z ostrą, krótką kreską, ciężkie proste brwi ściągnięte w dół,
-    // wąskie, proste czarne usta, mały krzyż na czole; dwie drobne gwiazdki; mina poważna
+    // biała twarz, męski gotycki makijaż: płaskie, przydymione cienie i zmrużone oczy z ostrą, krótką kreską, ciężkie proste brwi ściągnięte w dół,
+    // wąskie, proste czarne usta, dwie drobne gwiazdki; mina poważna
     x.save(); x.scale(2, 2);
     x.fillStyle = '#ebe8e6'; x.fillRect(0, 0, W, H);
     for (let i = 0; i < 900; i++) { x.fillStyle = r() < .5 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.06)'; x.fillRect(r() * W, r() * H, 1, .5); }
     const shade = (x0, y0, x1, y1, w, a) => { x.strokeStyle = `rgba(55,50,58,${a})`; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
     E.forEach((ex, i) => { const d = i ? 1 : -1;
-      const g = x.createRadialGradient(ex, EY, 5, ex, EY, 20); g.addColorStop(0, 'rgba(20,16,22,.95)'); g.addColorStop(1, 'rgba(20,16,22,0)');
-      x.fillStyle = g; x.beginPath(); x.ellipse(ex, EY + 1, 20, 16, 0, 0, 7); x.fill();                 // zapadnięty, przydymiony oczodół
+      x.save(); x.translate(ex, EY); x.scale(1, .42); const g = x.createRadialGradient(0, 0, 4, 0, 0, 19); g.addColorStop(0, 'rgba(20,16,22,.9)'); g.addColorStop(1, 'rgba(20,16,22,0)');
+      x.fillStyle = g; x.beginPath(); x.arc(0, 0, 19, 0, 7); x.fill(); x.restore();                   // płaski, przydymiony cień wzdłuż oka
       x.fillStyle = '#0b080b'; x.beginPath();                                                           // ostra, krótka kreska
-      x.moveTo(ex - d * 14, EY + 1); x.lineTo(ex + d * 13, EY - 3); x.lineTo(ex + d * 21, EY - 5); x.lineTo(ex + d * 13, EY + 3); x.lineTo(ex - d * 14, EY + 4); x.fill();
-      x.beginPath(); x.moveTo(ex - d * 17, EY - 13); x.lineTo(ex + d * 16, EY - 18); x.lineTo(ex + d * 17, EY - 14); x.lineTo(ex - d * 15, EY - 9); x.fill();   // ciężka brew, opada do środka
+      x.moveTo(ex - d * 14, EY); x.lineTo(ex + d * 13, EY - 2); x.lineTo(ex + d * 20, EY - 3); x.lineTo(ex + d * 13, EY + 2); x.lineTo(ex - d * 14, EY + 2.5); x.fill();
+      x.beginPath(); x.moveTo(ex - d * 17, EY - 9); x.lineTo(ex + d * 16, EY - 14); x.lineTo(ex + d * 17, EY - 10); x.lineTo(ex - d * 15, EY - 5.5); x.fill();   // ciężka brew nisko nad okiem, opada do środka
     });
-    x.fillStyle = '#0b080b'; x.fillRect(62.6, 30, 2.8, 16); x.fillRect(58, 35, 12, 2.6);                 // krzyż
     shade(60, 56, 58, 88, 2, .4); shade(68, 56, 70, 88, 2, .4); shade(57, 94, 71, 94, 3, .35);           // kontur nosa
     x.fillStyle = '#0b080b'; x.beginPath(); x.moveTo(48, 119); x.lineTo(80, 119); x.lineTo(76, 124); x.lineTo(52, 124); x.closePath(); x.fill();   // wąskie, proste usta
     const star = (cx, cy, rr) => { x.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = k % 2 ? rr * .3 : rr; x.lineTo(cx + Math.cos(a) * q, cy + Math.sin(a) * q); } x.closePath(); x.fill(); };
     x.fillStyle = '#1a141e'; star(98, 50, 3.6); star(30, 108, 2.8);                                      // dwie drobne gwiazdki
-    E.forEach(ex => hole(() => { x.moveTo(ex - 10, EY + 1); x.quadraticCurveTo(ex, EY - 5, ex + 10, EY); x.quadraticCurveTo(ex, EY + 5, ex - 10, EY + 1); }));
+    E.forEach(ex => hole(() => { x.moveTo(ex - 10, EY + .5); x.quadraticCurveTo(ex, EY - 2.5, ex + 10, EY); x.quadraticCurveTo(ex, EY + 2.5, ex - 10, EY + .5); }));   // zmrużone oczy
     x.restore();
   }
   if (kind === 'void') {
