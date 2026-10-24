@@ -12,7 +12,7 @@ Na stronie są pokazane jako teatralne maski w stylu PS1 (nie głowy).
 2. **Wyluzowana** — spokojna, nie przejmuje się życiem, cieszy się prostymi chwilami; bardzo energiczna, głośna,
    czasem zbyt impulsywna i nie przemyśla niektórych rzeczy; traci czas na głupotki, dużo goofy momentów.
    Estetyka: indie sleaze / hyperpop, chilled 2000s.
-3. **Poważna** (biała maska z gotyckim makijażem, rusza się szarpnięciami jak manekin) — skupiona na rozwoju wewnętrznym, nie traci czasu na głupoty; posępna i zadziorna, patrzy z góry,
+3. **Poważna** (biała maska, męski gotycki makijaż, bez aureoli; rusza się szarpnięciami jak manekin) — skupiona na rozwoju wewnętrznym, nie traci czasu na głupoty; posępna i zadziorna, patrzy z góry,
    obserwatorska; wysokie skupienie na duchowości i poczuciu połączenia ze sobą.
    Estetyka: gotycka, sakralna.
 

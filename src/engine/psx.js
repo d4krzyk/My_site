@@ -78,31 +78,28 @@ function maskTex(kind, seed) {
     x.fillStyle = '#ff3fb4'; x.fillRect(100, 30, 8, 8); x.fillStyle = '#fff36a'; x.fillRect(102, 32, 4, 4);   // naklejka
   }
   if (kind === 'sacral') {
-    // biała twarz z gotyckim makijażem (jak na wzorach): szare cienie łukiem nad okiem, gruba czarna kreska z ostrym skrzydłem,
-    // wysokie cienkie brwi, ankh na czole, kropki, kontur nosa i policzków, czarne usta-serce z kłami; drobne gwiazdki; mina poważna
+    // biała twarz, męski gotycki makijaż: zapadnięte, przydymione oczodoły z ostrą, krótką kreską, ciężkie proste brwi ściągnięte w dół,
+    // wklęsłe policzki i cień szczęki, wąskie, proste czarne usta, mały krzyż na czole; dwie drobne gwiazdki; mina poważna
     x.save(); x.scale(2, 2);
-    x.fillStyle = '#efeceb'; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#ebe8e6'; x.fillRect(0, 0, W, H);
     for (let i = 0; i < 900; i++) { x.fillStyle = r() < .5 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.06)'; x.fillRect(r() * W, r() * H, 1, .5); }
-    const shade = (x0, y0, x1, y1, w, a) => { x.strokeStyle = `rgba(70,66,72,${a})`; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
-    shade(18, 90, 42, 106, 9, .32); shade(110, 90, 86, 106, 9, .32);                                   // kontur policzków
+    const shade = (x0, y0, x1, y1, w, a) => { x.strokeStyle = `rgba(55,50,58,${a})`; x.lineWidth = w; x.lineCap = 'round'; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
+    shade(22, 86, 44, 112, 11, .38); shade(106, 86, 84, 112, 11, .38);                                 // wklęsłe policzki
+    shade(30, 132, 52, 146, 8, .3); shade(98, 132, 76, 146, 8, .3);                                    // cień szczęki
     E.forEach((ex, i) => { const d = i ? 1 : -1;
-      const g = x.createRadialGradient(ex, EY - 2, 4, ex, EY - 2, 18); g.addColorStop(0, 'rgba(30,26,34,.95)'); g.addColorStop(1, 'rgba(40,36,44,0)');
-      x.fillStyle = g; x.beginPath(); x.moveTo(ex - 19, EY); x.quadraticCurveTo(ex, EY - 26, ex + 19, EY); x.quadraticCurveTo(ex, EY - 7, ex - 19, EY); x.fill();   // cień łukiem
-      x.fillStyle = '#0b080b'; x.beginPath();                                                           // kreska ze skrzydłem
-      x.moveTo(ex - d * 15, EY + 2); x.quadraticCurveTo(ex, EY - 12, ex + d * 14, EY - 2); x.lineTo(ex + d * 31, EY - 12); x.lineTo(ex + d * 16, EY + 4);
-      x.quadraticCurveTo(ex, EY + 11, ex - d * 15, EY + 2); x.fill();
-      x.strokeStyle = '#0b080b'; x.lineWidth = .8; for (let k = -2; k <= 2; k++) { x.beginPath(); x.moveTo(ex + k * 4, EY + 6); x.lineTo(ex + k * 4.6, EY + 9); x.stroke(); }   // dolne rzęsy
-      x.lineWidth = 2.6; x.beginPath(); x.moveTo(ex - d * 15, EY - 15); x.quadraticCurveTo(ex + d * 2, EY - 19, ex + d * 19, EY - 13); x.stroke();   // brew
-      x.fillRect(ex + d * 21, EY - 22, 2.4, 2.4);                                                         // kropka nad brwią
+      const g = x.createRadialGradient(ex, EY, 5, ex, EY, 20); g.addColorStop(0, 'rgba(20,16,22,.95)'); g.addColorStop(1, 'rgba(20,16,22,0)');
+      x.fillStyle = g; x.beginPath(); x.ellipse(ex, EY + 1, 20, 16, 0, 0, 7); x.fill();                 // zapadnięty, przydymiony oczodół
+      x.fillStyle = '#0b080b'; x.beginPath();                                                           // ostra, krótka kreska
+      x.moveTo(ex - d * 14, EY + 1); x.lineTo(ex + d * 13, EY - 3); x.lineTo(ex + d * 21, EY - 5); x.lineTo(ex + d * 13, EY + 3); x.lineTo(ex - d * 14, EY + 4); x.fill();
+      x.beginPath(); x.moveTo(ex - d * 17, EY - 13); x.lineTo(ex + d * 16, EY - 18); x.lineTo(ex + d * 17, EY - 14); x.lineTo(ex - d * 15, EY - 9); x.fill();   // ciężka brew, opada do środka
     });
-    x.fillStyle = '#0b080b'; x.beginPath(); x.ellipse(64, 41, 2.4, 3, 0, 0, 7); x.lineWidth = 1.2; x.strokeStyle = '#0b080b'; x.stroke(); x.fillRect(59.5, 44, 9, 1.4); x.fillRect(63.3, 44, 1.4, 9);   // ankh
-    shade(60, 54, 58, 86, 1.5, .35); shade(68, 54, 70, 86, 1.5, .35); shade(58, 92, 70, 92, 3, .3);     // kontur nosa
-    x.fillStyle = '#0b080b'; [[57, 82], [71, 82], [56, 86], [72, 86]].forEach(([a, b]) => x.fillRect(a, b, 1.2, 1.2));
-    x.beginPath(); x.moveTo(46, 118); x.quadraticCurveTo(55, 107, 64, 113); x.quadraticCurveTo(73, 107, 82, 118); x.quadraticCurveTo(64, 135, 46, 118); x.fill();   // usta-serce
-    x.fillRect(51, 121, 2.2, 7); x.fillRect(74.8, 121, 2.2, 7); [[48, 122], [80, 122], [61, 131], [67, 131]].forEach(([a, b]) => x.fillRect(a, b, 1.3, 1.3));
+    x.fillStyle = '#0b080b'; x.fillRect(62.6, 30, 2.8, 16); x.fillRect(58, 35, 12, 2.6);                 // krzyż
+    shade(60, 56, 58, 88, 2, .4); shade(68, 56, 70, 88, 2, .4); shade(57, 94, 71, 94, 3, .35);           // kontur nosa
+    x.fillStyle = '#0b080b'; x.beginPath(); x.moveTo(48, 119); x.lineTo(80, 119); x.lineTo(76, 124); x.lineTo(52, 124); x.closePath(); x.fill();   // wąskie, proste usta
+    shade(52, 130, 76, 130, 2, .35);                                                                    // cień pod wargą
     const star = (cx, cy, rr) => { x.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = k % 2 ? rr * .3 : rr; x.lineTo(cx + Math.cos(a) * q, cy + Math.sin(a) * q); } x.closePath(); x.fill(); };
-    x.fillStyle = '#1a141e'; star(30, 48, 4.5); star(98, 48, 4.5); star(36, 112, 3.4); star(92, 112, 3.4);   // gwiazdki
-    E.forEach(ex => hole(() => { x.moveTo(ex - 10, EY + 1); x.quadraticCurveTo(ex, EY - 6, ex + 10, EY); x.quadraticCurveTo(ex, EY + 5, ex - 10, EY + 1); }));
+    x.fillStyle = '#1a141e'; star(98, 50, 3.6); star(30, 108, 2.8);                                      // dwie drobne gwiazdki
+    E.forEach(ex => hole(() => { x.moveTo(ex - 10, EY + 1); x.quadraticCurveTo(ex, EY - 5, ex + 10, EY); x.quadraticCurveTo(ex, EY + 5, ex - 10, EY + 1); }));
     x.restore();
   }
   if (kind === 'void') {
@@ -125,7 +122,6 @@ function makeMask(P, kind, seed) {
   const gf = g.toNonIndexed(); gf.computeVertexNormals();
   const m = P.mat({ map: P.tex(maskTex(kind, seed)), alphaTest: .5, side: THREE.DoubleSide });
   const grp = new THREE.Group(); grp.add(new THREE.Mesh(gf, m));
-  if (kind === 'sacral') { const halo = new THREE.Mesh(new THREE.TorusGeometry(.92, .04, 4, 18), P.mat({ color: 0xd9b25a, emissive: 0x3a2a08 })); halo.position.set(0, .25, -.45); grp.add(halo); }
   return grp;
 }
 
