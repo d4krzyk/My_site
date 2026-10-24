@@ -95,8 +95,15 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
       for (let k = 0; k < 4; k++) { const a = k * PI / 2 + PI / 4; dot('a', x + Math.cos(a) * 3.3, y + Math.sin(a) * 3.3, .6); }
       dot('r', x, y, 1.7);
       const top = y - s * .75 - 5, foot = y + s * 1.45 + 5;
-      crossInfo.push({ x, y, top, foot });
-      for (const dx of [-1, 1]) branches.push({ at: [x, y], p: .85, pts: line(x + dx * 6, y, x + dx * (s * .68 + 4), y) });   // krew rozlewa się na poprzeczkę i skapuje z jej końców
+      // trasy krwi po zewnętrznych konturach: od szczytu w dół lewą (q=-1) albo prawą krawędzią, dookoła ramienia poprzecznego, aż do stopy
+      const sideP = (dx, dy, l, r) => { const px = -dy, py = dx, P = (d, w) => [x + dx * d + px * w, y + dy * d + py * w];
+        return [P(6.2, 1.4 * r), P(l * .62, 1.6 * r), P(l - 2.6, 3.6 * r), P(l - 1, 2.1 * r), P(l + .8, 3.3 * r), P(l + 5, 0)]; };
+      const poly = P => { const o = []; for (let i = 0; i < P.length - 1; i++) o.push(...line(P[i][0], P[i][1], P[i + 1][0], P[i + 1][1])); return o; };
+      const ringArc = (p0, p1) => { const a0 = Math.atan2(p0[1] - y, p0[0] - x); let d = Math.atan2(p1[1] - y, p1[0] - x) - a0; while (d > PI) d -= TAU; while (d < -PI) d += TAU;
+        const n = Math.max(2, Math.ceil(Math.abs(d) * 6 / .3)), o = []; for (let i = 0; i <= n; i++) { const a = a0 + d * i / n; o.push([x + Math.cos(a) * 6.2, y + Math.sin(a) * 6.2, a + Math.sign(d) * PI / 2]); } return o; };
+      const contour = q => { const t = sideP(0, -1, s * .75, q).reverse(), hT = sideP(q, 0, s * .68, -q), hB = sideP(q, 0, s * .68, q).reverse(), b = sideP(0, 1, s * 1.45, -q);
+        return [...poly(t), ...ringArc(t[t.length - 1], hT[0]), ...poly(hT), ...poly(hB), ...ringArc(hB[hB.length - 1], b[0]), ...poly(b)]; };
+      crossInfo.push({ x, y, top, foot, left: contour(-1), right: contour(1) });
       const up = sx(top - 4), dn = sx(foot + 4); stroke('a', line(x, top, up[0], up[1]), () => .65); stroke('a', line(x, foot, dn[0], dn[1]), () => .65);
       // gałęzie oplatające krzyż: duży zawijas spod ramienia zwija się pod nim, mniejszy po drugiej stronie, listki przy szczycie
       const q = B.seed & 1 ? 1 : -1;
@@ -157,9 +164,10 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     heads.filter(h => h > y0 + 8 && h < y1 - 8).forEach(h => { const p = sx(h);
       for (let k = 0; k < 5; k++) { const w = 2.6 - Math.abs(k - 2) * 1.1; Ly.sh.fillRect(Math.round(p[0] - 2), Math.round(h - 3 + k), 4, 2); Ly.r.fillRect(Math.round(p[0] - w / 2), Math.round(h - 2 + k), Math.max(1, Math.round(w)), 1); } });
 
-    // trasa krwi: łodyga, ale przez krzyż prosto pionowym ramieniem (a nie po niewidocznej krzywej)
+    // trasa krwi: łodyga, a przez krzyż po konturze (lewa krawędź w głównej trasie, prawa jako odgałęzienie, które zawsze rusza)
     const mkRoute = tail => { const r = spine.filter(p => !crossInfo.some(c => p[1] > c.top - 4 && p[1] < c.foot + 4));
-      crossInfo.forEach(c => { let k = r.findIndex(p => p[1] > c.top - 4); if (k < 0) k = r.length; r.splice(k, 0, ...line(c.x, c.top - 4, c.x, c.foot + 4)); });
+      crossInfo.forEach(c => { let k = r.findIndex(p => p[1] > c.top - 4); if (k < 0) k = r.length; r.splice(k, 0, ...line(c.x, c.top - 4, c.x, c.top), ...c.left, ...line(c.x, c.foot, c.x, c.foot + 4));
+        branches.push({ at: [c.x, c.top], p: 1, pts: c.right }); });
       return r.concat(tail); };
     // zakończenia
     const top = spine[0], end = spine[spine.length - 1];
@@ -184,6 +192,7 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
       dashed('b', line(end[0], end[1], end[0], end[1] + 28), 3, 2.6, .5); dot('a', end[0], end[1] + 31, .9);
       B.route = mkRoute(line(end[0], end[1], end[0], end[1] + 33));
     }
+    B.crystals = crossInfo.map(c => ({ x: c.x, y: c.y, top: c.top, foot: c.foot }));
     B.branches = branches.map(b => ({ at: typeof b.at === 'number' ? [spine[b.at][0], spine[b.at][1]] : b.at, pts: b.pts, p: b.p }));
     for (const L of Object.values(Ly)) L.restore();
   }
@@ -203,7 +212,7 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
   const px = pts => { const o = []; for (const p of pts) { const x = Math.round(p[0]), y = Math.round(p[1]), l = o[o.length - 1]; if (l && l[0] === x && l[1] === y) continue; o.push([x, y, p[2]]); } return o; };
   const routes = bands.map(B => { const main = px(B.route), idx = p => { let b = 0; for (let k = 1; k < main.length; k++) if (Math.abs(main[k][1] - p[1]) + Math.abs(main[k][0] - p[0]) < Math.abs(main[b][1] - p[1]) + Math.abs(main[b][0] - p[0])) b = k; return b; };
     return { main, branches: B.branches.map(b => ({ at: idx(b.at), pts: px(b.pts), p: b.p })) }; });
-  return { img, routes, blood: tone === 'red' ? COL.a : COL.r };
+  return { img, routes, crystals: bands.flatMap(B => B.crystals || []), blood: tone === 'red' ? COL.a : COL.r };
 }
 
 // płótno: odsłanianie z góry na dół (jak rozkodowanie tekstu), potem krew: krople spadają z góry, wsiąkają w rycinę i spływają
@@ -213,7 +222,7 @@ export function ornCanvas(cv) {
   const x = cv.getContext('2d');
   let base = null, rev = null, W = 0, H = 0, routes = [], col = [196, 18, 29];
   const flows = [], drops = [];
-  let trails = [], prev = 0, wait = [];
+  let trails = [], prev = 0, wait = [], crystals = [], glow = [];
   const spawn = (ri) => {
     const r = routes[ri], m = r.main, top = Math.random() < .45 ? 0 : Math.floor(Math.random() * m.length * .7);
     drops.push({ x: m[top][0], y: -4, v: 0, ri, to: top, ty: m[top][1] });
@@ -231,6 +240,9 @@ export function ornCanvas(cv) {
       for (let i = i0; i <= Math.min(P.length - 1, f.i | 0); i++) { f.trail[i] = 1;
         if (f.ri != null) routes[f.ri].branches.forEach((br, j) => { if (br.at === i && Math.random() < (br.p || .3)) run(br.pts, trails[f.ri].br[j], 0, null); }); }
       if (f.i >= P.length - 1) { const e = P[P.length - 1]; drops.push({ x: e[0], y: e[1] + 1, v: 0 }); flows.splice(k, 1); } }
+    // kryształ w środku krzyża rozbłyska, gdy krew płynie po jego bokach
+    crystals.forEach((c, k) => { const on = flows.some(f => { const p = f.path[Math.min(f.path.length - 1, f.i | 0)]; return p[1] >= c.top - 2 && p[1] <= c.foot + 2 && Math.abs(p[0] - c.x) < 22; });
+      glow[k] = on ? Math.min(1, glow[k] + dt * 5) : glow[k] * Math.exp(-dt / .7); });
     const decay = Math.exp(-dt / 4.5);
     trails.forEach(t => { for (const a of [t.main, ...t.br]) for (let i = 0; i < a.length; i++) if (a[i]) a[i] = a[i] < .04 ? 0 : a[i] * decay; });
   };
@@ -242,6 +254,10 @@ export function ornCanvas(cv) {
     x.fillStyle = `rgb(${Math.min(255, col[0] + 50)},${col[1] + 20},${col[2] + 20})`;
     flows.forEach(f => { const p = f.path[Math.min(f.path.length - 1, f.i | 0)]; x.fillRect(p[0], p[1], 2, 2); });
     drops.forEach(d => x.fillRect(Math.round(d.x), Math.round(d.y), 2, 2 + Math.min(2, d.v / 120 | 0)));
+    crystals.forEach((c, k) => { const g = glow[k] * (.75 + Math.random() * .25); if (g < .05) return; const cx = Math.round(c.x), cy = Math.round(c.y);
+      x.fillStyle = `rgba(255,${40 + 60 * g | 0},${40 + 30 * g | 0},${.35 + .65 * g})`; x.fillRect(cx - 1, cy - 1, 3, 3);
+      if (g > .45) { const l = 2 + Math.round(g * 3); x.fillStyle = `rgba(255,120,110,${g * .8})`; x.fillRect(cx, cy - l, 1, 2 * l + 1); x.fillRect(cx - l + 1, cy, 2 * l - 1, 1); }
+      if (g > .7 && Math.random() < .7) { x.fillStyle = '#fff4f0'; x.fillRect(cx, cy, 1, 1); } });
   };
   const draw = (now) => {
     if (!base) return;
@@ -255,7 +271,7 @@ export function ornCanvas(cv) {
     paint();
   };
   return {
-    set(b) { base = b.img; W = base.width; H = base.height; cv.width = W; cv.height = H; routes = b.routes; col = b.blood;
+    set(b) { base = b.img; W = base.width; H = base.height; cv.width = W; cv.height = H; routes = b.routes; col = b.blood; crystals = b.crystals || []; glow = crystals.map(() => 0);
       trails = routes.map(r => ({ main: new Float32Array(r.main.length), br: r.branches.map(q => new Float32Array(q.pts.length)) }));
       wait = routes.map((_, i) => 1 + i * 2.2); flows.length = drops.length = 0; draw(performance.now()); },
     reveal() { rev = performance.now(); const st = now => { draw(now); if (rev) requestAnimationFrame(st); }; requestAnimationFrame(st); },
