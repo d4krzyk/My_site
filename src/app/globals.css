@@ -245,8 +245,8 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .cracktro canvas{display:block;width:100%;height:100%;image-rendering:pixelated;background:#000;border:0;opacity:.42}
 .nfo-wrap{container:nfo/inline-size;position:relative;display:flex;justify-content:center;align-items:stretch;gap:0 6px;
   grid-template-columns:none;background:transparent;border:0;padding:22px 12px 26px;overflow:hidden}
-.nfo-wrap>img{display:block;flex:0 0 200px;width:200px;height:560px;max-width:none;image-rendering:pixelated;
-  mix-blend-mode:lighten;-webkit-user-drag:none;user-select:none;pointer-events:none}
+.nfo-wrap>.orn-img{display:block;flex:0 0 200px;width:200px;height:560px;max-width:none;image-rendering:pixelated;
+  user-select:none;pointer-events:none}
 /* asymetria: lewa rycina (martwe drzewo) stoi na dole, prawa (iglica) wisi u góry */
 #ornL{align-self:flex-end;margin-right:auto}
 #ornR{align-self:flex-start;margin-left:auto}
@@ -267,12 +267,12 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 /* duży ekran: NFO większe, jako główna wizytówka */
 @media (min-width:1360px){
   .nfo-mid pre{font-size:18px}
-  .nfo-wrap>img{flex-basis:230px;width:230px;height:640px}
+  .nfo-wrap>.orn-img{flex-basis:230px;width:230px;height:640px}
   .nfo-title{font-size:68px}
   .nfo-sub{font-size:18px}
 }
 @container nfo (width < 1100px){
-  .nfo-wrap>img{display:none}
+  .nfo-wrap>.orn-img{display:none}
 }
 @media (max-width:860px){
   .nfo-wrap{padding:18px 10px 20px}

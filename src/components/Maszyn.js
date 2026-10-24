@@ -30,13 +30,13 @@ export default function Maszyn() {
         <div className="cracktro" aria-hidden="true"><canvas id="demo" width="320" height="200" /></div>
         <div className="m-panel rf">
           <div className="nfo-wrap">
-            <img id="ornL" alt="" draggable="false" />
+            <canvas id="ornL" className="orn-img" aria-hidden="true" />
             <div className="nfo-mid">
               <div className="nfo-title" aria-hidden="true">Maszynologia</div>
               <div className="nfo-sub dos">[ IT ] · RELEASE INFO · REV.2026</div>
               <pre id="nfo" className="selectable" />
             </div>
-            <img id="ornR" alt="" draggable="false" />
+            <canvas id="ornR" className="orn-img" aria-hidden="true" />
           </div>
         </div>
         <section className="m-panel rf term" aria-label="Terminal">

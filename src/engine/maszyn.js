@@ -1,5 +1,6 @@
 // strona Maszynologia: cracktro (listing asm, copper, sine-scroller z dekodowaniem) i plik NFO z ornamentami; przeniesione z planszy
 import { buildOrn, ornCanvas } from './nfoorn';
+import { pixelDecode } from './pixdecode';
 import { RM, rnd, clamp, FONTS, loop, N, fbm, bth, oneBit, makeGlyph, drawGlyph } from './core';
 export function initMaszyn(root, opts) {
   const $ = id => root.querySelector('#'+id);
@@ -11,9 +12,9 @@ export function initMaszyn(root, opts) {
 {
   const pre = $('nfo');
   const wrap = pre && pre.closest('.nfo-wrap');
+  // ryciny obrazkowe w rogach (tylko szerokie ekrany): odkodowują się z pikseli, lewa od dołu, prawa od góry
   const oL = $('ornL'), oR = $('ornR');
-  if (oL && ASSETS.ornL) oL.src = ASSETS.ornL;
-  if (oR && ASSETS.ornR) oR.src = ASSETS.ornR;
+  const ornImgs = [oL && ASSETS.ornL && pixelDecode(oL, ASSETS.ornL, { dir: 'up' }), oR && ASSETS.ornR && pixelDecode(oR, ASSETS.ornR, { dir: 'down' })].filter(Boolean);
   if (pre && wrap) {
     const L = {};
     /* ---- pełny profil IT: treść złożona z bloków ---- */
@@ -112,7 +113,7 @@ export function initMaszyn(root, opts) {
       pre.innerHTML = out.join('\n');
     };
     const avail = () => { const cs = getComputedStyle(wrap); let w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      wrap.querySelectorAll(':scope > img').forEach(im => { if (getComputedStyle(im).display !== 'none') w -= im.offsetWidth + 6; }); return w; };
+      wrap.querySelectorAll(':scope > .orn-img').forEach(im => { if (getComputedStyle(im).display !== 'none') w -= im.offsetWidth + 6; }); return w; };
     const pick = () => avail() >= L.full.cols * parseFloat(getComputedStyle(pre).fontSize) * .5 ? 'full' : 'compact';   // znak DOS = pół wysokości kroju
     // ryciny boczne: płótno nad <pre> w siatce znaków (kolumna = 4 px, wiersz = 8 px)
     const cv = document.createElement('canvas'); cv.className = 'nfo-orn'; cv.setAttribute('aria-hidden', 'true');
@@ -127,6 +128,7 @@ export function initMaszyn(root, opts) {
     const place = () => { const on = mode === 'full'; cv.style.display = on ? '' : 'none'; if (!on) return;
       Object.assign(cv.style, { left: pre.offsetLeft + 'px', top: pre.offsetTop + 'px', width: pre.offsetWidth + 'px', height: pre.offsetHeight + 'px' }); };
     const decode = () => {
+      ornImgs.forEach((o, i) => o.start(500 + i * 250));
       if (mode === 'full' && !RM) orn.reveal();
       if (RM) return render(null);
       dec = { t0: performance.now(), now: performance.now() };
