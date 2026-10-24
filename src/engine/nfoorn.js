@@ -60,8 +60,8 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
         stroke('a', curlPath(p[0], p[1], p[2] - side * (.9 + R() * .5), -side, 2.4 + R() * 2.6, .35, .1), t => .45 * (1 - t) + .15); }
       return pts;
     };
-    // ząbek akantu: krótki, zwężany listek odchodzący pod ostrym kątem
-    const flick = (p, sign, l) => stroke('a', leafPath(p[0], p[1], p[2] + sign * (.5 + R() * .35), sign, l, .18), t => .55 * (1 - t) + .12);
+    // ząbek akantu: krótki listek odchodzący pod ostrym kątem, zwinięty w malutki zwój
+    const flick = (p, sign, l) => { const q = leafPath(p[0], p[1], p[2] + sign * (.55 + R() * .3), -sign, l, .62); stroke('a', q, t => .55 * (1 - t) + .2); };
     // gałązka: odchodzi stycznie, wygina się łagodnym łukiem i na końcu zwija w mały listek; po drodze ząbki i czasem boczna gałązka
     // sign: kierunek skrętu (+1 zgodnie z ruchem wskazówek zegara na ekranie)
     const scroll = (x, y, a, sign, size, depth) => {
@@ -70,7 +70,7 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
       stroke('a', pts, (t, aa) => Math.max(.4, base * nib(aa) * (1 - t * .75) + .08));
       const e = pts[n - 1]; dot('a', e[0], e[1], .75);
       // ząbki po zewnętrznej stronie łuku
-      const fl = 1 + (R() * 2.2 | 0); for (let i = 0; i < fl; i++) { const p = pts[Math.floor(n * (.15 + R() * .45))]; flick(p, -sign, 2.2 + R() * 2.4); }
+      const fl = R() < .55 ? 1 : 0; for (let i = 0; i < fl; i++) { const p = pts[Math.floor(n * (.15 + R() * .45))]; flick(p, -sign, 3 + R() * 2); }
       if (depth > 0 && R() < .6) { const p = pts[Math.floor(n * (.22 + R() * .2))];
         scroll(p[0], p[1], p[2] - sign * (.35 + R() * .3), -sign, size * (.38 + R() * .14), depth - 1); }
       return pts;
@@ -105,38 +105,49 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     // łodyga: łańcuch łuków Béziera naprzemiennie w lewo i w prawo od osi pasa
     const anc = []; let yy = y0, sd = R() < .5 ? -1 : 1;
     // gładka fala (B.smooth): równy krok i wychylenie; inaczej swobodniejszy rytm
-    while (yy < y1 - 30) { const r1 = R(), r2 = R(); anc.push([cx + sd * bw * (B.smooth ? .15 + r1 * .03 : .08 + r1 * .2), yy]); sd = -sd; yy += B.smooth ? 100 + r2 * 16 : 70 + r2 * 80; }
+    while (yy < y1 - 30) { const r1 = R(), r2 = R(); anc.push([cx + sd * bw * (B.smooth ? .15 + r1 * .03 : .1 + r1 * .1), yy]); sd = -sd; yy += B.smooth ? 100 + r2 * 16 : 88 + r2 * 34; }
     anc.push([cx + sd * bw * .1, y1]);
+    if (B.cap === 'volute') anc[0] = [cx - bw * .04, y0];   // lewa: łodyga rusza pionowo z osi pasa
     // krzyż na kotwicy: tam łodyga biegnie pionowo, więc przechodzi prosto przez jego ramię
     crossY.forEach(c => { if (B.smooth) { let b = 1; for (let i = 1; i < anc.length - 1; i++) if (Math.abs(anc[i][1] - c) < Math.abs(anc[b][1] - c)) b = i; anc[b] = [cx, c]; return; }
       for (let i = anc.length - 2; i > 0; i--) if (Math.abs(anc[i][1] - c) < 50) anc.splice(i, 1); anc.push([cx + (B.seed & 1 ? -1 : 1) * bw * .06, c]); });
     anc.sort((p, q) => p[1] - q[1]);
     const spine = [];
-    for (let i = 0; i < anc.length - 1; i++) { const p0 = anc[i], p3 = anc[i + 1], h = (p3[1] - p0[1]) * (B.smooth ? (R(), .45) : .38 + R() * .2); bez(p0, [p0[0], p0[1] + h], [p3[0], p3[1] - h], p3, spine); }
+    for (let i = 0; i < anc.length - 1; i++) { const p0 = anc[i], p3 = anc[i + 1], h = (p3[1] - p0[1]) * (B.smooth ? (R(), .45) : .42 + R() * .06); bez(p0, [p0[0], p0[1] + h], [p3[0], p3[1] - h], p3, spine); }
     const CS = 24, [cT, cB] = crossSpan(CS), inCross = p => crossY.some(c => p[1] > c - cT && p[1] < c + cB);
-    stroke('a', spine.filter(p => !inCross(p)), (t, a) => Math.max(.42, 1 * nib(a) * Math.min(1, t * len / 30 + .2, (1 - t) * len / 40 + .2)));
+    const swell = y => .78 + .26 * Math.sin(y / 53 + B.seed) * Math.sin(y / 23 + 1);
+    stroke('a', spine.filter(p => !inCross(p)), (t, a) => { const yy = y0 + t * len; return Math.max(.42, 1.05 * nib(a) * swell(yy) * Math.min(1, t * len / 30 + .25, (1 - t) * len / 40 + .2)); });
     const sxI = y => { let b = 0; for (let i = 1; i < spine.length; i++) if (Math.abs(spine[i][1] - y) < Math.abs(spine[b][1] - y)) b = i; return b; }, sx = y => spine[sxI(y)];
 
     // zawijasy wzdłuż łodygi: gęsto w skupiskach, rzadko pomiędzy
-    let acc = 14, lastSide = 1; const branches = [];
+    let acc = 14, lastSide = 1; const branches = [], tips = [], motifY = (B.motif ? [y0 + B.motif[1] * len] : []);
     for (let i = 1; i < spine.length; i++) {
       const p = spine[i]; acc -= Math.hypot(p[0] - spine[i - 1][0], p[1] - spine[i - 1][1]); if (acc > 0) continue;
       const d = dens(p[1]); acc = 31 - 10 * d + R() * 11;
-      if (p[1] < y0 + 14 || p[1] > y1 - 18 || nearHead(p[1]) || crossY.some(c => p[1] > c - 22 && p[1] < c + 34)) { acc = 8; continue; }
-      const side = R() < .78 ? -lastSide : lastSide; lastSide = side;
+      if (p[1] < y0 + 14 || p[1] > y1 - 18 || nearHead(p[1]) || crossY.some(c => p[1] > c - 22 && p[1] < c + 34) || motifY.some(m => Math.abs(m - p[1]) < 18) || (B.cap === 'volute' && p[1] < y0 + 30)) { acc = 8; continue; }
+      let side = R() < .9 ? -lastSide : lastSide; if ((side > 0 ? x1 - p[0] : p[0] - x0) < 14) side = -side; lastSide = side;
       const room = side > 0 ? x1 - p[0] : p[0] - x0, size = Math.min(room * .7, (12 + 7 * d) * (.75 + R() * .5));
       // gałązka w dół-na zewnątrz zwija się ku górze; w górę-na zewnątrz zwija się ku dołowi
       const up = R() < .35, a0 = up ? -PI / 2 + side * (.35 + R() * .3) : p[2] - side * (.3 + R() * .3);
-      const sc = scroll(p[0], p[1], a0, up ? side : -side, size, d > .6 ? 2 : 1); if (sc && !up && size > 10) branches.push({ at: i, pts: sc });
-      if (R() < .5) flick(p, side, 2.5 + R() * 2.5);
+      const sc = scroll(p[0], p[1], a0, up ? side : -side, size, d > .6 ? 2 : 1); if (sc && !up && size > 10) branches.push({ at: i, pts: sc }); if (sc) tips.push([sc[sc.length - 1], side]);
+      if (R() < .25) flick(p, side, 3 + R() * 2);
     }
     // duże zwoje na przegięciach łodygi, zwinięte do środka pasa
     anc.slice(1, -1).forEach(([ax, ay]) => { if (nearHead(ay) || crossY.some(c => Math.abs(c - ay) < 40)) return;
       const i = sxI(ay), p = spine[i], side = ax < cx ? 1 : -1; const sc = scroll(p[0], p[1], p[2] + side * (.35 + R() * .25), -side, Math.min(bw * .5, 20 + R() * 6), 1); if (sc) branches.push({ at: i, pts: sc }); });
     // krzyże, przerywane łuki, gwiazdki
     crossY.forEach(y => cross(y, CS));
-    for (let y = y0 + 30 + R() * 40; y < y1 - 20; y += 70 + R() * 90) { const p = sx(y), side = p[0] < cx ? 1 : -1;
-      sparkle(clampv(p[0] + side * (18 + R() * 22), x0 + 6, x1 - 6), y + (R() - .5) * 20, 2.5 + R() * 3); }
+    // gwiazdki tuż przy zwojach co kilka gałązek
+    tips.forEach(([e, side], k) => { if (k % 4 !== 2) return; const sx2 = clampv(e[0] + side * (6 + R() * 4), x0 + 5, x1 - 5); sparkle(sx2, e[1] - 6 - R() * 5, 2.4 + R() * 2); });
+    // motyw w połowie drogi: wisiorek z gałązki (lewa) albo półksiężyc z gwiazdką (prawa)
+    motifY.forEach(my => { const i = sxI(my), p = spine[i], side = p[0] < cx ? 1 : -1;
+      if (B.motif[0] === 'pendant') { const br = leafPath(p[0], p[1], -PI / 2 + side * 1.1, side, 13, .35); stroke('a', br, (t, a) => Math.max(.42, .85 * nib(a) * (1 - t * .6)));
+        const e = br[br.length - 1]; scroll(e[0], e[1], br[br.length - 1][2], side, 7, 0); const h = br[Math.floor(br.length * .7)]; pendant(h[0], h[1] + 1, 12); }
+      else { const mx = clampv(p[0] + side * 17, x0 + 9, x1 - 9), my2 = my - 4, o = [], n = [];
+        for (let a = -PI * .75; a <= PI * .75; a += .06) { o.push([mx + Math.cos(a + (side > 0 ? PI : 0)) * 7, my2 + Math.sin(a) * 7, a]); }
+        for (let a = -PI * .62; a <= PI * .62; a += .06) { n.push([mx + side * 2.6 + Math.cos(a + (side > 0 ? PI : 0)) * 5.4, my2 + Math.sin(a) * 5.4, a]); }
+        stroke('a', o, t => .35 + .45 * Math.sin(t * PI)); stroke('a', n, () => .4); sparkle(mx + side * 8, my2 - 9, 3.2);
+        stroke('a', leafPath(p[0], p[1], p[2] - side * .9, -side, 8, .5), t => .7 * (1 - t) + .2); } });
     // koraliki przy nagłówkach sekcji
     heads.filter(h => h > y0 + 8 && h < y1 - 8).forEach(h => { const p = sx(h);
       for (let k = 0; k < 5; k++) { const w = 2.6 - Math.abs(k - 2) * 1.1; Ly.sh.fillRect(Math.round(p[0] - 2), Math.round(h - 3 + k), 4, 2); Ly.r.fillRect(Math.round(p[0] - w / 2), Math.round(h - 2 + k), Math.max(1, Math.round(w)), 1); } });
@@ -144,8 +155,11 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     // zakończenia
     const top = spine[0], end = spine[spine.length - 1];
     if (B.cap === 'volute') {
-      scroll(top[0], top[1] + 2, -PI / 2 + (top[0] < cx ? .3 : -.3), top[0] < cx ? -1 : 1, 24, 1);
-      dashed('b', line(top[0], top[1] - 2, top[0], 2), 1.4, 2.2);
+      // góra: łodyga wznosi się i zwija w dużą wolutę na zewnątrz pasa, z listkiem po stronie tekstu
+      const vo = leafPath(top[0], top[1] + .5, -PI / 2, -1, 28, 1.15); stroke('a', vo, (t, a) => Math.max(.42, 1.05 * nib(a) * (1 - t * .7)));
+      const ve = vo[vo.length - 1]; dot('a', ve[0], ve[1], .9);
+      const vm = vo[Math.floor(vo.length * .3)]; scroll(vm[0], vm[1], vm[2] + 1.3, 1, 11, 0);
+      scroll(top[0] + 1, top[1] + 14, -PI / 2 + .55, 1, 10, 0); flick(vo[Math.floor(vo.length * .55)], 1, 3.5);
       // dół: zwój odbija od łodygi, dalej wykropkowana nitka z koralikami i małym sigilem, jak u góry
       const side = end[0] < cx ? 1 : -1; scrollOld(end[0], end[1] - 16, PI / 2 - side * .9, -side, 15, 1);
       dashed('b', line(end[0], end[1] + 2, end[0], end[1] + 30), 3, 2.6, .5); dot('a', end[0], end[1] + 12, .8); dot('r', end[0], end[1] + 22, .7);

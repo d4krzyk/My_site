@@ -122,8 +122,8 @@ export function initMaszyn(root, opts) {
     {
       const G = L.full, W = G.cols * 4, H = G.ch.length * 8;
       orn.set(buildOrn(W, H, [
-        { name: 'L', seed: 1911, x: [4, 86], top: 34, bot: 46, cap: 'volute', clusters: [.1, .62, .88], crosses: [.36] },
-        { name: 'R', seed: 666, smooth: true, x: [256, 340], top: 50, bot: 60, cap: 'pendants', clusters: [.28, .5, .9], crosses: [.72] }], G.heads.map(r => r * 8 + 4), opts.ornTone || 'white'));
+        { name: 'L', seed: 1911, x: [4, 86], top: 62, motif: ['pendant', .76], bot: 46, cap: 'volute', clusters: [.1, .62, .88], crosses: [.36] },
+        { name: 'R', seed: 666, smooth: true, motif: ['moon', .44], x: [256, 340], top: 50, bot: 60, cap: 'pendants', clusters: [.28, .5, .9], crosses: [.72] }], G.heads.map(r => r * 8 + 4), opts.ornTone || 'white'));
     }
     const place = () => { const on = mode === 'full'; cv.style.display = on ? '' : 'none'; if (!on) return;
       Object.assign(cv.style, { left: pre.offsetLeft + 'px', top: pre.offsetTop + 'px', width: pre.offsetWidth + 'px', height: pre.offsetHeight + 'px' }); };
