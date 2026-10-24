@@ -276,12 +276,10 @@ button{-webkit-user-select:none;user-select:none}
   .nfo-sub{font-size:13px}
 }
 /* panele Maszynologii w czerwonej oprawie bramy (płyta z fakturą i ozdoby rysowane w canvas.rframe) */
-.m-panel{position:relative;margin:0 auto 34px;padding:34px clamp(14px,3vw,34px) 18px}
+.m-panel{position:relative;margin:0 auto 34px;padding:34px clamp(14px,3vw,34px) 26px}
 .sec.maszyn>.m-panel{z-index:auto}
 .m-panel>canvas.rframe{position:absolute;left:0;top:0;image-rendering:pixelated;pointer-events:none;z-index:0}
 .m-panel>*:not(canvas){position:relative;z-index:1}
-.rf-foot{display:grid;grid-template-columns:1fr 3.2em 1fr;align-items:center;width:max-content;margin:6px auto 0;color:#a8161f;font-size:13px;letter-spacing:.08em}
-.rf-foot .w{justify-self:end}.rf-foot .yr{justify-self:start}.rf-foot .gx{display:block;width:3.2em;height:1em}
 /* terminal */
 .term{max-width:980px}
 .t-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;color:#c4121d;border-bottom:1px solid #4a080c;padding:0 4px 6px;margin:0 0 8px;font-size:13px}
