@@ -16,10 +16,12 @@ export default function Maszyn() {
       if (alive && ref.current) initMaszyn(ref.current, { assets: { ornL: asset('/maszyn/ornL.png'), ornR: asset('/maszyn/ornR.png') } });
     });
     import('@/engine/redframe').then(({ redFrame }) => { if (alive && ref.current) ref.current.querySelectorAll('.rf').forEach(redFrame); });
+    let offPager = null;
+    import('@/engine/klatki').then(({ initPager }) => { if (alive && ref.current) offPager = initPager(ref.current); });   // przewijanie wierszami jak `more`
     import('@/engine/term').then(({ initTerm }) => {
       if (alive && ref.current) initTerm(ref.current.querySelector('.term'), { go: k => router.push(HREF[k] || '/') });
     });
-    return () => { alive = false; };
+    return () => { alive = false; if (offPager) offPager(); };
   }, [router]);
   return (
     <>

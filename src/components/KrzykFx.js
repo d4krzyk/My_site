@@ -27,6 +27,8 @@ export default function KrzykFx({ children }) {
     let off = [], alive = true;
     const sec = ref.current.closest('.krzyk');
     import('@/engine/krzykfx').then(({ initKrzykFx }) => { if (alive) off.push(initKrzykFx(sec, { pieces: n => asset(`/krzyk/pieces/${n}`) })); });
+    // przewijanie sekcjami: wariant A (taśma) domyślnie, ?klatki=b — wariant B (skok blokowy)
+    import('@/engine/klatki').then(({ initKlatki }) => { if (alive) off.push(initKlatki(sec, { mode: new URLSearchParams(location.search).get('klatki') === 'b' ? 'block' : 'film' })); });
     import('@/engine/psx').then(({ initRooms }) => {
       if (!alive) return;
       const go = kind => { const el = document.getElementById(TARGET[kind]); if (!el) return;
