@@ -1,5 +1,5 @@
 // pole wyborów działu Krzyk: modele 3D w potoku PS1 (niska rozdzielczość, drganie wierzchołków, najbliższy piksel)
-// walkman → muzyka, trzy główki → persony, kaseta miniDV (zapada się pod ziemię, potem kamera HC90E) → obraz, telefon → kontakt
+// walkman → muzyka, trzy maski → persony, kaseta miniDV (zapada się pod ziemię, potem kamera HC90E) → obraz, telefon → kontakt
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RM, loop, clamp } from './core';
@@ -49,46 +49,65 @@ function grime(w, h, base, v, seed = 1) {
   x.putImageData(id, 0, 0); return c;
 }
 
-/* ---------- trzy główki PS1: każda w innym nastroju ---------- */
-function headTex(mood, seed) {
-  const W = 256, H = 128, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+/* ---------- persony: teatralne maski PS1 (1 lękowa / haunted, 2 wyluzowana / indie sleeze, 3 poważna / gotycka sakralna) ---------- */
+function maskTex(kind, seed) {
+  const W = 128, H = 160, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   let s = seed; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
-  const skin = { cisza: '#c9bfa6', krzyk: '#c4a690', pustka: '#9fb2b6' }[mood];
-  x.fillStyle = skin; x.fillRect(0, 0, W, H);
-  // ziarno i plamy jak na teksturze PS1 (dither)
-  for (let i = 0; i < 2600; i++) { x.fillStyle = r() < .5 ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.06)'; x.fillRect(Math.floor(r() * W), Math.floor(r() * H), 2, 1); }
-  // cień pod oczami i policzki (twarz w środku u=.25, czyli x=64)
-  x.fillStyle = 'rgba(40,20,20,.18)'; x.fillRect(44, 60, 16, 10); x.fillRect(68, 60, 16, 10);
-  // włosy: ciemne, postrzępione, z tyłu i na czubku
-  x.fillStyle = '#120d0f';
-  for (let px = 0; px < W; px++) { const front = Math.abs(((px - 64 + 128) % 256) - 128) < 34; const hgt = front ? 30 + (mood === 'krzyk' ? 6 : 2) * Math.sin(px * 1.7) + r() * 8 : 70 + r() * 10; x.fillRect(px, 0, 1, hgt); }
-  const eye = (cx, cy) => {
-    if (mood === 'cisza') { x.fillStyle = '#2a2018'; x.fillRect(cx - 6, cy, 12, 2); x.fillRect(cx - 7, cy - 1, 2, 2); x.fillRect(cx + 5, cy - 1, 2, 2); }
-    if (mood === 'krzyk') { x.fillStyle = '#000'; x.fillRect(cx - 6, cy - 5, 12, 10); x.fillStyle = '#e8e2d0'; x.fillRect(cx - 1, cy - 1, 2, 2); x.fillStyle = '#2a1410'; x.fillRect(cx - 8, cy - 9, 16, 2); }
-    if (mood === 'pustka') { x.fillStyle = '#050608'; x.fillRect(cx - 6, cy - 5, 12, 11); for (let k = 0; k < 3; k++) x.fillRect(cx - 4 + k * 3, cy + 6, 2, 6 + Math.floor(r() * 18)); }
-  };
-  eye(52, 56); eye(76, 56);
-  x.fillStyle = '#3a2a22'; x.fillRect(62, 62, 4, 8);
-  if (mood === 'cisza') { x.fillStyle = '#4a2a24'; x.fillRect(58, 80, 12, 2); }
-  if (mood === 'krzyk') { x.fillStyle = '#000'; x.beginPath(); x.ellipse(64, 84, 8, 11, 0, 0, 7); x.fill(); x.fillStyle = '#6a0b12'; x.fillRect(60, 88, 8, 4); }
-  if (mood === 'pustka') { x.fillStyle = '#1a1214'; x.fillRect(57, 84, 14, 2); x.fillRect(55, 86, 3, 2); x.fillRect(70, 86, 3, 2); }
+  const base = { haunt: '#dfe4e2', sleaze: '#f4e9f0', sacral: '#2e2636', void: '#120607' }[kind];
+  x.fillStyle = base; x.fillRect(0, 0, W, H);
+  for (let i = 0; i < 1600; i++) { x.fillStyle = r() < .5 ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.07)'; x.fillRect(Math.floor(r() * W), Math.floor(r() * H), 2, 1); }
+  const hole = (f) => { x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.beginPath(); f(); x.fill(); x.restore(); };
+  const E = [42, 86], EY = 68;
+  if (kind === 'haunt') {
+    // porcelana z pęknięciami, szeroko otwarte, przerażone oczy, rozmazany cień spływający w dół, małe „o”
+    x.strokeStyle = 'rgba(40,60,70,.55)'; x.lineWidth = 1;
+    for (let k = 0; k < 7; k++) { x.beginPath(); let px = r() * W, py = r() * 50; x.moveTo(px, py); for (let n = 0; n < 6; n++) { px += (r() - .5) * 14; py += 4 + r() * 8; x.lineTo(px, py); } x.stroke(); }
+    E.forEach(ex => { x.fillStyle = 'rgba(30,40,55,.55)'; x.fillRect(ex - 13, EY - 13, 26, 26);
+      for (let k = 0; k < 4; k++) x.fillRect(ex - 9 + k * 6, EY + 10, 2, 14 + Math.floor(r() * 28)); });
+    x.strokeStyle = '#3a4a52'; x.lineWidth = 2; x.beginPath(); x.moveTo(30, 44); x.lineTo(52, 50); x.moveTo(98, 44); x.lineTo(76, 50); x.stroke();
+    E.forEach(ex => hole(() => x.ellipse(ex, EY, 9, 11, 0, 0, 7))); hole(() => x.ellipse(64, 120, 5, 7, 0, 0, 7));
+  }
+  if (kind === 'sleaze') {
+    // błyszcząca, różowo-cyjanowa, mrugnięcie i gwiazdka zamiast oka, wielki uśmiech, brokat i naklejki (2000s)
+    const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#ffd2ec'); g.addColorStop(.55, '#f4e9f0'); g.addColorStop(1, '#b9f3ff'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    for (let i = 0; i < 160; i++) { x.fillStyle = ['#ff3fb4', '#3ff0ff', '#fff36a', '#ffffff', '#9b5cff'][Math.floor(r() * 5)]; x.fillRect(Math.floor(r() * W), Math.floor(r() * H), 1, 1); }
+    x.fillStyle = 'rgba(255,80,170,.45)'; x.fillRect(22, 88, 20, 10); x.fillRect(86, 88, 20, 10);
+    x.fillStyle = '#2a0d24'; x.fillRect(34, EY, 18, 3); x.fillRect(32, EY - 2, 3, 3);                     // mrugnięcie
+    hole(() => { for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? 5 : 12; x.lineTo(E[1] + Math.cos(a) * rr, EY + Math.sin(a) * rr); } x.closePath(); });
+    hole(() => { x.moveTo(36, 110); x.quadraticCurveTo(64, 146, 92, 110); x.quadraticCurveTo(64, 126, 36, 110); });
+    x.fillStyle = '#ff3fb4'; x.fillRect(100, 30, 8, 8); x.fillStyle = '#fff36a'; x.fillRect(102, 32, 4, 4);   // naklejka
+  }
+  if (kind === 'sacral') {
+    // czarna z płatkami złota, wąskie oczy z ciężką powieką patrzą z góry, zaciśnięte usta, złoty krzyż na czole
+    for (let i = 0; i < 70; i++) { x.fillStyle = `rgba(${200 + r() * 40},${160 + r() * 30},${60 + r() * 30},${.3 + r() * .5})`; x.fillRect(Math.floor(r() * W), Math.floor(r() * H), 2 + Math.floor(r() * 4), 1 + Math.floor(r() * 3)); }
+    x.fillStyle = '#d9b25a'; x.fillRect(62, 14, 4, 26); x.fillRect(54, 22, 20, 4);
+    x.strokeStyle = '#d9b25a'; x.lineWidth = 2; E.forEach(ex => { x.beginPath(); x.moveTo(ex - 15, EY - 3); x.quadraticCurveTo(ex, EY - 10, ex + 15, EY - 3); x.stroke(); });
+    E.forEach(ex => hole(() => { x.moveTo(ex - 12, EY); x.quadraticCurveTo(ex, EY - 3, ex + 12, EY); x.quadraticCurveTo(ex, EY + 6, ex - 12, EY); }));
+    x.fillStyle = '#d9b25a'; x.fillRect(50, 120, 28, 3);
+    x.fillStyle = 'rgba(217,178,90,.8)'; for (let k = 0; k < 3; k++) x.fillRect(40 + k * 22, 140, 4, 4);
+  }
+  if (kind === 'void') {
+    // (ukryta) czerń i krew: szparki oczu, poszarpany uśmiech z zębami, zacieki
+    x.fillStyle = '#4a0006'; for (let k = 0; k < 9; k++) x.fillRect(10 + r() * 108, 90 + r() * 20, 2, 20 + r() * 50);
+    E.forEach(ex => hole(() => { x.moveTo(ex - 14, EY + 4); x.lineTo(ex + 12, EY - 6); x.lineTo(ex + 10, EY); x.closePath(); }));
+    hole(() => { x.moveTo(26, 106); for (let k = 0; k <= 12; k++) x.lineTo(26 + k * 6.3, 106 + (k % 2 ? 14 : 4) + Math.sin(k / 12 * Math.PI) * 14); x.lineTo(102, 106); x.quadraticCurveTo(64, 116, 26, 106); });
+  }
   return c;
 }
-function makeHead(P, mood, seed) {
-  const g = new THREE.SphereGeometry(1, 12, 9), p = g.attributes.position;
+function makeMask(P, kind, seed) {
+  const g = new THREE.SphereGeometry(1, 14, 12, Math.PI / 2 - 1.15, 2.3, .3, 2.45), p = g.attributes.position;
   for (let i = 0; i < p.count; i++) {
     let X = p.getX(i), Y = p.getY(i), Z = p.getZ(i);
-    if (Y < 0) { const f = 1 - .3 * Math.pow(-Y, 1.4); X *= f; Z *= f; }
-    if (Y < -.75) Z += .08;
-    if (Z > .7 && Math.abs(X) < .2 && Y > -.3 && Y < .12) Z += .16;           // nos
-    if (Z > .55 && Math.abs(X) > .16 && Math.abs(X) < .5 && Y > .02 && Y < .32) Z -= .07;   // oczodoły
-    p.setXYZ(i, X * .8, Y, Z * .88);
+    if (Y < 0) { const f = 1 - .32 * Math.pow(-Y, 1.3); X *= f; Z *= f; }
+    if (Z > .7 && Math.abs(X) < .16 && Y > -.28 && Y < .12) Z += .14;            // nos
+    if (Z > .55 && Math.abs(X) > .18 && Math.abs(X) < .52 && Y > 0 && Y < .34) Z -= .06;  // oczodoły
+    p.setXYZ(i, X * .78, Y * 1.05, Z * .7);
   }
-  const gf = g.toNonIndexed(); gf.computeVertexNormals();                                   // płaskie cieniowanie ścianek jak na PS1
-  const m = P.mat({ map: P.tex(headTex(mood, seed)) });
-  const ng = new THREE.CylinderGeometry(.28, .34, .5, 6).toNonIndexed(); ng.computeVertexNormals();
-  const h = new THREE.Mesh(gf, m); const neck = new THREE.Mesh(ng, P.mat({ color: 0x1a1416 }));
-  neck.position.y = -1.05; const grp = new THREE.Group(); grp.add(h); grp.add(neck); return grp;
+  const gf = g.toNonIndexed(); gf.computeVertexNormals();
+  const m = P.mat({ map: P.tex(maskTex(kind, seed)), alphaTest: .5, side: THREE.DoubleSide });
+  const grp = new THREE.Group(); grp.add(new THREE.Mesh(gf, m));
+  if (kind === 'sacral') { const halo = new THREE.Mesh(new THREE.TorusGeometry(.92, .04, 4, 18), P.mat({ color: 0xd9b25a, emissive: 0x3a2a08 })); halo.position.set(0, .25, -.45); grp.add(halo); }
+  return grp;
 }
 
 /* ---------- pole wyborów ---------- */
@@ -116,12 +135,31 @@ export function initRooms(root, { assets, go }) {
       }).catch(() => {});
     }
     if (kind === 'heads') {
-      const moods = ['cisza', 'krzyk', 'pustka'], hs = moods.map((md, i) => { const h = makeHead(P, md, 11 + i * 7); h.scale.setScalar(.3); h.position.x = (i - 1) * .62; P.scene.add(h); return h; });
-      P.cam.position.set(0, .05, 2.9); P.cam.lookAt(0, -.02, 0);
-      tick = (t) => hs.forEach((h, i) => { const ph = i * 2.1;
-        h.position.y = Math.sin(t / 1100 + ph) * .07 + (st.hot ? .05 : 0);
-        h.rotation.y = st.hot ? Math.sin(t / 90 + ph) * .04 : Math.sin(t / 1900 + ph) * .55;
-        h.rotation.z = Math.sin(t / 1500 + ph) * .08; h.rotation.x = Math.sin(t / 2300 + ph) * .1; });
+      // trzy maski obok siebie, każda rusza się po swojemu; czwarta, ukryta, siedzi w środku i prawie nigdy się nie pokazuje
+      const ks = ['haunt', 'sleaze', 'sacral'], ms = ks.map((k, i) => { const m = makeMask(P, k, 11 + i * 7); m.scale.setScalar(.31); m.position.x = (i - 1) * .6; P.scene.add(m); return m; });
+      const hid = makeMask(P, 'void', 97); hid.scale.setScalar(.31); hid.visible = false; P.scene.add(hid);
+      const cold = new THREE.PointLight(0x7fe8ff, .8, 1.6); cold.position.set(-.64, .1, .6); P.scene.add(cold);
+      const pink = new THREE.PointLight(0xff3fb4, .7, 1.6); pink.position.set(0, -.2, .6); P.scene.add(pink);
+      const gold = new THREE.PointLight(0xffd27a, .8, 1.6); gold.position.set(.64, .4, .6); P.scene.add(gold);
+      P.cam.position.set(0, .05, 2.9); P.cam.lookAt(0, 0, 0);
+      let hoverFrom = null, flashAt = null, flashed = false;
+      tick = (t) => {
+        const [a1, a2, a3] = ms, hot = st.hot;
+        // 1: lękowa, drży i nerwowo się rozgląda
+        a1.position.set(-.6 + (Math.random() - .5) * (hot ? .02 : .008), Math.sin(t / 700) * .03 + (Math.random() - .5) * .006, 0);
+        a1.rotation.set(Math.sin(t / 900) * .06, hot ? Math.sin(t / 60) * .05 : (Math.floor(t / 1300) % 3 - 1) * .35, Math.sin(t / 333) * .03);
+        // 2: wyluzowana, podskakuje i kiwa się na boki, czasem kręci się dla zabawy
+        const sp = (t % 6000) < 700 ? (t % 6000) / 700 * Math.PI * 2 : 0;
+        a2.position.set(0, Math.abs(Math.sin(t / 380)) * (hot ? .12 : .07) - .02, 0); a2.rotation.set(0, sp + Math.sin(t / 1400) * .2, Math.sin(t / 520) * .22);
+        // 3: poważna, wolno unosi się, broda w górze, patrzy z góry
+        a3.position.set(.6, Math.sin(t / 2200) * .04 + .03, 0); a3.rotation.set(-.18 + Math.sin(t / 3000) * .03, hot ? 0 : Math.sin(t / 4000) * .15, 0);
+        // ukryta: tylko po długim wpatrywaniu się (najechanie > 6 s) mignie raz na ułamek sekundy w miejscu środkowej maski
+        if (hot) { if (hoverFrom === null) { hoverFrom = t; flashAt = t + 6000 + Math.random() * 5000; } } else { hoverFrom = null; flashed = false; }
+        const show = hot && !flashed && flashAt && t > flashAt && t < flashAt + 90;
+        if (hot && flashAt && t >= flashAt + 90) flashed = true;
+        hid.visible = !!show; a2.visible = !show; hid.position.copy(a2.position); hid.rotation.set(0, 0, 0);
+        pink.color.setHex(show ? 0xff0000 : 0xff3fb4); pink.intensity = show ? 2.5 : .7;
+      };
       click = () => { st.busy = true; setTimeout(() => { st.busy = false; go(kind); }, RM ? 0 : 380); };
     }
     if (kind === 'minidv') {

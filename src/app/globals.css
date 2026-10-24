@@ -142,7 +142,7 @@ button{-webkit-user-select:none;user-select:none}
 .k-body{position:relative;z-index:2;width:84%;margin:0 auto;padding:var(--pad) 0 0}
 .k-body :is(p,h1,h2,.k-lv){text-shadow:0 0 6px #000,0 0 14px #000,1px 1px 0 #000}
 @media (max-width:700px){
-  .sec.krzyk{--toph:675cqw;--pad:272cqw}
+  .sec.krzyk{--toph:675cqw;--pad:285cqw}
   .k-bgs{background-image:var(--btp),var(--bmp)}
   .k-foot{background-image:var(--bbp)}
   .k-body{width:92%}
