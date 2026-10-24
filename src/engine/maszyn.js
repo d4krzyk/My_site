@@ -194,6 +194,7 @@ ogien:  mov cx,64000
         shr al,2
         stosb
         loop .f
+        call sigen       ; ?
         in al,60h
         dec al
         jnz ogien

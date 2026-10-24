@@ -2,7 +2,7 @@
 // potem sigile ściekają w dół i odsłaniają nową podstronę. Płótno żyje w <body>, więc przetrwa nawigację po stronie.
 import { RM, bth, makeGlyph, drawGlyph } from './core';
 
-const PAL = { krzyk: ['#3ff0ff', '#0e7c8a', '#062f36'], maszynologia: ['#ff3a3a', '#a8161f', '#3c070b'], brama: ['#dfe2e8', '#6e717d', '#1c1d24'] };
+const PAL = { krzyk: ['#3ff0ff', '#0e7c8a', '#062f36'], maszynologia: ['#ff3a3a', '#a8161f', '#3c070b'], brama: ['#dfe2e8', '#6e717d', '#1c1d24'], sigen: ['#ffffff', '#c4121d', '#3c070b'] };
 const PX = 3, CW = 9;            // piksel płótna (px ekranu), szerokość kolumny sigili (px płótna)
 let busy = false, phaseNow = null;
 export const veilPhase = () => phaseNow;             // 'in' | 'hold' | 'out' | null — czytane przez ready.js

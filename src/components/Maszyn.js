@@ -19,7 +19,7 @@ export default function Maszyn() {
     let offPager = null;
     import('@/engine/klatki').then(({ initPager }) => { if (alive && ref.current) offPager = initPager(ref.current); });   // przewijanie wierszami jak `more`
     import('@/engine/term').then(({ initTerm }) => {
-      if (alive && ref.current) initTerm(ref.current.querySelector('.term'), { go: k => router.push(HREF[k] || '/') });
+      if (alive && ref.current) initTerm(ref.current.querySelector('.term'), { go: k => k === 'sigen' ? import('@/engine/veil').then(({ veilGo }) => veilGo('/sigen/', 'sigen', h => router.push(h))) : router.push(HREF[k] || '/') });
     });
     return () => { alive = false; if (offPager) offPager(); };
   }, [router]);
