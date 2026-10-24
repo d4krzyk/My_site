@@ -17,7 +17,8 @@ export function ps1(canvas, lowW, lowH, { clear = 0x000000, alpha = 0, fog = nul
   const mat = o => { const m = new THREE.MeshLambertMaterial(o); m.onBeforeCompile = sh => { sh.uniforms.uSnap = { value: snap };
     sh.vertexShader = 'uniform vec2 uSnap;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\n vec4 sp=gl_Position; sp.xy=floor(sp.xy/sp.w*uSnap)/uSnap*sp.w; gl_Position=sp;'); }; return m; };
   const tex = c => { const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; return t; };
-  return { r, scene, cam, mat, tex, render: () => r.render(scene, cam) };
+  const resize = (w, h) => { r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); snap.set(w / 2.5, h / 2.5); };
+  return { r, scene, cam, mat, tex, resize, render: () => r.render(scene, cam) };
 }
 
 const GL = new GLTFLoader();
@@ -258,17 +259,40 @@ function personaPortal(pickCv, xs, arrive, done) {
   for (let ring = 0; ring * RW < maxD; ring++) { const n = 6 + ring * 6; for (let k = 0; k < n; k++) { const a0 = k / n * TAU, a1 = (k + 1) / n * TAU, r0 = ring * RW, r1 = (ring + 1) * RW, q = [[a0, r0], [a1, r0], [a1, r1], [a0, r1]].map(([a, rr]) => [CX + Math.cos(a) * rr, CY + Math.sin(a) * rr]);
     for (const tri of [[0, 1, 2], [0, 2, 3]]) { const pts = tri.map(j => q[j]), mx = (pts[0][0] + pts[1][0] + pts[2][0]) / 3, my = (pts[0][1] + pts[1][1] + pts[2][1]) / 3;
       shards.push({ pts: pts.map(([a, b]) => [a - mx, b - my]), mx, my, del: ring * .07 + hsh(k, ring) * .12, rot: (hsh(k, ring + 7) - .5) * 3, ox: (hsh(ring, k) - .5) * 50 }); } } }
-  const CORNERS = [0, 2, 3];                                             // maski stają na wierzchołkach pentaklu: górnym i dwóch dolnych
+  const wrapA = d => Math.atan2(Math.sin(d), Math.cos(d)), SH = 2380;
+  let goal = null, frags = null;
+  // pęknięcie maski na ok. 28 kawałków (po kilka sąsiednich trójkątów siatki), każdy z własnym środkiem
+  const shatter = m => { const mesh = m.children[0], gm = mesh.geometry, pos = gm.attributes.position, nor = gm.attributes.normal, uv = gm.attributes.uv, tri = pos.count / 3, per = Math.ceil(tri / 28);
+    const G = new THREE.Group(); G.position.copy(m.position); G.rotation.copy(m.rotation); G.scale.copy(m.scale); P.scene.add(G); G.updateMatrixWorld(true);
+    const target = G.worldToLocal(new THREE.Vector3(0, 0, -.6)), parts = [];
+    for (let t = 0; t < tri; t += per) { const n = Math.min(per, tri - t) * 3, P3 = new Float32Array(n * 3), N3 = new Float32Array(n * 3), U2 = new Float32Array(n * 2), c = new THREE.Vector3();
+      for (let j = 0; j < n; j++) c.add(new THREE.Vector3(pos.getX(t * 3 + j), pos.getY(t * 3 + j), pos.getZ(t * 3 + j))); c.divideScalar(n);
+      for (let j = 0; j < n; j++) { const v = t * 3 + j; P3.set([pos.getX(v) - c.x, pos.getY(v) - c.y, pos.getZ(v) - c.z], j * 3); N3.set([nor.getX(v), nor.getY(v), nor.getZ(v)], j * 3); U2.set([uv.getX(v), uv.getY(v)], j * 2); }
+      const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.BufferAttribute(P3, 3)); bg.setAttribute('normal', new THREE.BufferAttribute(N3, 3)); bg.setAttribute('uv', new THREE.BufferAttribute(U2, 2));
+      const fm = new THREE.Mesh(bg, mesh.material); fm.position.copy(c); G.add(fm);
+      parts.push({ m: fm, p0: c.clone(), del: Math.random() * 220, sw: .25 + Math.random() * .5, side: new THREE.Vector3(-c.y, c.x, 0).normalize(), r0: new THREE.Euler(),
+        spin: new THREE.Vector3((Math.random() - .5) * 9, (Math.random() - .5) * 9, (Math.random() - .5) * 9) }); }
+    return { G, target, parts }; };
   let finished = false, jumped = false, t0 = null;
   const end = () => { if (finished) return; finished = true; ov.remove(); P.r.dispose(); ppBusy = false; done(); };
   loop(cv, 30, t => { if (finished) return; if (t0 === null) t0 = t; const e = t - t0;
     x.clearRect(0, 0, W, H);
     const g = ease(seg(e, 0, 700)), toV = ease(seg(e, 1500, 1900)), burnt = seg(e, 2150, 2500), rot = e / 4000;
-    ms.forEach((m, i) => { if (e > 2500) { m.visible = false; return; } m.visible = true;
-      const a = e / 1000 * 1.4 * (1 - toV) + i * TAU / 3 - Math.PI / 2, [cx, cy] = [CX + Math.cos(a) * R * 1.15, CY + Math.sin(a) * R * 1.03], [vx, vy] = vert(R * .8, CORNERS[i], rot * .3);
-      const ax = START[i][0] + (cx - START[i][0]) * g, ay = START[i][1] + (cy - START[i][1]) * g, [wx, wy] = toW(ax + (vx - ax) * toV, ay + (vy - ay) * toV);
+    // krąg: maski krążą do 1,5 s, potem każda idzie do najbliższego wolnego wierzchołka pentaklu najkrótszym łukiem
+    if (e >= 1500 && !goal) { goal = []; const used = new Set(), a0 = ms.map((_, i) => 1.4 * 1.5 + i * TAU / 3 - Math.PI / 2);
+      ms.forEach((_, i) => { let best = -1, bd = 9; for (let k = 0; k < 5; k++) { if (used.has(k)) continue; const d = Math.abs(wrapA(-Math.PI / 2 + k * TAU / 5 - a0[i])); if (d < bd) { bd = d; best = k; } } used.add(best); goal.push(best); }); }
+    ms.forEach((m, i) => { if (e > SH) { m.visible = false; return; } m.visible = true;
+      let a = 1.4 * Math.min(e, 1500) / 1000 + i * TAU / 3 - Math.PI / 2, rr = 1;
+      if (goal) { const ta = -Math.PI / 2 + goal[i] * TAU / 5 + rot * .3; a += wrapA(ta - a) * toV; rr = 1 - (1 - .8 / 1.1) * toV; }
+      const ex = CX + Math.cos(a) * R * 1.1 * rr, ey = CY + Math.sin(a) * R * 1.1 * rr;
+      const [wx, wy] = toW(START[i][0] + (ex - START[i][0]) * g, START[i][1] + (ey - START[i][1]) * g);
       m.position.set(wx, wy, 0); m.scale.setScalar(.31 * s0 + (MS - .31 * s0) * g); m.rotation.set(0, Math.sin(e / 500 + i) * .2, Math.sin(e / 700 + i * 2) * .06);
       const ember = burnt * (.75 + .25 * Math.sin(e / 45 + i)); m.children[0].material.color.setRGB(1 - ember * .55, 1 - ember * .85, 1 - ember * .92); });   // zwęglają się, żar pulsuje
+    // rozpad: maska pęka na wielokąty, które wirując wpadają do środka znaku i gasną
+    if (e > SH && !frags) frags = ms.map(shatter);
+    if (frags) frags.forEach(F => F.parts.forEach(q => { const k = clamp((e - SH - q.del) / 520, 0, 1), kk = k * k;
+      q.m.position.lerpVectors(q.p0, F.target, kk).addScaledVector(q.side, Math.sin(k * Math.PI) * q.sw);
+      q.m.rotation.set(q.r0.x + q.spin.x * k, q.r0.y + q.spin.y * k, q.r0.z + q.spin.z * k); q.m.scale.setScalar(Math.max(.001, 1 - kk)); q.m.visible = k < 1; }));
     P.render();
     if (e < 3250) {
       br = e > 2000 ? seg(e, 2000, 2700) * R * 1.25 : -1;
@@ -298,10 +322,14 @@ function personaPortal(pickCv, xs, arrive, done) {
 /* ---------- sekcja person: trzy maski lewitują u góry; przy części danej persony ona wychyla się na wprost,
    a pozostałe cofają się w cień jak nieodblokowane postacie ---------- */
 export function initPersonaStage(cv, parts) {
-  const W = Math.max(160, Math.round(cv.clientWidth / 4)), Hh = Math.max(60, Math.round(cv.clientHeight / 4));
+  // niska rozdzielczość w proporcjach płótna (minimum 120 px szerokości bez zmiany proporcji, inaczej maski się rozciągają)
+  const dims = () => { const w = cv.clientWidth / 4 || 120, h = cv.clientHeight / 4 || 60, k = Math.max(1, 120 / w); return [Math.round(w * k), Math.max(30, Math.round(h * k))]; };
+  let [W, Hh] = dims();
   const P = ps1(cv, W, Hh); lights(P); P.cam.position.set(0, .02, 3); P.cam.lookAt(0, 0, 0);
   const ms = ['haunt', 'sleaze', 'sacral'].map((k, i) => { const m = makeMask(P, k, 11 + i * 7); P.scene.add(m); return m; });
-  const span = Math.min(1.25, 1.4 * W / Hh / 4.2);
+  let span = Math.min(1.25, 1.4 * W / Hh / 4.2);
+  // płótno mierzone przed ułożeniem strony miało złe proporcje (rozciągnięte maski na telefonie): przeliczamy przy każdej zmianie rozmiaru
+  const ro = new ResizeObserver(() => { const [w, h] = dims(); if (w === W && h === Hh) return; W = w; Hh = h; P.resize(W, Hh); span = Math.min(1.25, 1.4 * W / Hh / 4.2); }); ro.observe(cv);
   const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 }));
   let active = -1;
   const io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) active = +e.target.dataset.p; else if (+e.target.dataset.p === active) active = -1; }); },
@@ -317,11 +345,12 @@ export function initPersonaStage(cv, parts) {
       if (i === 2) { const st = Math.floor(t / 1500), pose = k => [[-.28, .06], [0, 0], [.24, -.05], [0, .03]][((k % 4) + 4) % 4], k3 = Math.min(1, (t % 1500) / 90);
         const p0 = pose(st - 1), p1 = pose(st); rx = -.18; ry = p0[0] + (p1[0] - p0[0]) * k3; rz = p0[1] + (p1[1] - p0[1]) * k3; }     // poważna: szarpnięcia manekina
       if (on) rx -= .12;                                                                                                                 // wychyla się ku widzowi
-      m.position.set(x, y, c.z); m.scale.setScalar(c.s); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
+      // wąski ekran: mniejsze maski, żeby się nie nakładały
+      m.position.set(x, y, c.z); m.scale.setScalar(c.s * Math.min(1, Math.max(.55, W / Hh / 2.4))); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
     });
     P.render();
   });
-  return () => io.disconnect();
+  return () => { io.disconnect(); ro.disconnect(); };
 }
 
 /* ---------- walkman → muzyka: słuchawki wylatują z karty, obracają się wokół osi nauszników (pałąk idzie do tyłu, jakby
