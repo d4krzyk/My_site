@@ -107,7 +107,7 @@ export function buildOrn(W, H, bands, heads, tone = 'white') {
     // gładka fala (B.smooth): równy krok i wychylenie; inaczej swobodniejszy rytm
     while (yy < y1 - 30) { const r1 = R(), r2 = R(); anc.push([cx + sd * bw * (B.smooth ? .15 + r1 * .03 : .1 + r1 * .1), yy]); sd = -sd; yy += B.smooth ? 100 + r2 * 16 : 88 + r2 * 34; }
     anc.push([cx + sd * bw * .1, y1]);
-    if (B.cap === 'volute') anc[0] = [cx - bw * .04, y0];   // lewa: łodyga rusza pionowo z osi pasa
+    if (B.cap === 'volute') anc[0] = [cx + bw * Math.max(.14, -Math.sign(anc[1][0] - cx) * .16), y0];   // lewa: szczyt po przeciwnej stronie niż następny łuk, żeby od razu szła fala
     // krzyż na kotwicy: tam łodyga biegnie pionowo, więc przechodzi prosto przez jego ramię
     crossY.forEach(c => { if (B.smooth) { let b = 1; for (let i = 1; i < anc.length - 1; i++) if (Math.abs(anc[i][1] - c) < Math.abs(anc[b][1] - c)) b = i; anc[b] = [cx, c]; return; }
       for (let i = anc.length - 2; i > 0; i--) if (Math.abs(anc[i][1] - c) < 50) anc.splice(i, 1); anc.push([cx + (B.seed & 1 ? -1 : 1) * bw * .06, c]); });
