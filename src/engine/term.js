@@ -29,12 +29,10 @@ const FS = {
   '/var': { d: ['log'] }, '/var/log': { f: ['syslog'] },
 };
 const FILES = {
-  '/home/daniel/cv.txt': ['DANIEL KRZYK — MASZYNOLOGIA [IT]', '', 'DOŚWIADCZENIE', '  2025 →  MSK TORMAN ......... operator NOC', '  2023    LUXOLIS ............ software engineer', '  2023    PFEIFER & LANGEN ... staż IT', '',
-    'EDUKACJA', '  2024 →  UMK TORUŃ .......... MSc, sztuczna inteligencja', '', 'PROJEKTY', '  visual-echoes-2.0 · wikirooms · remuz.io · musicclubapp · shadowdetection · gameinjava', '',
-    'STACK', '  python · pytorch · habitat · docker · linux · rest api · postgresql', '', 'Więcej: ls ~/projekty  ·  cat ~/kontakt.txt'],
-  '/home/daniel/o-mnie.txt': ['Dźwięk i obraz. W sztuce i w kodzie.', 'Maszyny, które widzą, słyszą i coś z tego rozumieją.'],
-  '/home/daniel/kontakt.txt': ['e-mail ... (wkrótce)', 'github ... github.com/d4krzyk', '', 'Więcej w dziale Krzyk → kontakt.'],
-  '/home/daniel/umiejetnosci.txt': ['python ......... ████████░░', 'pytorch ........ ███████░░░', 'linux .......... ████████░░', 'docker ......... ██████░░░░', 'rest api ....... ███████░░░', 'postgresql ..... ██████░░░░'],
+  '/home/daniel/cv.txt': ['DANIEL KRZYKOWSKI — MSc COMPUTER SCIENCE (AI) · PYTHON & ML ENGINEER', '', 'PROFIL', '  Absolwent informatyki, student magisterski sztucznej inteligencji na UMK w Toruniu.', '  Pracuję w centrum operacji sieciowych (NOC) w MSK TORMAN. Praca magisterska rozwija', '  Visual Echoes 2.0 (pierwotnie z Facebook AI Research): lepsza percepcja 3D dzięki', '  dokładniejszemu modelowaniu orientacji.', '', 'DOŚWIADCZENIE', '  10.2025 →  Operator NOC, MSK TORMAN (UCI)', '  09.2023    Software Engineer, Luxolis (09-10.2023)', '  08.2023    Staż, Pfeifer & Langen Polska (08-09.2023)', '', 'EDUKACJA', '  10.2024 →  Magister, UMK Toruń: informatyka (specjalizacja: sztuczna inteligencja)', '  10.2020 –  Inżynier informatyki, UMK Toruń (do 05.2024)', '', 'UMIEJĘTNOŚCI', '  Python · C / C++ · C# / .NET · JavaScript · PHP · REST API · React · Selenium', '  PostgreSQL / MySQL · NumPy · Pandas · scikit-learn · PyTorch', '  Linux / Bash · Git · Docker · Network Monitoring · Incident Management · IT Operations', '', 'JĘZYKI', '  polski: ojczysty · angielski: B2', '', 'Więcej: ls ~/doswiadczenie · ls ~/projekty · cat ~/kontakt.txt'],
+  '/home/daniel/o-mnie.txt': ['Informatyk (MSc, sztuczna inteligencja) i Python & ML Engineer.', 'Dźwięk i obraz. W sztuce i w kodzie.', 'Zainteresowania: IT · muzyka · fotografia · DIY · bieganie.'],
+  '/home/daniel/kontakt.txt': ['github ..... github.com/d4krzyk', 'linkedin ... linkedin.com/in/d4krzyk', '', 'Więcej w dziale Krzyk → kontakt.'],
+  '/home/daniel/umiejetnosci.txt': ['języki ...... Python · C / C++ · C# / .NET · JavaScript · PHP', 'web ......... REST API · React · Selenium', 'dane ........ PostgreSQL / MySQL · NumPy · Pandas · scikit-learn · PyTorch', 'systemy ..... Linux / Bash · Git · Docker', 'it ops ...... Network Monitoring · Incident Management · IT Operations', '', 'miękkie: komunikacja · współpraca · kreatywność · dbałość o szczegóły · rozwiązywanie problemów · analityczne myślenie · priorytetyzacja zadań'],
   '/home/daniel/.bashrc': ['export PS1="\\u@\\h:\\w\\$ "', 'alias cv="cat ~/cv.txt"', 'alias projekty="ls ~/projekty"', '# greetz: wszystkim, którzy jeszcze piszą ręcznie'],
   '/home/daniel/.bash_history': ['ssh noc-01', 'docker ps', 'python train.py --orientations 36', 'git push', 'cat /dev/urandom | head -c 64 | xxd', 'exit'],
   '/home/daniel/projekty/visual-echoes-2.0/README.md': P('VISUAL ECHOES 2.0', ['Praca magisterska · 2025 → · autor', 'Stack: python · pytorch · habitat', '',
@@ -51,10 +49,10 @@ const FILES = {
   '/home/daniel/projekty/musicclubapp/github.url': ['https://github.com/d4krzyk/MusicClubApp'],
   '/home/daniel/projekty/shadowdetection/github.url': ['https://github.com/d4krzyk/ShadowDetection'],
   '/home/daniel/projekty/gameinjava/github.url': ['https://github.com/d4krzyk/GameInJava'],
-  '/home/daniel/doswiadczenie/msk-torman.txt': ['MSK TORMAN · 2025 →', 'Operator NOC: monitoring sieci i usług, reagowanie na incydenty.'],
-  '/home/daniel/doswiadczenie/luxolis.txt': ['LUXOLIS · 2023', 'Software engineer.'],
-  '/home/daniel/doswiadczenie/pfeifer-langen.txt': ['PFEIFER & LANGEN · 2023', 'Staż IT.'],
-  '/home/daniel/edukacja/umk-torun.txt': ['UMK TORUŃ · 2024 →', 'Studia magisterskie: sztuczna inteligencja.'],
+  '/home/daniel/doswiadczenie/msk-torman.txt': ['OPERATOR NOC · MSK TORMAN (UCI) · 10.2025 →', 'Nadzór operacyjny nad siecią MSK TORMAN w środowisku NOC: monitoring sieci i systemów,', 'rozpoznawanie i obsługa incydentów, eskalacja do zespołów technicznych, dokumentowanie zdarzeń.'],
+  '/home/daniel/doswiadczenie/luxolis.txt': ['SOFTWARE ENGINEER · LUXOLIS · 09.2023 – 10.2023', 'Przygotowanie danych, dobór modeli, projekt API, wdrożenie i utrzymanie rozwiązań opartych na AI.'],
+  '/home/daniel/doswiadczenie/pfeifer-langen.txt': ['STAŻ · PFEIFER & LANGEN POLSKA · 08.2023 – 09.2023', 'Helpdesk, pomoc przy zadaniach infrastruktury sieciowej, pierwsze prace z Power BI (wizualizacja i analiza danych).'],
+  '/home/daniel/edukacja/umk-torun.txt': ['UMK TORUŃ (Uniwersytet Mikołaja Kopernika)', '10.2024 →      Magister: informatyka, specjalizacja sztuczna inteligencja', '10.2020 – 05.2024  Inżynier informatyki'],
   '/etc/hostname': [HOST], '/etc/motd': ['KrzykOS 2026'],
   '/etc/os-release': ['NAME="KrzykOS"', 'VERSION="2026"', 'ID=krzyk', 'PRETTY_NAME="KrzykOS 2026"'],
   '/etc/passwd': ['root:x:0:0:root:/root:/bin/nologin', 'daniel:x:1000:1000:Daniel:/home/daniel:/bin/bash', 'gosc:x:1001:1001:gość:/home/daniel:/bin/bash'],
@@ -67,7 +65,7 @@ const DESC = {
   '/': 'korzeń systemu', '/bin': 'polecenia', '/etc': 'konfiguracja systemu', '/home': 'katalogi domowe', '/proc': 'procesor i jądro', '/tmp': 'pliki tymczasowe (pusto)',
   '/usr': 'programy i zasoby', '/usr/bin': 'programy', '/usr/share': 'zasoby', '/var': 'dane zmienne', '/var/log': 'logi systemowe',
   '/home/daniel': 'katalog domowy · CV, projekty, doświadczenie, kontakt', '/home/daniel/projekty': 'projekty · w każdym README.md i github.url',
-  '/home/daniel/doswiadczenie': 'doświadczenie zawodowe', '/home/daniel/edukacja': 'edukacja',
+  '/home/daniel/doswiadczenie': 'doświadczenie zawodowe · NOC, AI, helpdesk', '/home/daniel/edukacja': 'edukacja · UMK Toruń',
   '/home/daniel/projekty/visual-echoes-2.0': 'praca magisterska · echo, obraz i głębia', '/home/daniel/projekty/wikirooms': 'projekt badawczo-rozwojowy · fastapi, postgresql',
   '/home/daniel/projekty/remuz.io': 'praca dyplomowa · wielościeżkowy edytor audio', '/home/daniel/projekty/musicclubapp': 'ludzie o podobnym guście muzycznym',
   '/home/daniel/projekty/shadowdetection': 'kierunek światła z geometrii cieni', '/home/daniel/projekty/gameinjava': 'gra w javie',
@@ -158,16 +156,16 @@ export function initTerm(root, { go } = {}) {
         if (!spans.length) body.textContent = '\u00a0';
         row.appendChild(body); out.appendChild(row); return { row, spans };
       });
-      out.scrollTop = out.scrollHeight;
+      out.scrollTo({ top: out.scrollHeight, behavior: 'instant' });
       if (RM) { done(); return; }
-      els.forEach(({ row, spans }, i) => setTimeout(() => { row.classList.add('on'); decodeChars(spans, performance.now() + 260); out.scrollTop = out.scrollHeight; }, i * 55));
+      els.forEach(({ row, spans }, i) => setTimeout(() => { row.classList.add('on'); decodeChars(spans, performance.now() + 260); out.scrollTo({ top: out.scrollHeight, behavior: 'instant' }); }, i * 55));
       setTimeout(done, Math.min(900, els.length * 55 + 120));
     }));
     return queue;
   };
   const link = async url => { await print([[seg('otwieram ', 'dim'), seg(url, 'dir')]]); window.open(url, '_blank', 'noopener'); };
   // wiersze bez dekodowania, do animacji klatkowych (matrix)
-  const raw = (n, cls) => { const rows = Array.from({ length: n }, () => { const r = document.createElement('div'); r.className = 'tl on pre plain ' + cls; out.appendChild(r); return r; }); out.scrollTop = out.scrollHeight; return rows; };
+  const raw = (n, cls) => { const rows = Array.from({ length: n }, () => { const r = document.createElement('div'); r.className = 'tl on pre plain ' + cls; out.appendChild(r); return r; }); out.scrollTo({ top: out.scrollHeight, behavior: 'instant' }); return rows; };
   const anim = (ms, fps, f) => new Promise(done => { if (RM) { f(1); return done(); } const t0 = performance.now(); let last = 0;
     const st = now => { if (now - last >= 1000 / fps) { last = now; f(Math.min(1, (now - t0) / ms)); } if (now - t0 < ms) requestAnimationFrame(st); else { f(1); done(); } }; requestAnimationFrame(st); });
   const cols = () => Math.max(20, Math.floor(out.clientWidth / (parseFloat(getComputedStyle(out).fontSize) * .5)) - 2);

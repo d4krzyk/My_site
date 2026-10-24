@@ -1,0 +1,257 @@
+// boczne ryciny NFO na płótnie w siatce znaków (1 kolumna = 4 px, 1 wiersz = 8 px): cienka, kaligraficzna filigrana w duchu
+// barokowych ozdobników. Łodyga z łuków S o grubości zależnej od kierunku (jak stalówka), z niej zawijasy rozgałęziające się
+// na coraz mniejsze; skupiska gęstnieją przy krzyżach i co kawałek, między nimi rzadkie, oddychające odcinki. Do tego wisiorki
+// na kreskowanych nitkach, gwiazdki, przerywane łuki, wykropkowane zakończenia; przy nagłówkach sekcji koralik w kolorze akcentu.
+const rng = s => () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const BAY = [0, 32, 8, 40, 2, 34, 10, 42, 48, 16, 56, 24, 50, 18, 58, 26, 12, 44, 4, 36, 14, 46, 6, 38, 60, 28, 52, 20, 62, 30, 54, 22, 3, 35, 11, 43, 1, 33, 9, 41, 51, 19, 59, 27, 49, 17, 57, 25, 15, 47, 7, 39, 13, 45, 5, 37, 63, 31, 55, 23, 61, 29, 53, 21].map(v => (v + .5) / 64);
+const bth = (x, y) => BAY[(y & 7) * 8 + (x & 7)];
+// palety: linie jasne (a), nitki i łuki przygaszone (b), akcent (r), obwódka oddzielająca od tła (sh)
+const TONES = {
+  white: { a: [232, 230, 238], b: [112, 112, 134], r: [196, 18, 29], sh: [3, 3, 9] },
+  red: { a: [206, 26, 38], b: [104, 12, 22], r: [236, 232, 238], sh: [3, 3, 9] },
+};
+const TAU = Math.PI * 2, PI = Math.PI;
+const clampv = (v, a, b) => Math.max(a, Math.min(b, v));
+
+export function buildOrn(W, H, bands, heads, tone = 'white') {
+  const COL = TONES[tone] || TONES.white;
+  const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'); x.fillStyle = '#fff'; return x; };
+  const Ly = { a: mk(), b: mk(), r: mk(), sh: mk() };
+  const dot = (k, x, y, r) => { if (r <= .05) return; for (const L of [Ly[k], Ly.sh]) { L.beginPath(); L.arc(x, y, L === Ly.sh ? r + 1 : r, 0, TAU); L.fill(); } };
+  const stroke = (k, pts, wf) => { const n = pts.length - 1 || 1; pts.forEach((p, i) => dot(k, p[0], p[1], wf(i / n, p[2]))); };
+  const nib = a => .35 + .65 * Math.abs(Math.sin(a - .75));          // stalówka pod kątem: grubiej w dół, włoskowo w poprzek
+  // ścieżka zawijasa: krzywizna rośnie z długością (k0 < 0 daje wygięcie w S przed zwojem)
+  const curlPath = (x, y, a, side, size, turns, k0) => {
+    const L = size * 3, c = 3 * (turns * TAU - k0 * L) / (L * L * L), pts = [[x, y, a]], ds = .3;
+    for (let s = 0; s < L; s += ds) { a += side * (k0 + c * s * s) * ds; x += Math.cos(a) * ds; y += Math.sin(a) * ds; pts.push([x, y, a]); }
+    return pts;
+  };
+  const leafPath = (x, y, a, sign, size, turns) => {
+    const L = size * 2.6, k0 = .05, c = 3 * Math.max(0, turns * TAU - k0 * L) / (L ** 3), pts = [[x, y, a]], ds = .3;
+    for (let s = 0; s < L; s += ds) { a += sign * (k0 + c * s * s) * ds; x += Math.cos(a) * ds; y += Math.sin(a) * ds; pts.push([x, y, a]); }
+    return pts;
+  };
+  const bez = (p0, p1, p2, p3, out) => { for (let t = 0; t <= 1; t += .003) { const u = 1 - t;
+    const x = u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0], y = u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1];
+    const l = out[out.length - 1]; if (l && Math.hypot(x - l[0], y - l[1]) < .3) continue; out.push([x, y, l ? Math.atan2(y - l[1], x - l[0]) : PI / 2]); } return out; };
+  const dashed = (k, pts, on, off, r = .45) => { let s = 0; for (let i = 1; i < pts.length; i++) { s += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); if (s % (on + off) < on) dot(k, pts[i][0], pts[i][1], r); } };
+  const line = (x0, y0, x1, y1) => { const n = Math.max(2, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / .3)), a = Math.atan2(y1 - y0, x1 - x0), p = []; for (let i = 0; i <= n; i++) p.push([x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, a]); return p; };
+  const sparkle = (x, y, s, k = 'a') => { stroke(k, line(x, y - s, x, y + s), t => .6 * (1 - Math.abs(t * 2 - 1)) + .12); stroke(k, line(x - s * .55, y, x + s * .55, y), t => .5 * (1 - Math.abs(t * 2 - 1)) + .1); };
+
+  for (const B of bands) {
+    const R = rng(B.seed), [x0, x1] = B.x, bw = x1 - x0, cx = (x0 + x1) / 2;
+    for (const L of Object.values(Ly)) { L.save(); L.beginPath(); L.rect(x0 - 2, 0, bw + 4, H); L.clip(); }
+    const y0 = B.top, y1 = H - B.bot, len = y1 - y0;
+    const clusters = B.clusters.map(f => y0 + f * len), crossY = B.crosses.map(f => y0 + f * len);
+    const dens = y => Math.min(1, clusters.concat(crossY).reduce((v, c) => v + Math.exp(-(((y - c) / 60) ** 2)), 0));
+    const nearHead = y => heads.some(h => Math.abs(h - y) < 12);
+
+    // dawny zawijas (zostaje na spodach rycin)
+    const scrollOld = (x, y, a, side, size, depth) => {
+      if (size < 3) return;
+      const pts = curlPath(x, y, a, side, size, 1 + R() * .5, R() < .3 ? -.05 - R() * .04 : .05 + R() * .04), base = clampv(size * .05, .45, 1);
+      stroke('a', pts, (t, aa) => Math.max(.4, base * nib(aa) * Math.pow(1 - t, .5) + .1));
+      const e = pts[pts.length - 1]; dot('a', e[0], e[1], base * .55 + .3);
+      if (depth > 0) { const n = 1 + (depth > 1 && R() < .35 ? 1 : 0);
+        for (let i = 0; i < n; i++) { const p = pts[Math.floor(pts.length * (.18 + R() * .38))];
+          scrollOld(p[0], p[1], p[2] - side * (.55 + R() * .6), R() < .7 ? -side : side, size * (.32 + R() * .2), depth - 1); } }
+      // drobne haczyki jak kolce
+      const sp = R() < .5 ? 1 : 0; for (let i = 0; i < sp; i++) { const p = pts[Math.floor(pts.length * (.1 + R() * .5))];
+        stroke('a', curlPath(p[0], p[1], p[2] - side * (.9 + R() * .5), -side, 2.4 + R() * 2.6, .35, .1), t => .45 * (1 - t) + .15); }
+      return pts;
+    };
+    // ząbek akantu: krótki listek odchodzący pod ostrym kątem, zwinięty w malutki zwój
+    const flick = (p, sign, l) => { const q = leafPath(p[0], p[1], p[2] + sign * (.55 + R() * .3), -sign, l, .62); stroke('a', q, t => .55 * (1 - t) + .2); };
+    // gałązka: odchodzi stycznie, wygina się łagodnym łukiem i na końcu zwija w mały listek; po drodze ząbki i czasem boczna gałązka
+    // sign: kierunek skrętu (+1 zgodnie z ruchem wskazówek zegara na ekranie)
+    const scroll = (x, y, a, sign, size, depth) => {
+      if (size < 4) return null;
+      const pts = leafPath(x, y, a, sign, size, .9 + R() * .2), base = clampv(size * .045, .5, 1.05), n = pts.length;
+      stroke('a', pts, (t, aa) => Math.max(.4, base * nib(aa) * (1 - t * .75) + .08));
+      const e = pts[n - 1]; dot('a', e[0], e[1], .75);
+      // ząbki po zewnętrznej stronie łuku
+      const fl = R() < .55 ? 1 : 0; for (let i = 0; i < fl; i++) { const p = pts[Math.floor(n * (.15 + R() * .45))]; flick(p, -sign, 3 + R() * 2); }
+      if (depth > 0 && R() < .6) { const p = pts[Math.floor(n * (.22 + R() * .2))];
+        scroll(p[0], p[1], p[2] - sign * (.35 + R() * .3), -sign, size * (.38 + R() * .14), depth - 1); }
+      return pts;
+    };
+    const pendant = (x, y, l) => { dashed('b', line(x, y, x, y + l), 3, 2.4); const yy = y + l;
+      dot('a', x, yy + 2, .9); const d = [[x, yy + 4], [x + 3.4, yy + 10], [x, yy + 16], [x - 3.4, yy + 10], [x, yy + 4]];
+      for (let i = 0; i < 4; i++) stroke('a', line(d[i][0], d[i][1], d[i + 1][0], d[i + 1][1]), () => .45); dot('r', x, yy + 10, .8); dashed('b', line(x, yy + 17, x, yy + 24), 1.5, 2); dot('a', x, yy + 26, .6); };
+        // gotycki krzyż wpleciony w gałęzie: konturowe ramiona rozszerzające się ku końcom, zakończone szpicem z płatkami,
+    // w środku medalion z akcentem; łodyga wchodzi w szczyt i wychodzi spod stopy, spod ramion wyrastają zawijasy
+    const outline = (P, r = .5) => { for (let i = 0; i < P.length - 1; i++) stroke('a', line(P[i][0], P[i][1], P[i + 1][0], P[i + 1][1]), () => r); };
+    const crossSpan = s => [s * .75 + 8, s * 1.45 + 8];
+    const cross = (y, s) => {
+      const x = sx(y)[0];
+      const arm = (dx, dy, l) => { const px = -dy, py = dx, P = (d, w) => [x + dx * d + px * w, y + dy * d + py * w];
+        const side = q => [P(6.2, 1.4 * q), P(l * .62, 1.6 * q), P(l - 2.6, 3.6 * q), P(l - 1, 2.1 * q), P(l + .8, 3.3 * q), P(l + 5, 0)];
+        outline(side(1)); outline(side(-1));
+        stroke('b', line(x + dx * 7.5, y + dy * 7.5, x + dx * (l - 3), y + dy * (l - 3)), () => .45);   // żyłka w osi ramienia
+        dot('a', x + dx * (l - 1.2), y + dy * (l - 1.2), .7); };
+      arm(0, -1, s * .75); arm(-1, 0, s * .68); arm(1, 0, s * .68); arm(0, 1, s * 1.45);
+      const ring = []; for (let a = 0; a < TAU; a += .07) ring.push([x + Math.cos(a) * 6, y + Math.sin(a) * 6, a]); stroke('a', ring, () => .55);
+      for (let k = 0; k < 4; k++) { const a = k * PI / 2 + PI / 4; dot('a', x + Math.cos(a) * 3.3, y + Math.sin(a) * 3.3, .6); }
+      dot('r', x, y, 1.7);
+      const top = y - s * .75 - 5, foot = y + s * 1.45 + 5;
+      const up = sx(top - 4), dn = sx(foot + 4); stroke('a', line(x, top, up[0], up[1]), () => .65); stroke('a', line(x, foot, dn[0], dn[1]), () => .65);
+      // gałęzie oplatające krzyż: duży zawijas spod ramienia zwija się pod nim, mniejszy po drugiej stronie, listki przy szczycie
+      const q = B.seed & 1 ? 1 : -1;
+      scroll(x + q * 3.5, y + 9, PI / 2 - q * .55, -q, s * .62, 1);
+      scroll(x - q * 3.5, y + s * .75, PI / 2 + q * .5, q, s * .42, 0);
+      scroll(up[0], up[1] + 1, -PI / 2 - q * .6, -q, s * .4, 0);
+      flick([x - q * 2.2, y - s * .4, -PI / 2], -q, 3.5);
+    };
+    // łodyga: łańcuch łuków Béziera naprzemiennie w lewo i w prawo od osi pasa
+    const anc = []; let yy = y0, sd = R() < .5 ? -1 : 1;
+    // gładka fala (B.smooth): równy krok i wychylenie; inaczej swobodniejszy rytm
+    while (yy < y1 - 30) { const r1 = R(), r2 = R(); anc.push([cx + sd * bw * (B.smooth ? .15 + r1 * .03 : .1 + r1 * .1), yy]); sd = -sd; yy += B.smooth ? 100 + r2 * 16 : 88 + r2 * 34; }
+    anc.push([cx + sd * bw * .1, y1]);
+    if (B.cap === 'volute') anc[0] = [cx + bw * Math.max(.14, -Math.sign(anc[1][0] - cx) * .16), y0];   // lewa: szczyt po przeciwnej stronie niż następny łuk, żeby od razu szła fala
+    // krzyż na kotwicy: tam łodyga biegnie pionowo, więc przechodzi prosto przez jego ramię
+    crossY.forEach(c => { if (B.smooth) { let b = 1; for (let i = 1; i < anc.length - 1; i++) if (Math.abs(anc[i][1] - c) < Math.abs(anc[b][1] - c)) b = i; anc[b] = [cx, c]; return; }
+      for (let i = anc.length - 2; i > 0; i--) if (Math.abs(anc[i][1] - c) < 50) anc.splice(i, 1); anc.push([cx + (B.seed & 1 ? -1 : 1) * bw * .06, c]); });
+    anc.sort((p, q) => p[1] - q[1]);
+    // prawa: część pod krzyżem odbita lustrzanie, żeby fala przechodziła przez krzyż jednym esem
+    if (B.smooth && crossY.length) anc.forEach(p => { if (p[1] > crossY[0] + 1) p[0] = 2 * cx - p[0]; });
+    const spine = [];
+    for (let i = 0; i < anc.length - 1; i++) { const p0 = anc[i], p3 = anc[i + 1], h = (p3[1] - p0[1]) * (B.smooth ? (R(), .45) : .42 + R() * .06); bez(p0, [p0[0], p0[1] + h], [p3[0], p3[1] - h], p3, spine); }
+    const CS = 24, [cT, cB] = crossSpan(CS), inCross = p => crossY.some(c => p[1] > c - cT && p[1] < c + cB);
+    const swell = y => .78 + .26 * Math.sin(y / 53 + B.seed) * Math.sin(y / 23 + 1);
+    stroke('a', spine.filter(p => !inCross(p)), (t, a) => { const yy = y0 + t * len; return Math.max(.42, 1.05 * nib(a) * swell(yy) * Math.min(1, t * len / 30 + .25, (1 - t) * len / 40 + .2)); });
+    const sxI = y => { let b = 0; for (let i = 1; i < spine.length; i++) if (Math.abs(spine[i][1] - y) < Math.abs(spine[b][1] - y)) b = i; return b; }, sx = y => spine[sxI(y)];
+
+    // zawijasy wzdłuż łodygi: gęsto w skupiskach, rzadko pomiędzy
+    let acc = 14, lastSide = 1; const branches = [], tips = [], motifY = (B.motif ? [y0 + B.motif[1] * len] : []);
+    for (let i = 1; i < spine.length; i++) {
+      const p = spine[i]; acc -= Math.hypot(p[0] - spine[i - 1][0], p[1] - spine[i - 1][1]); if (acc > 0) continue;
+      const d = dens(p[1]); acc = 31 - 10 * d + R() * 11;
+      if (p[1] < y0 + 14 || p[1] > y1 - 18 || nearHead(p[1]) || crossY.some(c => p[1] > c - 22 && p[1] < c + 34) || motifY.some(m => Math.abs(m - p[1]) < 18) || (B.cap === 'volute' && p[1] < y0 + 30)) { acc = 8; continue; }
+      let side = R() < .9 ? -lastSide : lastSide; if ((side > 0 ? x1 - p[0] : p[0] - x0) < 14) side = -side; lastSide = side;
+      const room = side > 0 ? x1 - p[0] : p[0] - x0, size = Math.min(room * .7, (12 + 7 * d) * (.75 + R() * .5));
+      // gałązka w dół-na zewnątrz zwija się ku górze; w górę-na zewnątrz zwija się ku dołowi
+      const up = R() < .35, a0 = up ? -PI / 2 + side * (.35 + R() * .3) : p[2] - side * (.3 + R() * .3);
+      const sc = scroll(p[0], p[1], a0, up ? side : -side, size, d > .6 ? 2 : 1); if (sc && !up && size > 10) branches.push({ at: i, pts: sc }); if (sc) tips.push([sc[sc.length - 1], side]);
+      if (R() < .25) flick(p, side, 3 + R() * 2);
+    }
+    // duże zwoje na przegięciach łodygi, zwinięte do środka pasa
+    anc.slice(1, -1).forEach(([ax, ay]) => { if (nearHead(ay) || crossY.some(c => Math.abs(c - ay) < 40)) return;
+      const i = sxI(ay), p = spine[i], side = ax < cx ? 1 : -1; const sc = scroll(p[0], p[1], p[2] + side * (.35 + R() * .25), -side, Math.min(bw * .5, 20 + R() * 6), 1); if (sc) branches.push({ at: i, pts: sc }); });
+    // krzyże, przerywane łuki, gwiazdki
+    crossY.forEach(y => cross(y, CS));
+    // gwiazdki tuż przy zwojach co kilka gałązek
+    tips.forEach(([e, side], k) => { if (k % 4 !== 2) return; const sx2 = clampv(e[0] + side * (6 + R() * 4), x0 + 5, x1 - 5); sparkle(sx2, e[1] - 6 - R() * 5, 2.4 + R() * 2); });
+    // motyw w połowie drogi: wisiorek z gałązki (lewa) albo półksiężyc z gwiazdką (prawa)
+    motifY.forEach(my => { const i = sxI(my), p = spine[i], side = p[0] < cx ? 1 : -1;
+      if (B.motif[0] === 'pendant') { const br = leafPath(p[0], p[1], -PI / 2 + side * 1.1, side, 13, .35); stroke('a', br, (t, a) => Math.max(.42, .85 * nib(a) * (1 - t * .6)));
+        const e = br[br.length - 1]; scroll(e[0], e[1], br[br.length - 1][2], side, 7, 0); const h = br[Math.floor(br.length * .7)]; pendant(h[0], h[1] + 1, 12); }
+      else { const mx = clampv(p[0] + side * 17, x0 + 9, x1 - 9), my2 = my - 4, o = [], n = [];
+        for (let a = -PI * .75; a <= PI * .75; a += .06) { o.push([mx + Math.cos(a + (side > 0 ? PI : 0)) * 7, my2 + Math.sin(a) * 7, a]); }
+        for (let a = -PI * .62; a <= PI * .62; a += .06) { n.push([mx + side * 2.6 + Math.cos(a + (side > 0 ? PI : 0)) * 5.4, my2 + Math.sin(a) * 5.4, a]); }
+        stroke('a', o, t => .35 + .45 * Math.sin(t * PI)); stroke('a', n, () => .4); sparkle(mx + side * 8, my2 - 9, 3.2);
+        stroke('a', leafPath(p[0], p[1], p[2] - side * .9, -side, 8, .5), t => .7 * (1 - t) + .2); } });
+    // koraliki przy nagłówkach sekcji
+    heads.filter(h => h > y0 + 8 && h < y1 - 8).forEach(h => { const p = sx(h);
+      for (let k = 0; k < 5; k++) { const w = 2.6 - Math.abs(k - 2) * 1.1; Ly.sh.fillRect(Math.round(p[0] - 2), Math.round(h - 3 + k), 4, 2); Ly.r.fillRect(Math.round(p[0] - w / 2), Math.round(h - 2 + k), Math.max(1, Math.round(w)), 1); } });
+
+    // zakończenia
+    const top = spine[0], end = spine[spine.length - 1];
+    if (B.cap === 'volute') {
+      // góra: łodyga wznosi się i zwija w dużą wolutę na zewnątrz pasa, z listkiem po stronie tekstu
+      const vo = leafPath(top[0], top[1] + .5, -PI / 2, -1, 28, 1.15); stroke('a', vo, (t, a) => Math.max(.42, 1.05 * nib(a) * (1 - t * .7)));
+      const ve = vo[vo.length - 1]; dot('a', ve[0], ve[1], .9);
+      const vm = vo[Math.floor(vo.length * .3)]; scroll(vm[0], vm[1], vm[2] + 1.3, 1, 11, 0);
+      scroll(top[0] + 1, top[1] + 14, -PI / 2 + .55, 1, 10, 0); flick(vo[Math.floor(vo.length * .55)], 1, 3.5);
+      // dół: zwój odbija od łodygi, dalej wykropkowana nitka z koralikami i małym sigilem, jak u góry
+      const side = end[0] < cx ? 1 : -1; scrollOld(end[0], end[1] - 16, PI / 2 - side * .9, -side, 15, 1);
+      dashed('b', line(end[0], end[1] + 2, end[0], end[1] + 30), 3, 2.6, .5); dot('a', end[0], end[1] + 12, .8); dot('r', end[0], end[1] + 22, .7);
+      const sy = end[1] + 36; stroke('a', line(end[0], sy - 5, end[0], sy + 5), t => .6 * (1 - Math.abs(t * 2 - 1)) + .15); stroke('a', line(end[0] - 3, sy - 1, end[0] + 3, sy - 1), () => .4);
+      dot('a', end[0], sy + 8, .6); B.route = spine.concat(line(end[0], end[1] + 2, end[0], end[1] + 31));
+    } else {
+      // góra: gałąź w poprzek z wisiorkami
+      const br = []; bez([x0 + 8, y0 + 4], [x0 + 12, y0 - 30], [top[0], y0 - 34], top, br);
+      stroke('a', br, (t, a) => Math.max(.42, .9 * nib(a) * Math.min(1, t * 4 + .25)));
+      scroll(x0 + 8, y0 + 4, PI / 2 + .25, 1, 11, 0);
+      [.34, .6].forEach((f, i) => { const p = br[Math.floor(br.length * f)]; pendant(p[0], p[1] + 1, 14 + i * 14); });
+      // dół: wykropkowana nitka, z której kapie krew
+      dashed('b', line(end[0], end[1], end[0], end[1] + 28), 3, 2.6, .5); dot('a', end[0], end[1] + 31, .9);
+      B.route = spine.concat(line(end[0], end[1], end[0], end[1] + 33));
+    }
+    B.branches = branches;
+    for (const L of Object.values(Ly)) L.restore();
+  }
+  // progowanie: linie ostre, przygaszone nitki ditherowane, czarna obwódka oddziela rycinę od tła
+  const A = k => Ly[k].getImageData(0, 0, W, H).data;
+  const a = A('a'), b = A('b'), r = A('r'), sh = A('sh');
+  const img = new ImageData(W, H), D = img.data;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = (y * W + x) * 4, th = bth(x, y); let c = null;
+    if (r[i + 3] / 255 > .34) c = COL.r;
+    else if (a[i + 3] / 255 > .34) c = COL.a;
+    else if (b[i + 3] / 255 > .2 + .4 * th) c = COL.b;
+    else if (sh[i + 3] / 255 > .4) c = COL.sh;
+    if (c) { D[i] = c[0]; D[i + 1] = c[1]; D[i + 2] = c[2]; D[i + 3] = c === COL.sh ? 190 : 255; }
+  }
+  // trasy spływu krwi: łodyga z nitką na końcu i odgałęzienia (duże zawijasy) przypięte do punktu łodygi
+  const px = pts => { const o = []; for (const p of pts) { const x = Math.round(p[0]), y = Math.round(p[1]), l = o[o.length - 1]; if (l && l[0] === x && l[1] === y) continue; o.push([x, y, p[2]]); } return o; };
+  const routes = bands.map(B => { const main = px(B.route), idx = i => { const p = B.route[i]; let b = 0; for (let k = 1; k < main.length; k++) if (Math.abs(main[k][1] - p[1]) + Math.abs(main[k][0] - p[0]) < Math.abs(main[b][1] - p[1]) + Math.abs(main[b][0] - p[0])) b = k; return b; };
+    return { main, branches: B.branches.map(b => ({ at: idx(b.at), pts: px(b.pts) })) }; });
+  return { img, routes, blood: tone === 'red' ? COL.a : COL.r };
+}
+
+// płótno: odsłanianie z góry na dół (jak rozkodowanie tekstu), potem krew: krople spadają z góry, wsiąkają w rycinę i spływają
+// jej trasą (szybciej na stromych odcinkach, wolniej na zakrętach), czasem skręcają w zawijas, zostawiają zasychający ślad
+// i skapują z końca
+export function ornCanvas(cv) {
+  const x = cv.getContext('2d');
+  let base = null, rev = null, W = 0, H = 0, routes = [], col = [196, 18, 29];
+  const flows = [], drops = [];
+  let trails = [], prev = 0, wait = [];
+  const spawn = (ri) => {
+    const r = routes[ri], m = r.main, top = Math.random() < .45 ? 0 : Math.floor(Math.random() * m.length * .7);
+    drops.push({ x: m[top][0], y: -4, v: 0, ri, to: top, ty: m[top][1] });
+  };
+  const run = (path, trail, from, ri) => flows.push({ path, trail, i: from, ri });
+  const step = (now) => {
+    const dt = Math.min(.1, (now - prev) / 1000); prev = now;
+    routes.forEach((r, ri) => { wait[ri] -= dt; if (wait[ri] <= 0) { spawn(ri); wait[ri] = 5 + Math.random() * 6; } });
+    for (let k = drops.length - 1; k >= 0; k--) { const d = drops[k]; d.v += 260 * dt; d.y += d.v * dt;
+      if (d.ri != null && d.y >= d.ty) { const r = routes[d.ri]; run(r.main, trails[d.ri].main, d.to, d.ri); drops.splice(k, 1); continue; }
+      if (d.y > H) drops.splice(k, 1); }
+    for (let k = flows.length - 1; k >= 0; k--) { const f = flows[k], P = f.path;
+      const p = P[Math.min(P.length - 1, f.i | 0)], v = 10 + 46 * Math.abs(Math.sin(p[2]));   // grawitacja: pion szybko, poziom wolno
+      const i0 = f.i | 0; f.i += v * dt;
+      for (let i = i0; i <= Math.min(P.length - 1, f.i | 0); i++) { f.trail[i] = 1;
+        if (f.ri != null) { const br = routes[f.ri].branches.find(b => b.at === i); if (br && Math.random() < .3) run(br.pts, trails[f.ri].br[routes[f.ri].branches.indexOf(br)], 0, null); } }
+      if (f.i >= P.length - 1) { const e = P[P.length - 1]; drops.push({ x: e[0], y: e[1] + 1, v: 0 }); flows.splice(k, 1); } }
+    const decay = Math.exp(-dt / 4.5);
+    trails.forEach(t => { for (const a of [t.main, ...t.br]) for (let i = 0; i < a.length; i++) if (a[i]) a[i] = a[i] < .04 ? 0 : a[i] * decay; });
+  };
+  const paint = () => {
+    x.putImageData(base, 0, 0);
+    const put = (pts, tr) => { for (let i = 0; i < pts.length; i++) { const v = tr[i]; if (!v) continue;
+      const k = .3 + .7 * v; x.fillStyle = `rgb(${col[0] * k | 0},${col[1] * k | 0},${col[2] * k | 0})`; x.fillRect(pts[i][0], pts[i][1], v > .8 ? 2 : 1, 1); } };
+    routes.forEach((r, ri) => { put(r.main, trails[ri].main); r.branches.forEach((b, j) => put(b.pts, trails[ri].br[j])); });
+    x.fillStyle = `rgb(${Math.min(255, col[0] + 50)},${col[1] + 20},${col[2] + 20})`;
+    flows.forEach(f => { const p = f.path[Math.min(f.path.length - 1, f.i | 0)]; x.fillRect(p[0], p[1], 2, 2); });
+    drops.forEach(d => x.fillRect(Math.round(d.x), Math.round(d.y), 2, 2 + Math.min(2, d.v / 120 | 0)));
+  };
+  const draw = (now) => {
+    if (!base) return;
+    if (rev) {
+      const t = now - rev, out = x.createImageData(W, H), S = base.data, O = out.data;
+      for (let y = 0; y < H; y++) { const ty = y / H * 900; for (let xx = 0; xx < W; xx++) { const i = (y * W + xx) * 4; if (!S[i + 3]) continue;
+        const k = (t - ty - bth(xx, y) * 420) / 150; if (k < 0) continue;
+        if (k < 1 && S[i + 3] === 255) { O[i] = O[i + 1] = O[i + 2] = k < .5 ? 60 : 110; O[i + 3] = 255; } else { O[i] = S[i]; O[i + 1] = S[i + 1]; O[i + 2] = S[i + 2]; O[i + 3] = S[i + 3]; } } }
+      x.putImageData(out, 0, 0); if (t > 900 + 420 + 150) { rev = null; prev = now; } return;
+    }
+    paint();
+  };
+  return {
+    set(b) { base = b.img; W = base.width; H = base.height; cv.width = W; cv.height = H; routes = b.routes; col = b.blood;
+      trails = routes.map(r => ({ main: new Float32Array(r.main.length), br: r.branches.map(q => new Float32Array(q.pts.length)) }));
+      wait = routes.map((_, i) => 1 + i * 2.2); flows.length = drops.length = 0; draw(performance.now()); },
+    reveal() { rev = performance.now(); const st = now => { draw(now); if (rev) requestAnimationFrame(st); }; requestAnimationFrame(st); },
+    tick(now) { if (rev || !base) return; if (!prev) prev = now; step(now); paint(); },
+  };
+}
