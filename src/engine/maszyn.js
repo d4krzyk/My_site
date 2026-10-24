@@ -1,17 +1,13 @@
 // strona Maszynologia: cracktro (listing asm, copper, sine-scroller z dekodowaniem) i plik NFO z ornamentami; przeniesione z planszy
-import { genSide } from './nfoorn';
+import { buildOrn, ornCanvas } from './nfoorn';
 import { RM, rnd, clamp, FONTS, loop, N, fbm, bth, oneBit, makeGlyph, drawGlyph } from './core';
 export function initMaszyn(root, opts) {
   const $ = id => root.querySelector('#'+id);
   const ASSETS = opts.assets;
 /* ===== NFO · MASZYNOLOGIA [IT] =====
-   Wnętrze panelu: tekst NFO + wewnętrzna ramka z półbloków CP437 (▀▄█▌▐ ░▒▓) TYLKO po bokach tekstu.
-   Ornamenty boczne w duchu scrolli RAZOR 1911: łańcuch esowatych płomieni (wiązki równoległych pasm,
-   zwężanych do ostrza, krzyżujących się na przegięciach), hakowate kolce, zwój, okrągły przerwany krąg
-   z kreskami, jeden świecący krzyż ░▒▓ (lewa); półksiężyc, sterczyna ▒, kropla krwi (prawa).
-   Układy: FULL (86 kol. x 37 wierszy, tekst w kol. 23-62, odstęp >= 3 kol.) i COMPACT (31 kol., bez ramki),
-   wybierany po szerokości wnętrza .nfo-wrap (ResizeObserver). Generator: gen3/ (frame.py, text.py, emit.py).
-   Klasy znaków: s srebro, d przygaszony, h krew (nagłówki), o ornament, q ornament ciemniejszy, r kropla. */
+   Pełny profil IT jako plik NFO. Układy: FULL (86 kol., tekst w kol. 23-62) z rycinami bocznymi na płótnie (engine/nfoorn)
+   i COMPACT (31 kol., bez rycin), wybierany po szerokości wnętrza .nfo-wrap (ResizeObserver).
+   Klasy znaków: s srebro, d przygaszony, h krew (nagłówki), A..H linki. */
 {
   const pre = $('nfo');
   const wrap = pre && pre.closest('.nfo-wrap');
@@ -19,173 +15,8 @@ export function initMaszyn(root, opts) {
   if (oL && ASSETS.ornL) oL.src = ASSETS.ornL;
   if (oR && ASSETS.ornR) oR.src = ASSETS.ornR;
   if (pre && wrap) {
-    const L = {
-      full: {cols: 86, ch: [
-        "            ▄                                              ▄▄▄▀▀▀▀▀█▀▀█▀▀███▀▀▀▀▀▀▀███",
-        "     ▄    ▄▀    ▄                                         ▐       ▌ ██▄▄█▓█▀",
-        "    █  ▄██                     ·─═≡ R E L E A S E ≡═─·            ▌ █▀██▓█▀",
-        "▀▄ █ ▄██▀                                                          ██ █▓█▀       ▄▀▀▀▄",
-        " ▀█▄▄██                PROJEKT ..... VISUAL ECHOES 2.0             ██ █▓█       █  ▀▄",
-        "  █ ███                TYP ......... PRACA MAGISTERSKA             ██ █▓█▄      ▀▄▀▀ ▄",
-        "  █ ███                ROK ......... 2025 →                       ▌ █▄ ████    ▄ ▄▀▀▀",
-        "  ▀█ ██▄               STACK ....... PYTHON · PYTORCH · HABITAT   ▀  ▀▄ ▀███▄▄  ▀▄",
-        "   ▀▄ ██▄              ROLA ........ AUTOR                         ▀  ▀▀▄  ▀███▄ ▀█▄",
-        "   ░█  ██                                                           ▀        ▀███▄ █▄",
-        "  ▒▓▒▄  ██   ▄   ▄                                                             █▓█▄ █",
-        "   ▒ ▀   ▀█▄  █  ▀               ─═ RELEASE NOTES ═─                ▄█▀         █▓█ █",
-        "   ░      ███  █  █▄                                               ██          █▓█▀▄█",
-        "           ███▄▀█ ██   Agent widzi obraz i słyszy echo.            ▀█▄        ▄█▓█ █▀",
-        "            ███ ██▀█   Rozszerzyłem model z 4 do 36 orientacji       ▀▀      ▄██▀ █▀",
-        "             ███ █ ▐   co 10° i zbadałem, ile kierunków                     ▄██▀ ▄▀  ▄",
-        "            ▄██▀▄█ ▐   naprawdę się opłaca: krzywa nasyca się           ▄   ██  ▄▀",
-        " ▄         ███▀ █▀ ▐   przy 9-12.                                      █  ▄█▀   ▀",
-        "▄  ▄█▀  ▄███▀ ▄█  █                                                ▌  █  ██▀",
-        "▀ █▀ ▄███▀   ▄▀  █                                                ▄▀ █▀▄██▀       ▄▄",
-        " ██ ███▀        ▀                 ─═ MEMBER INFO ═─               ▌ ██ ███         ▀█",
-        "▄█ █▓█▀       ▄▀▀▀▄                                               ▌ █ ███          ▄▀▀",
-        "██ █▓█       ▌  ▄  ▀   MSK TORMAN ........ OPERATOR NOC  2025 →   ▌ █ ███        ▄█▀",
-        "▀█▄█▓█▄      ▀▄   ▄▄   LUXOLIS ........... SOFTWARE ENG. 2023     ▌ █▄ ███",
-        "█▀█ ███▄        ▀▀     PFEIFER & LANGEN .. STAŻ IT       2023     ▀  █▄ ▀██▄",
-        "█▄▀█ ▀██▄       ▀      UMK TORUŃ ......... MSc AI        2024 →    ▀ █▀▄  ▀██  ▀",
-        "▀  ▀▄  ██▄                                                          ▀█▀ ▀   ▀█▄ ▀",
-        " ▌   ▄  ██▄  ▀                                                       █       ▀██ ▐",
-        "         ███  █                   ─═ INNE RELEASY ═─                ▌ ▐       ██▄▀▄",
-        "          ███▄ █▄ │                                                 █░█       ██▀▄▀",
-        "  ▄▀▀▀▄    █▓█▄ █▄ ▄   WIKIROOMS ·÷· REMUZ.IO ·÷· MUSICCLUBAPP      █▒█      ▄██ █  ▀",
-        " █ ▄▀  █   ▀█▓█▄▀█ ▐   SHADOWDETECTION ·÷· GAMEINJAVA              ▀█▒█▀    ▄█▀ ▄▀",
-        " ▀▄ ▀▀▄▀    █▓▓█ ██                                                ▄▀▒▀▄   ▄▀  ▄",
-        "   ▀▀▀▄     ▄█▓█ ██                                                █░▒░█   ▀",
-        "       ▀    █▓█▀▄█     DŹWIĘK I OBRAZ  //  W SZTUCE I W KODZIE     █▒▒▒█",
-        "          ▄█▓████▀ │                                               █▒▒▒█",
-        " ███████████▀▀██▀▀█▀▀▀▀▀▀▀▀▀▀                                      █▒▒▒█"
-      ], cl: [
-        "            o                                              ooooooooooooooooooooooooooo",
-        "     o    oo    q                                         o       q oooooooo",
-        "    o  ooo                     dddddhhhhhhhhhhhhhddddd            q ooooooo",
-        "oo o oooo                                                          oo oooo       ooooo",
-        " oooooo                ssssssssdddddssssssssssssssssss             oo ooo       o  oo",
-        "  o ooo                ssssdddddddddssssssssssssssssss             oo oooo      oooo o",
-        "  o ooo                ssssdddddddddsssssss                       q oo oooo    o oooo",
-        "  oo ooo               ssssssdddddddsssssssssssssssssssssssssss   q  oo oooooo  oo",
-        "   oo ooo              sssssddddddddssssss                         q  ooo  ooooo ooo",
-        "   qo  oo                                                           q        ooooo oo",
-        "  qqqo  oo   o   q                                                             oooo o",
-        "   q o   ooo  o  q               dddhhhhhhhhhhhhhddd                ooo         ooo o",
-        "   q      ooo  o  qq                                               oo          oooooo",
-        "           oooooo oo   ssssssssssssssssssssssssssssssss            ooo        oooo oo",
-        "            ooo oooq   sssssssssssssssssssssssssssssssssssssss       oo      oooo oo",
-        "             ooo o q   ssssssssssssssssssssssssssssssss                     oooo oo  q",
-        "            oooooo q   ssssssssssssssssssssssssssssssssssssss           o   oo  oo",
-        " q         oooo oo q   ssssssssss                                      o  ooo   o",
-        "q  ooo  ooooo oo  q                                                q  o  ooo",
-        "q oo ooooo   oo  q                                                qq oooooo       oo",
-        " oo oooo        q                 dddhhhhhhhhhhhddd               q oo ooo         oo",
-        "oo oooo       qqqqq                                               q o ooo          ooo",
-        "oo ooo       q  o  q   sssssssssssddddddddsssssssssssssssssssss   q o ooo        ooo",
-        "ooooooo      qq   qq   ssssssssdddddddddddsssssssssssssssssss     q oo ooo",
-        "ooo oooo        qq     sssssssssssssssssddsssssssssssssssssss     q  oo oooo",
-        "qqoo oooo       q      ssssssssssdddddddddsssssssssssssssssssss    q qoo  ooo  q",
-        "q  oo  ooo                                                          qqq o   ooo q",
-        " q   o  ooo  o                                                       q       ooo q",
-        "         ooo  o                   dddhhhhhhhhhhhhddd                q q       oooqq",
-        "          oooo oo q                                                 qqq       oooqq",
-        "  ooooo    oooo oo q   ssssssssssdddssssssssssdddsssssssssssss      qqq      ooo q  q",
-        " o oo  o   ooooooo q   ssssssssssssssssdddsssssssssss              qqqqq    ooo qq",
-        " oo oooo    oooo oo                                                qqqqq   oo  q",
-        "   oooo     oooo oo                                                qqqqq   r",
-        "       o    oooooo     ssssssssssssssddddddsssssssssssssssssss     qqqqq",
-        "          oooooooo q                                               qqqqq",
-        " oooooooooooooooooooooooooooo                                      qqqqq"
-      ]},
-      compact: {cols: 31, ch: [
-        "    ·─═≡ R E L E A S E ≡═─·",
-        "",
-        "PROJEKT . VISUAL ECHOES 2.0",
-        "TYP ..... PRACA MAGISTERSKA",
-        "ROK ..... 2025 →",
-        "STACK ... PYTHON · PYTORCH ·",
-        "          HABITAT",
-        "ROLA .... AUTOR",
-        "",
-        "",
-        "      ─═ RELEASE NOTES ═─",
-        "",
-        "Agent widzi obraz i słyszy",
-        "echo. Rozszerzyłem model z 4 do",
-        "36 orientacji co 10° i",
-        "zbadałem, ile kierunków",
-        "naprawdę się opłaca: krzywa",
-        "nasyca się przy 9-12.",
-        "",
-        "",
-        "       ─═ MEMBER INFO ═─",
-        "",
-        "MSK TORMAN ............. 2025 →",
-        "  └─ OPERATOR NOC",
-        "LUXOLIS .................. 2023",
-        "  └─ SOFTWARE ENG.",
-        "PFEIFER & LANGEN ......... 2023",
-        "  └─ STAŻ IT",
-        "UMK TORUŃ .............. 2024 →",
-        "  └─ MSc AI",
-        "",
-        "",
-        "      ─═ INNE RELEASY ═─",
-        "",
-        "    WIKIROOMS ·÷· REMUZ.IO",
-        "  MUSICCLUBAPP ·÷· GAMEINJAVA",
-        "        SHADOWDETECTION",
-        "",
-        "",
-        "        DŹWIĘK I OBRAZ",
-        "              //",
-        "      W SZTUCE I W KODZIE"
-      ], cl: [
-        "    dddddhhhhhhhhhhhhhddddd",
-        "",
-        "ssssssssdssssssssssssssssss",
-        "ssssdddddssssssssssssssssss",
-        "ssssdddddsssssss",
-        "ssssssdddsssssssssssssssssss",
-        "          sssssss",
-        "sssssddddssssss",
-        "",
-        "",
-        "      dddhhhhhhhhhhhhhddd",
-        "",
-        "ssssssssssssssssssssssssss",
-        "sssssssssssssssssssssssssssssss",
-        "ssssssssssssssssssssss",
-        "sssssssssssssssssssssss",
-        "sssssssssssssssssssssssssss",
-        "sssssssssssssssssssss",
-        "",
-        "",
-        "       dddhhhhhhhhhhhddd",
-        "",
-        "sssssssssssdddddddddddddsssssss",
-        "dddddssssssssssss",
-        "ssssssssddddddddddddddddddsssss",
-        "dddddsssssssssssss",
-        "sssssssssssssssssdddddddddsssss",
-        "dddddsssssss",
-        "ssssssssssddddddddddddddsssssss",
-        "dddddssssss",
-        "",
-        "",
-        "      dddhhhhhhhhhhhhddd",
-        "",
-        "    ssssssssssdddsssssssss",
-        "  sssssssssssssdddsssssssssss",
-        "        sssssssssssssss",
-        "",
-        "",
-        "        ssssssssssssss",
-        "              dd",
-        "      sssssssssssssssssss"
-      ]}
-    };
-    /* ---- pełny profil IT: treść złożona z bloków; ornamenty boki z układu powyżej, środkowy fragment (wiersze A..B-1) powtarzany tyle razy, ile trzeba ---- */
+    const L = {};
+    /* ---- pełny profil IT: treść złożona z bloków ---- */
     const BLOCKS = [
       {kv: [['AUTOR', 'DANIEL KRZYKOWSKI'], ['TYTUŁ', 'MSc COMPUTER SCIENCE (AI)'], ['ROLA', 'PYTHON & ML ENGINEER'], ['UCZELNIA', 'UMK TORUŃ'], ['JĘZYKI', 'PL NATYWNY · EN B2']]},
       {h: 'PROFIL'},
@@ -231,41 +62,21 @@ export function initMaszyn(root, opts) {
       return linkify(rows);
     };
     {
-      const A = 9, B = 26, TW = 40, X0 = 23, SRC = L.full, N0 = SRC.ch.length;
-      let body = compose(TW); while (body.length && !body[0][0]) body.shift();
-      const ROW0 = 3, TAIL = 11;
-      const gen = Math.max(B - A, Math.ceil(ROW0 + body.length + 3 - (A + TAIL)));   // tyle wierszy środka, ile potrzeba na tekst
-      const total = A + gen + (N0 - B), slack = total - 1 - ROW0 - body.length - 2, heads = BLOCKS.filter(b => b.h).length;
-      if (slack >= heads) { body = compose(TW, Math.floor(slack / heads)); while (body.length && !body[0][0]) body.shift(); }
-      const LX = 0, LW = 21, RX = 64, RW = 22;
-      const gl = genSide(gen, LW, 1911, { k: 3, P: [26, 38], A: [4.5, 6.5], gap: [1.8, 2.6], thorn: true, acc: ['ring', 'cross', 'ring', 'spire'], every: 3, off: 1, start: 'ring', end: 'cross' });
-      const gr = genSide(gen, RW, 666, { k: 4, P: [20, 30], A: [3.2, 5], gap: [1.3, 2], thorn: false, acc: ['crescent', 'spire', 'ring'], every: 4, off: 2, start: 'spire', end: 'crescent' });
-      const ch = [], cl = [];
+      const TW = 40, X0 = 23, ROW0 = 3;
+      const body = compose(TW, 1); while (body.length && !body[0][0]) body.shift();
+      const total = ROW0 + body.length + 2, ch = [], cl = [], heads = [2];
       for (let ri = 0; ri < total; ri++) {
-        const mid = ri >= A && ri < A + gen;
-        let r = [...(mid ? '' : SRC.ch[ri < A ? ri : ri - gen + B - A].padEnd(86))], k = [...(mid ? '' : SRC.cl[ri < A ? ri : ri - gen + B - A].padEnd(86))];
-        if (mid) { r = new Array(86).fill(' '); k = new Array(86).fill(' ');
-          [...gl.ch[ri - A]].forEach((c, i) => { r[LX + i] = c; k[LX + i] = gl.cl[ri - A][i]; });
-          [...gr.ch[ri - A]].forEach((c, i) => { r[RX + i] = c; k[RX + i] = gr.cl[ri - A][i]; }); }
-        if (ri >= 2 && ri < total - 1) {
-          // środek wymieniamy na nasz tekst (wiersz 2 to napis nagłówka, który podmieniamy też)
-          for (let c = X0; c < X0 + TW; c++) { r[c] = ' '; k[c] = ' '; }
-          const ln = body[ri - ROW0];
-          if (ri === 2) { const t = '·─═≡ P R O F I L   I T ≡═─·'; const pad = X0 + Math.floor((TW - t.length) / 2); [...t].forEach((c, i) => { r[pad + i] = c; k[pad + i] = c === ' ' ? ' ' : /[A-Z]/.test(c) ? 'h' : 'd'; }); }
-          else if (ln) [...ln[0]].forEach((c, i) => { r[X0 + i] = c; k[X0 + i] = ln[1][i] || ' '; });
-        }
+        const r = new Array(X0 + TW).fill(' '), k = new Array(X0 + TW).fill(' '), ln = body[ri - ROW0];
+        if (ri === 2) { const t = '·─═≡ P R O F I L   I T ≡═─·'; const pad = X0 + Math.floor((TW - t.length) / 2); [...t].forEach((c, i) => { r[pad + i] = c; k[pad + i] = c === ' ' ? ' ' : /[A-Z]/.test(c) ? 'h' : 'd'; }); }
+        else if (ln) { [...ln[0]].forEach((c, i) => { r[X0 + i] = c; k[X0 + i] = ln[1][i] || ' '; }); if (ln[1].includes('h')) heads.push(ri); }
         ch.push(r.join('')); cl.push(k.join(''));
       }
-      L.full = { cols: 86, ch, cl, off: total - N0 };
+      L.full = { cols: 86, ch, cl, heads };
       const cw = 31, cb = compose(cw); while (cb.length && !cb[0][0]) cb.shift();
       L.compact = { cols: cw, ch: ['    ·─═≡ P R O F I L   I T ≡═─·', ...cb.map(r => r[0])], cl: ['dddddddhhhhhhhhhhhhhdddddd'.padEnd(31, ' '), ...cb.map(r => r[1].padEnd(r[0].length, ' '))] };
       L.compact.ch = L.compact.ch.map(l => l.slice(0, cw)); L.compact.cl = L.compact.cl.map(l => l.slice(0, cw));
-      var DROPOFF = L.full.off;
     }
-    // spadająca kropla (układ FULL): klatki [wiersz, kolumna, znak, klasa]
-    const DROP = [[[33, 75, "▀", "r"], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, "█", "r"], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, "▄", "r"], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, "▀", "r"], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, "▄", "r"], [35, 75, " ", " "], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, "▀", "r"], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, "▄", "r"], [36, 75, " ", " "]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, "▀", "r"]], [[33, 75, " ", " "], [34, 75, " ", " "], [35, 75, " ", " "], [36, 75, " ", " "]]];
-    DROP.forEach(f => f.forEach(c => { c[0] += DROPOFF; }));
-    const CLASS = {d: 'd', h: 'h', o: 'o', q: 'q', r: 'r'};
+    const CLASS = {d: 'd', h: 'h'};
     const esc = g => g === '&' ? '&amp;' : g === '<' ? '&lt;' : g === '>' ? '&gt;' : g;
     let mode = null, dec = null;
     // rozkodowanie przy wczytaniu (jak w szczelinie): każdy znak przechodzi przez bloki ▓▒░, od góry ku dołowi, w rozrzuconej kolejności
@@ -282,7 +93,7 @@ export function initMaszyn(root, opts) {
           if (!run) return;
           const c = CLASS[k0];
           if (LINKS[k0]) { html += `<a class="lk" href="${LINKS[k0]}" target="_blank" rel="noopener noreferrer">${run}</a>`; run = ''; return; }
-          html += c ? `<span class="${c}"${c === 'o' || c === 'q' || c === 'r' ? ' aria-hidden="true"' : ''}>${run}</span>` : run;
+          html += c ? `<span class="${c}">${run}</span>` : run;
           run = '';
         };
         const n = Math.max(row.length, fx ? G.cols : 0);
@@ -304,7 +115,20 @@ export function initMaszyn(root, opts) {
     const avail = () => { const cs = getComputedStyle(wrap); let w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       wrap.querySelectorAll(':scope > img').forEach(im => { if (getComputedStyle(im).display !== 'none') w -= im.offsetWidth + 6; }); return w; };
     const pick = () => avail() >= L.full.cols * parseFloat(getComputedStyle(pre).fontSize) * .5 ? 'full' : 'compact';   // znak DOS = pół wysokości kroju
+    // ryciny boczne: płótno nad <pre> w siatce znaków (kolumna = 2 px, wiersz = 4 px)
+    const cv = document.createElement('canvas'); cv.className = 'nfo-orn'; cv.setAttribute('aria-hidden', 'true');
+    pre.parentNode.insertBefore(cv, pre);
+    const orn = ornCanvas(cv);
+    {
+      const G = L.full, W = G.cols * 2, H = G.ch.length * 4;
+      orn.set(buildOrn(W, H, [
+        { name: 'L', seed: 1911, x: [2, 43], top: 18, bot: 22, twine: true, thorns: true, cap: 'volute' },
+        { name: 'R', seed: 666, x: [129, 170], top: 22, bot: 28, leaves: true, cap: 'moon' }], G.heads.map(r => r * 4 + 2)));
+    }
+    const place = () => { const on = mode === 'full'; cv.style.display = on ? '' : 'none'; if (!on) return;
+      Object.assign(cv.style, { left: pre.offsetLeft + 'px', top: pre.offsetTop + 'px', width: pre.offsetWidth + 'px', height: pre.offsetHeight + 'px' }); };
     const decode = () => {
+      if (mode === 'full' && !RM) orn.reveal();
       if (RM) return render(null);
       dec = { t0: performance.now(), now: performance.now() };
       const step = now => { dec.now = now; render(null); if (now - dec.t0 < 1600) requestAnimationFrame(step); else { dec = null; render(null); } };
@@ -312,41 +136,32 @@ export function initMaszyn(root, opts) {
     };
     const update = () => {
       const m = pick();
-      if (m === mode) return;
-      const first = mode === null;
-      mode = m;
-      pre.classList.toggle('compact', m === 'compact');
-      if (first) decode(); else render(null);
+      if (m !== mode) {
+        const first = mode === null;
+        mode = m;
+        pre.classList.toggle('compact', m === 'compact');
+        pre.style.width = m === 'full' ? L.full.cols * .5 + 'em' : '';   // znak DOS = pół em; trailing spacje są ucinane
+        if (first) decode(); else render(null);
+      }
+      place();
     };
     update();
     if ('ResizeObserver' in window) new ResizeObserver(update).observe(wrap);
     else addEventListener('resize', update, {passive: true});
-    let holding = false;
-    pre.addEventListener('pointerenter', () => { holding = true; }); pre.addEventListener('pointerleave', () => { holding = false; });
-    pre.addEventListener('pointerdown', () => { holding = true; });
     pre.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a.lk'); if (!a) return; e.preventDefault();
       const url = a.href; a.classList.add('zap'); setTimeout(() => { a.classList.remove('zap'); window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
-    // kopiowanie: ornamenty (aria-hidden) znikają, zostaje sam tekst CV, bez wcięcia pod ramkę
+    // kopiowanie: sam tekst CV, bez wcięcia pod ryciny
     pre.addEventListener('copy', e => {
       const sel = getSelection(); if (!sel || sel.isCollapsed || !pre.contains(sel.anchorNode) && !pre.contains(sel.focusNode)) return;
       const box = document.createElement('div'); for (let i = 0; i < sel.rangeCount; i++) box.appendChild(sel.getRangeAt(i).cloneContents());
-      box.querySelectorAll('[aria-hidden="true"]').forEach(n => n.replaceWith(' '.repeat(n.textContent.length)));
       let lines = box.textContent.split('\n').map(l => l.replace(/\s+$/, ''));
       const ind = Math.min(...lines.filter(l => l.trim()).map(l => l.match(/^ */)[0].length), 1e9);
       lines = lines.map(l => l.slice(Math.min(ind, l.length)));
       const txt = lines.join('\n').replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '');
       e.clipboardData.setData('text/plain', txt); e.preventDefault();
     });
-    if (!RM) {
-      // co ~5 s kropla wydłuża się, odrywa i spada w dół (12 kl./s); tylko w układzie FULL
-      let last = -1;
-      loop(pre, 12, t => {
-        if (mode !== 'full' || dec || holding) return;
-        const cyc = t % 5200;
-        const f = cyc < 4300 ? -1 : Math.min(DROP.length - 1, Math.floor((cyc - 4300) / 84));
-        if (f !== last) { last = f; render(f < 0 ? null : DROP[f]); }
-      });
-    }
+    // co ~5 s kropla krwi zbiera się na ostrzu prawej ryciny i spada
+    if (!RM) loop(cv, 15, t => { if (mode === 'full') orn.tick(t); });
   }
 }
 

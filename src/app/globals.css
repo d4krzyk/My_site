@@ -250,22 +250,20 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 /* asymetria: lewa rycina (martwe drzewo) stoi na dole, prawa (iglica) wisi u góry */
 #ornL{align-self:flex-end;margin-right:auto}
 #ornR{align-self:flex-start;margin-left:auto}
-.nfo-mid{flex:0 1 auto;min-width:0;overflow:visible;color:var(--silver)}
+.nfo-mid{position:relative;flex:0 1 auto;min-width:0;overflow:visible;color:var(--silver)}
 .nfo-title{font-family:var(--f-goth);font-size:54px;line-height:1;text-align:center;color:var(--silver);margin:2px 0 4px;
   -webkit-font-smoothing:none;text-shadow:0 0 18px rgba(223,226,232,.08)}
 .nfo-sub{text-align:center;color:var(--ink-dim);margin:0 0 12px}
-.nfo-mid pre{margin:0 auto;width:max-content;max-width:100%;overflow:hidden;font-family:var(--f-dos);font-size:16px;
+.nfo-mid pre{position:relative;z-index:1;margin:0 auto;width:max-content;max-width:100%;overflow:hidden;font-family:var(--f-dos);font-size:16px;
   line-height:1;letter-spacing:0;white-space:pre;color:var(--silver);-webkit-font-smoothing:none;font-smooth:never;font-kerning:none;
   font-variant-ligatures:none;scrollbar-width:thin;scrollbar-color:#2a2d3a transparent}
 .nfo-mid pre,.nfo-title,.nfo-sub{text-shadow:0 0 3px #000,0 0 8px #000,1px 1px 0 #000}
 .nfo-mid pre a.lk{color:#e8dcc0;text-decoration:underline dotted;text-decoration-color:#6e0d14;text-underline-offset:3px;cursor:pointer}
 .nfo-mid pre a.lk:hover,.nfo-mid pre a.lk:focus-visible{color:#ff5a3c;text-decoration-style:solid;outline:none}
 .nfo-mid pre a.lk.zap{color:#ff1f1f;background:rgba(196,18,29,.35);text-shadow:0 0 6px #ff1f1f,0 0 14px #c4121d}
-.nfo-mid pre .o,.nfo-mid pre .q,.nfo-mid pre .r{user-select:none;-webkit-user-select:none}
-.nfo-mid pre .o{color:#5f6582}
-.nfo-mid pre .q{color:#3d4159}
+.nfo-orn{position:absolute;z-index:0;pointer-events:none;image-rendering:pixelated;user-select:none}
 .nfo-mid pre .d{color:var(--ink-dim)}
-.nfo-mid pre .h,.nfo-mid pre .r{color:var(--blood-hi)}
+.nfo-mid pre .h{color:var(--blood-hi)}
 /* duży ekran: NFO większe, jako główna wizytówka */
 @media (min-width:1360px){
   .nfo-mid pre{font-size:18px}
