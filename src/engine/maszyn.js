@@ -1,4 +1,5 @@
 // strona Maszynologia: cracktro (listing asm, copper, sine-scroller z dekodowaniem) i plik NFO z ornamentami; przeniesione z planszy
+import { genSide } from './nfoorn';
 import { RM, rnd, clamp, FONTS, loop, N, fbm, bth, oneBit, makeGlyph, drawGlyph } from './core';
 export function initMaszyn(root, opts) {
   const $ = id => root.querySelector('#'+id);
@@ -233,14 +234,20 @@ export function initMaszyn(root, opts) {
       const A = 9, B = 26, TW = 40, X0 = 23, SRC = L.full, N0 = SRC.ch.length;
       let body = compose(TW); while (body.length && !body[0][0]) body.shift();
       const ROW0 = 3, TAIL = 11;
-      const loops = Math.max(0, Math.ceil((ROW0 + body.length + 3 - (A + TAIL)) / (B - A)));
-      const total = A + loops * (B - A) + (N0 - B), slack = total - 1 - ROW0 - body.length - 2, heads = BLOCKS.filter(b => b.h).length;
+      const gen = Math.max(B - A, Math.ceil(ROW0 + body.length + 3 - (A + TAIL)));   // tyle wierszy środka, ile potrzeba na tekst
+      const total = A + gen + (N0 - B), slack = total - 1 - ROW0 - body.length - 2, heads = BLOCKS.filter(b => b.h).length;
       if (slack >= heads) { body = compose(TW, Math.floor(slack / heads)); while (body.length && !body[0][0]) body.shift(); }
-      const idx = []; for (let i = 0; i < A; i++) idx.push(i); for (let l = 0; l < loops; l++) for (let i = A; i < B; i++) idx.push(i); for (let i = B; i < N0; i++) idx.push(i);
+      const LX = 0, LW = 21, RX = 64, RW = 22;
+      const gl = genSide(gen, LW, 1911, { k: 3, P: [26, 38], A: [4.5, 6.5], gap: [1.8, 2.6], thorn: true, acc: ['ring', 'cross', 'ring', 'spire'], every: 3, off: 1, start: 'ring', end: 'cross' });
+      const gr = genSide(gen, RW, 666, { k: 4, P: [20, 30], A: [3.2, 5], gap: [1.3, 2], thorn: false, acc: ['crescent', 'spire', 'ring'], every: 4, off: 2, start: 'spire', end: 'crescent' });
       const ch = [], cl = [];
-      idx.forEach((si, ri) => {
-        let r = [...SRC.ch[si].padEnd(86)], k = [...SRC.cl[si].padEnd(86)];
-        if (ri >= 2 && ri < idx.length - 1) {
+      for (let ri = 0; ri < total; ri++) {
+        const mid = ri >= A && ri < A + gen;
+        let r = [...(mid ? '' : SRC.ch[ri < A ? ri : ri - gen + B - A].padEnd(86))], k = [...(mid ? '' : SRC.cl[ri < A ? ri : ri - gen + B - A].padEnd(86))];
+        if (mid) { r = new Array(86).fill(' '); k = new Array(86).fill(' ');
+          [...gl.ch[ri - A]].forEach((c, i) => { r[LX + i] = c; k[LX + i] = gl.cl[ri - A][i]; });
+          [...gr.ch[ri - A]].forEach((c, i) => { r[RX + i] = c; k[RX + i] = gr.cl[ri - A][i]; }); }
+        if (ri >= 2 && ri < total - 1) {
           // środek wymieniamy na nasz tekst (wiersz 2 to napis nagłówka, który podmieniamy też)
           for (let c = X0; c < X0 + TW; c++) { r[c] = ' '; k[c] = ' '; }
           const ln = body[ri - ROW0];
@@ -248,8 +255,8 @@ export function initMaszyn(root, opts) {
           else if (ln) [...ln[0]].forEach((c, i) => { r[X0 + i] = c; k[X0 + i] = ln[1][i] || ' '; });
         }
         ch.push(r.join('')); cl.push(k.join(''));
-      });
-      L.full = { cols: 86, ch, cl, off: idx.length - N0 };
+      }
+      L.full = { cols: 86, ch, cl, off: total - N0 };
       const cw = 31, cb = compose(cw); while (cb.length && !cb[0][0]) cb.shift();
       L.compact = { cols: cw, ch: ['    ·─═≡ P R O F I L   I T ≡═─·', ...cb.map(r => r[0])], cl: ['dddddddhhhhhhhhhhhhhdddddd'.padEnd(31, ' '), ...cb.map(r => r[1].padEnd(r[0].length, ' '))] };
       L.compact.ch = L.compact.ch.map(l => l.slice(0, cw)); L.compact.cl = L.compact.cl.map(l => l.slice(0, cw));
@@ -319,6 +326,17 @@ export function initMaszyn(root, opts) {
     pre.addEventListener('pointerdown', () => { holding = true; });
     pre.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a.lk'); if (!a) return; e.preventDefault();
       const url = a.href; a.classList.add('zap'); setTimeout(() => { a.classList.remove('zap'); window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
+    // kopiowanie: ornamenty (aria-hidden) znikają, zostaje sam tekst CV, bez wcięcia pod ramkę
+    pre.addEventListener('copy', e => {
+      const sel = getSelection(); if (!sel || sel.isCollapsed || !pre.contains(sel.anchorNode) && !pre.contains(sel.focusNode)) return;
+      const box = document.createElement('div'); for (let i = 0; i < sel.rangeCount; i++) box.appendChild(sel.getRangeAt(i).cloneContents());
+      box.querySelectorAll('[aria-hidden="true"]').forEach(n => n.replaceWith(' '.repeat(n.textContent.length)));
+      let lines = box.textContent.split('\n').map(l => l.replace(/\s+$/, ''));
+      const ind = Math.min(...lines.filter(l => l.trim()).map(l => l.match(/^ */)[0].length), 1e9);
+      lines = lines.map(l => l.slice(Math.min(ind, l.length)));
+      const txt = lines.join('\n').replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '');
+      e.clipboardData.setData('text/plain', txt); e.preventDefault();
+    });
     if (!RM) {
       // co ~5 s kropla wydłuża się, odrywa i spada w dół (12 kl./s); tylko w układzie FULL
       let last = -1;

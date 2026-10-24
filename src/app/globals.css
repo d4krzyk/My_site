@@ -261,6 +261,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .nfo-mid pre a.lk{color:#e8dcc0;text-decoration:underline dotted;text-decoration-color:#6e0d14;text-underline-offset:3px;cursor:pointer}
 .nfo-mid pre a.lk:hover,.nfo-mid pre a.lk:focus-visible{color:#ff5a3c;text-decoration-style:solid;outline:none}
 .nfo-mid pre a.lk.zap{color:#ff1f1f;background:rgba(196,18,29,.35);text-shadow:0 0 6px #ff1f1f,0 0 14px #c4121d}
+.nfo-mid pre .o,.nfo-mid pre .q,.nfo-mid pre .r{user-select:none;-webkit-user-select:none}
 .nfo-mid pre .o{color:#5f6582}
 .nfo-mid pre .q{color:#3d4159}
 .nfo-mid pre .d{color:var(--ink-dim)}
