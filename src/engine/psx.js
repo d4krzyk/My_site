@@ -95,6 +95,8 @@ function maskTex(kind, seed) {
     x.fillStyle = '#0b080b'; x.beginPath(); x.moveTo(48, 119); x.lineTo(80, 119); x.lineTo(76, 124); x.lineTo(52, 124); x.closePath(); x.fill();   // wąskie, proste usta
     const star = (cx, cy, rr) => { x.beginPath(); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = k % 2 ? rr * .3 : rr; x.lineTo(cx + Math.cos(a) * q, cy + Math.sin(a) * q); } x.closePath(); x.fill(); };
     x.fillStyle = '#1a141e'; star(98, 50, 3.6); star(30, 108, 2.8);                                      // dwie drobne gwiazdki
+    x.fillStyle = '#0b080b';                                                                            // pionowe kreski przez oczy, zwężone na końcach (jak na wzorze)
+    E.forEach(ex => { x.beginPath(); x.moveTo(ex - .5, EY - 34); x.quadraticCurveTo(ex + 4, EY, ex + .8, EY + 38); x.lineTo(ex - .8, EY + 38); x.quadraticCurveTo(ex - 4, EY, ex + .5, EY - 34); x.fill(); });
     E.forEach(ex => hole(() => { x.moveTo(ex - 10, EY + .5); x.quadraticCurveTo(ex, EY - 2.5, ex + 10, EY); x.quadraticCurveTo(ex, EY + 2.5, ex - 10, EY + .5); }));   // zmrużone oczy
     x.restore();
   }
