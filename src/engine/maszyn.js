@@ -115,15 +115,15 @@ export function initMaszyn(root, opts) {
     const avail = () => { const cs = getComputedStyle(wrap); let w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       wrap.querySelectorAll(':scope > img').forEach(im => { if (getComputedStyle(im).display !== 'none') w -= im.offsetWidth + 6; }); return w; };
     const pick = () => avail() >= L.full.cols * parseFloat(getComputedStyle(pre).fontSize) * .5 ? 'full' : 'compact';   // znak DOS = pół wysokości kroju
-    // ryciny boczne: płótno nad <pre> w siatce znaków (kolumna = 2 px, wiersz = 4 px)
+    // ryciny boczne: płótno nad <pre> w siatce znaków (kolumna = 4 px, wiersz = 8 px)
     const cv = document.createElement('canvas'); cv.className = 'nfo-orn'; cv.setAttribute('aria-hidden', 'true');
     pre.parentNode.insertBefore(cv, pre);
     const orn = ornCanvas(cv);
     {
-      const G = L.full, W = G.cols * 2, H = G.ch.length * 4;
+      const G = L.full, W = G.cols * 4, H = G.ch.length * 8;
       orn.set(buildOrn(W, H, [
-        { name: 'L', seed: 1911, x: [2, 43], top: 18, bot: 22, twine: true, thorns: true, cap: 'volute' },
-        { name: 'R', seed: 666, x: [129, 170], top: 22, bot: 28, leaves: true, cap: 'moon' }], G.heads.map(r => r * 4 + 2)));
+        { name: 'L', seed: 1911, x: [4, 86], top: 34, bot: 46, cap: 'volute', clusters: [.1, .62, .88], crosses: [.36] },
+        { name: 'R', seed: 666, x: [256, 340], top: 50, bot: 60, cap: 'pendants', clusters: [.28, .5, .9], crosses: [.72] }], G.heads.map(r => r * 8 + 4), opts.ornTone || 'white'));
     }
     const place = () => { const on = mode === 'full'; cv.style.display = on ? '' : 'none'; if (!on) return;
       Object.assign(cv.style, { left: pre.offsetLeft + 'px', top: pre.offsetTop + 'px', width: pre.offsetWidth + 'px', height: pre.offsetHeight + 'px' }); };
