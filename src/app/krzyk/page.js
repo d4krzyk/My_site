@@ -12,6 +12,12 @@ const PICKS = [
   ['heads', 'persony', 'trzy maski, trzy nastroje'],
   ['minidv', 'obraz', 'kaseta miniDV · aparat DSC-V1'],
 ];
+// persony: trzy części sekcji; maski lewitują u góry (scena 3D), przy części danej persony ona wychyla się do przodu
+const PERSONY = [
+  ['lękowa', 'haunted · nawiedzona', 'Boi się i analizuje wszystko po kilka razy. Mówi szybko i dużo, wiecznie przestraszona życiem.'],
+  ['wyluzowana', 'indie sleaze · hyperpop · chilled 2000s', 'Spokojna, cieszy się prostymi chwilami. Energiczna i głośna, czasem zbyt impulsywna; dużo głupotek i goofy momentów.'],
+  ['poważna', 'gotycka · sakralna', 'Skupiona na rozwoju wewnętrznym, nie traci czasu na głupoty. Posępna i zadziorna, patrzy z góry i obserwuje; szuka połączenia ze sobą.'],
+];
 // podrozdziały (treść później)
 const SUBS = [
   ['k-muzyka', 'A1', 'muzyka · taśmy', 'Tu będą klipy w odtwarzaczu.'],
@@ -50,7 +56,21 @@ export default function Krzyk() {
                 <span className="k-pick-s dos">zadzwoń · napisz</span>
               </button>
             </nav>
-            {SUBS.map(([id, code, h, txt]) => (
+            {SUBS.map(([id, code, h, txt]) => id === 'k-persony' ? (
+              <section className="k-sub k-persony" id={id} key={id}>
+                <span className="k-code dos">{code}</span>
+                <h2 data-type="" data-seed={code.charCodeAt(1)}>{h}</h2>
+                <div className="kp-stage" aria-hidden="true"><canvas /></div>
+                {PERSONY.map(([n, tag, d], i) => (
+                  <div className="kp-part" data-p={i} key={n}>
+                    <h3 data-type="" data-seed={30 + i}>{n}</h3>
+                    <p className="kp-tag dos">{tag}</p>
+                    <p>{d}</p>
+                  </div>
+                ))}
+                <p className="k-wip dos">▓ w budowie</p>
+              </section>
+            ) : (
               <section className="k-sub" id={id} key={id}>
                 <span className="k-code dos">{code}</span>
                 <h2 data-type="" data-seed={code.charCodeAt(1)}>{h}</h2>

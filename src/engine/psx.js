@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RM, loop, clamp } from './core';
 
 const ease = k => k * k * (3 - 2 * k), easeOut = k => 1 - Math.pow(1 - k, 3);
+const TAU = Math.PI * 2;
 
 /* ---------- wspólny potok PS1 (jak na planszy) ---------- */
 export function ps1(canvas, lowW, lowH, { clear = 0x000000, alpha = 0, fog = null } = {}) {
@@ -169,7 +170,9 @@ export function initRooms(root, { assets, go }) {
         a3.position.set(.6, .03 + (ph3 < 1 ? .012 : 0), 0);
         a3.rotation.set(-.18, p0[0] + (p1[0] - p0[0]) * k3, p0[1] + (p1[1] - p0[1]) * k3);
       };
-      click = () => { st.busy = true; setTimeout(() => { st.busy = false; go(kind); }, RM ? 0 : 380); };
+      // klik: maski wylatują z karty, krążą w kręgu i otwierają heksagonalny portal, za którym jest sekcja person
+      click = () => { if (RM) return go(kind); st.busy = true; ms.forEach(m => { m.visible = false; });
+        personaPortal(cv, ms.map(m => m.position.x), () => go(kind, true), () => { ms.forEach(m => { m.visible = true; }); st.busy = false; }); };
     }
     if (kind === 'minidv') {
       const fc = grime(96, 96, [14, 12, 11], 18, 5), fx = fc.getContext('2d'), fd = fx.getImageData(0, 0, 96, 96);
@@ -216,6 +219,81 @@ export function initRooms(root, { assets, go }) {
     loop(cv, RM ? 4 : 20, (t) => { st.now = t; tick(t); P.render(); });
   });
   return () => stop.forEach(f => f());
+}
+
+/* ---------- persony: trzy maski wylatują z karty, krążą w kręgu twarzami do widza, wpadają w heksagonalny portal z ditherem,
+   który zalewa ekran; po skoku do sekcji warstwy portalu schodzą (trzy warstwy heksów, od środka na zewnątrz) ---------- */
+const PCOL = ['#7fe8ff', '#ff3fb4', '#ffd27a'];          // lękowa · wyluzowana · poważna
+let ppBusy = false;
+function personaPortal(pickCv, xs, arrive, done) {
+  if (ppBusy) return; ppBusy = true;
+  const ov = document.createElement('div'); ov.className = 'pp-ov'; ov.innerHTML = '<canvas class="pp-hex"></canvas><canvas class="pp-3d"></canvas>'; document.body.appendChild(ov);
+  const [hx, cv] = ov.querySelectorAll('canvas'), lw = Math.ceil(innerWidth / 3), lh = Math.ceil(innerHeight / 3);
+  const P = ps1(cv, lw, lh, { alpha: 0 }); lights(P); P.cam.position.set(0, 0, 3); P.cam.lookAt(0, 0, 0);
+  const cold = new THREE.PointLight(0x7fe8ff, .7, 3); cold.position.set(-1, .3, 1.2); P.scene.add(cold); const gold = new THREE.PointLight(0xffd27a, .6, 3); gold.position.set(1, .4, 1.2); P.scene.add(gold);
+  hx.width = lw; hx.height = lh; const x = hx.getContext('2d');
+  const ms = ['haunt', 'sleaze', 'sacral'].map((k, i) => { const m = makeMask(P, k, 11 + i * 7); P.scene.add(m); return m; });
+  const r = pickCv.getBoundingClientRect(), H = 3 * Math.tan(17.5 * Math.PI / 180), Wd = H * innerWidth / innerHeight, k0 = 2 * 2.9 * Math.tan(17.5 * Math.PI / 180);
+  const s0 = (r.height / k0) / (innerHeight / (2 * H)), cx0 = ((r.left + r.width / 2) / innerWidth * 2 - 1) * Wd, cy0 = -((r.top + r.height / 2) / innerHeight * 2 - 1) * H;
+  const RAD = Math.min(.62, Wd * .55), SZ = Math.min(.24, Wd * .2);
+  // siatka heksów (ostre wierzchołki u góry), rysowana pełnymi wierszami pikseli, żeby była ostra
+  const S = Math.max(6, Math.round(Math.min(lw, lh) / 14)), cells = [], cxm = lw / 2, cym = lh / 2;
+  for (let row = -2, y; (y = row * S * 1.5) < lh + S * 2; row++) for (let q = -2, xx; (xx = (q + (row & 1) / 2) * S * 1.732) < lw + S * 2; q++)
+    cells.push({ x: xx, y, d: Math.hypot(xx - cxm, y - cym), j: Math.random(), layer: ((q + row * 2) % 3 + 3) % 3 });
+  const maxD = Math.hypot(cxm, cym) + S * 2;
+  const hexAt = (cxp, cyp, s, fill, edge) => { const w = s * .866;
+    for (let dy = -s; dy <= s; dy++) { const hw = Math.abs(dy) <= s / 2 ? w : w * (s - Math.abs(dy)) / (s / 2); if (hw < .5) continue;
+      x.fillStyle = edge; x.fillRect(Math.round(cxp - hw), Math.round(cyp + dy), Math.round(hw * 2), 1);
+      if (Math.abs(dy) < s - 1 && hw > 1.5) { x.fillStyle = fill; x.fillRect(Math.round(cxp - hw + 1), Math.round(cyp + dy), Math.round(hw * 2 - 2), 1); } } };
+  let finished = false, jumped = false, t0 = null;
+  const end = () => { if (finished) return; finished = true; ov.remove(); P.r.dispose(); ppBusy = false; done(); };
+  loop(cv, 30, t => { if (finished) return; if (t0 === null) t0 = t; const e = t - t0;
+    // maski: z karty do kręgu (0–0,5 s), krążą coraz szybciej, potem spiralą wpadają w środek portalu (1,25–1,75 s)
+    const gather = ease(clamp(e / 500, 0, 1)), dive = ease(clamp((e - 1250) / 500, 0, 1)), spin = e / 1000 * (2.2 + e / 600);
+    ms.forEach((m, i) => { const a = spin + i * TAU / 3 + Math.PI / 2, rr = RAD * (1 - dive);
+      const ox = Math.cos(a) * rr, oy = Math.sin(a) * rr * .85, sx0 = cx0 + xs[i] * s0, sy0 = cy0;
+      m.position.set(sx0 + (ox - sx0) * gather, sy0 + (oy - sy0) * gather, dive * -.8);
+      m.scale.setScalar((.31 * s0 + (SZ - .31 * s0) * gather) * (1 - dive * .95)); m.rotation.set(0, Math.sin(e / 300 + i) * .15, Math.sin(e / 400 + i * 2) * .08); m.visible = dive < .98; });
+    P.render();
+    // portal: otwiera się od środka (1,0–1,8 s) i zalewa ekran; po skoku trzy warstwy schodzą od środka (1,95–2,95 s)
+    x.clearRect(0, 0, lw, lh);
+    const kin = clamp((e - 1000) / 800, 0, 1), kout = clamp((e - 1950) / 1000, 0, 1);
+    if (kin > 0) for (const c of cells) { const dn = c.d / maxD;
+      if (dn > kin * 1.2 - c.j * .2) continue;
+      if (kout > 0 && dn < (kout - c.layer * .18) * 1.6 - c.j * .12) continue;
+      const front = kin < 1 ? dn > kin * 1.2 - .22 : kout > 0 && dn > (kout - c.layer * .18) * 1.6 - .3;
+      hexAt(c.x, c.y, S, front ? '#140d1c' : '#07060c', front ? PCOL[(c.layer + Math.floor(e / 120)) % 3] : '#1c1426'); }
+    if (kin >= 1 && !jumped) { jumped = true; arrive(); }
+    if (e > 3000) end(); });
+}
+
+/* ---------- sekcja person: trzy maski lewitują u góry; przy części danej persony ona wychyla się na wprost,
+   a pozostałe cofają się w cień jak nieodblokowane postacie ---------- */
+export function initPersonaStage(cv, parts) {
+  const W = Math.max(160, Math.round(cv.clientWidth / 4)), Hh = Math.max(60, Math.round(cv.clientHeight / 4));
+  const P = ps1(cv, W, Hh); lights(P); P.cam.position.set(0, .02, 3); P.cam.lookAt(0, 0, 0);
+  const ms = ['haunt', 'sleaze', 'sacral'].map((k, i) => { const m = makeMask(P, k, 11 + i * 7); P.scene.add(m); return m; });
+  const span = Math.min(1.25, 1.4 * W / Hh / 4.2);
+  const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 }));
+  let active = -1;
+  const io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) active = +e.target.dataset.p; else if (+e.target.dataset.p === active) active = -1; }); },
+    { rootMargin: '-40% 0px -40% 0px' });
+  parts.forEach(p => io.observe(p));
+  loop(cv, RM ? 4 : 24, t => {
+    ms.forEach((m, i) => {
+      const on = active === i, off = active >= 0 && !on, tg = { z: on ? .7 : off ? -1 : 0, s: on ? .48 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
+      for (const k in tg) c[k] += (tg[k] - c[k]) * .12;
+      let x = (i - 1) * span, y = c.y + Math.sin(t / 900 + i * 2) * .05, rx = 0, ry = 0, rz = 0;
+      if (i === 0) { x += (Math.random() - .5) * .01; ry = (Math.floor(t / 1300) % 3 - 1) * .3; rz = Math.sin(t / 333) * .03; }          // lękowa: drży, rozgląda się nerwowo
+      if (i === 1) { y += Math.abs(Math.sin(t / 380)) * .06; rz = Math.sin(t / 520) * .2; ry = Math.sin(t / 1400) * .2; }                  // wyluzowana: podskakuje, kiwa się
+      if (i === 2) { const st = Math.floor(t / 1500), pose = k => [[-.28, .06], [0, 0], [.24, -.05], [0, .03]][((k % 4) + 4) % 4], k3 = Math.min(1, (t % 1500) / 90);
+        const p0 = pose(st - 1), p1 = pose(st); rx = -.18; ry = p0[0] + (p1[0] - p0[0]) * k3; rz = p0[1] + (p1[1] - p0[1]) * k3; }     // poważna: szarpnięcia manekina
+      if (on) rx -= .12;                                                                                                                 // wychyla się ku widzowi
+      m.position.set(x, y, c.z); m.scale.setScalar(c.s); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
+    });
+    P.render();
+  });
+  return () => io.disconnect();
 }
 
 /* ---------- walkman → muzyka: słuchawki wylatują z karty, obracają się wokół osi nauszników (pałąk idzie do tyłu, jakby

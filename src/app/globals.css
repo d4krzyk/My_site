@@ -223,6 +223,20 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .k-sub p{margin:0;max-width:60ch;text-shadow:0 1px 0 #000}
 .k-code{color:var(--blood-hi)}
 .k-sub .k-wip{margin-top:14px;color:var(--blood-hi)}
+/* sekcja person: scena z maskami przyklejona u góry, pod nią trzy części (po jednej na personę) */
+.k-sub.k-persony{display:block}
+.kp-stage{position:sticky;top:0;z-index:1;height:38svh;margin:6px calc(-1 * clamp(18px,4vw,44px)) 0;
+  background:radial-gradient(60% 70% at 50% 45%,rgba(0,0,0,.4),transparent 70%),var(--board) 0 0/640px auto repeat;
+  -webkit-mask:linear-gradient(#000 82%,transparent);mask:linear-gradient(#000 82%,transparent)}   /* tekst poprzedniej części chowa się pod sceną */
+.kp-stage canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.kp-part{min-height:58svh;display:flex;flex-direction:column;justify-content:center;max-width:46ch}
+.kp-part[data-p="1"]{margin:0 auto;text-align:center}.kp-part[data-p="2"]{margin-left:auto;text-align:right}
+.kp-part h3{font-family:"Special Elite K",monospace;font-weight:400;font-size:clamp(24px,3.4vw,38px);margin:0 0 4px;color:#e8dcc0}
+.kp-tag{color:var(--blood-hi);margin:0 0 10px!important}
+.kp-part[data-p="0"] h3{color:#bff4ff}.kp-part[data-p="1"] h3{color:#ffb6e2}.kp-part[data-p="2"] h3{color:#ffe7b0}
+/* persony: przejście z portalem heksagonalnym */
+.pp-ov{position:fixed;inset:0;z-index:50;pointer-events:none}
+.pp-ov canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
 
 /* przejście miniDV → HC90E na cały ekran */
 .hc-ov{position:fixed;inset:0;z-index:50;background:#000;cursor:pointer;transition:opacity .45s}

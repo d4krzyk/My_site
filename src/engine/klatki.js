@@ -46,7 +46,10 @@ function driver(go, step = 1) {
 }
 
 export function initKlatki(sec, { mode = 'film' } = {}) {
-  const points = () => { const s = [0]; sec.querySelectorAll('.k-choose, .k-sub').forEach(el => { const r = el.getBoundingClientRect(); s.push(r.top + scrollY - (el.classList.contains('k-sub') ? 34 : 0)); }); return s; };
+  // przystanki: góra, pole wyborów, podrozdziały, a w sekcji person każda persona osobno (jej część pod sceną z maskami)
+  const points = () => { const s = [0]; sec.querySelectorAll('.k-choose, .k-sub, .kp-part').forEach(el => { const r = el.getBoundingClientRect(), y = r.top + scrollY;
+      s.push(el.classList.contains('kp-part') ? y - innerHeight * .42 : el.classList.contains('k-sub') ? y - 34 : y); });
+    s.sort((a, b) => a - b); return s.filter((v, i) => !i || v - s[i - 1] > 40); };
   const ov = overlay(); const { cv, x } = ov;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const film = async (y0, y1, idx, n) => {
