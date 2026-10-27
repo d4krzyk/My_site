@@ -52,3 +52,6 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
 - **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).
   Autor dośle zdjęcia; wtedy zaproponować warianty (np. próg + dither Bayera w czerni i krwi, z żarzącymi się oczami, rozpad w piksele przy odkodowaniu
   razem z resztą animacji wejścia). Używać tylko zdjęć dostarczonych przez autora i bez innych osób; zdjęcie ma być częścią animowanego odkodowania strony.
+- **Maszynologia: animacja tekstu przy przewijaniu.** Linijki tekstu Release info mają się przy przewijaniu w dół rozszyfrowywać od dołu ekranu
+  (budować znak po znaku, jak przy wczytaniu), a przy dalszym zjeżdżaniu lub przewijaniu w górę szyfrować się z powrotem od góry. Teraz tego nie ma:
+  rozkodowanie odbywa się tylko raz, przy wejściu na stronę.
