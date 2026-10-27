@@ -55,3 +55,5 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
 - **Maszynologia: animacja tekstu przy przewijaniu.** Linijki tekstu Release info mają się przy przewijaniu w dół rozszyfrowywać od dołu ekranu
   (budować znak po znaku, jak przy wczytaniu), a przy dalszym zjeżdżaniu lub przewijaniu w górę szyfrować się z powrotem od góry. Teraz tego nie ma:
   rozkodowanie odbywa się tylko raz, przy wejściu na stronę.
+- **Maszynologia: podstrony projektów (po obronie magisterki).** Z czasem zrobić podstrony poszczególnych projektów autora z GitHuba, żeby lepiej pokazać,
+  co robią (opis, zrzuty, linki). Na razie projekty są tylko jako klikalne linki do repozytoriów w Release info oraz pliki README w terminalu. Termin: po magisterce, bez pośpiechu.
