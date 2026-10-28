@@ -57,3 +57,6 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
   rozkodowanie odbywa się tylko raz, przy wejściu na stronę.
 - **Maszynologia: podstrony projektów (po obronie magisterki).** Z czasem zrobić podstrony poszczególnych projektów autora z GitHuba, żeby lepiej pokazać,
   co robią (opis, zrzuty, linki). Na razie projekty są tylko jako klikalne linki do repozytoriów w Release info oraz pliki README w terminalu. Termin: po magisterce, bez pośpiechu.
+- **Maszynologia: przejście przy otwieraniu projektu.** Po wejściu w projekt (np. `open <projekt>` w terminalu lub kliknięcie) ma się pokazać
+  szyfr tekstowy 10 na 10 znaków, który odszyfrowuje się w kombinacji, wyświetlając kolor projektu. Przejście w stylu cyberpunkowej demosceny,
+  spójne z resztą podstrony Maszynologii.
