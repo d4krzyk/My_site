@@ -36,14 +36,9 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
   („...”), które dodają grozy. Potem ditherowy przeskok do sekcji kontaktu (jak w przejściach walkman → muzyka i persony). Na telefonie ta sama animacja.
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
 - **Przewijanie sekcjami (Krzyk, wariant B – skok blokowy):** sprawdzić na gładziku (Mac); przystanki pośrednie przy wysokim kolażu są już dodane (nie testowane na gładziku).
-- **Generator sigili (`/sigen/`): styl suwaków i pasków.** Zmienić wygląd pasków (suwaki gęstości i grubości, panel) na bardziej imersyjny,
-  w stylistyce pixel haunted (np. pikselowe, ditherowane suwaki w kolorach krwi i kości słoniowej, nawiedzony klimat zamiast domyślnych kontrolek).
 - **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).
   Autor dośle zdjęcia; wtedy zaproponować warianty (np. próg + dither Bayera w czerni i krwi, z żarzącymi się oczami, rozpad w piksele przy odkodowaniu
   razem z resztą animacji wejścia). Używać tylko zdjęć dostarczonych przez autora i bez innych osób; zdjęcie ma być częścią animowanego odkodowania strony.
-- **Maszynologia: animacja tekstu przy przewijaniu.** Linijki tekstu Release info mają się przy przewijaniu w dół rozszyfrowywać od dołu ekranu
-  (budować znak po znaku, jak przy wczytaniu), a przy dalszym zjeżdżaniu lub przewijaniu w górę szyfrować się z powrotem od góry. Teraz tego nie ma:
-  rozkodowanie odbywa się tylko raz, przy wejściu na stronę.
 - **Maszynologia: podstrony projektów (po obronie magisterki).** Z czasem zrobić podstrony poszczególnych projektów autora z GitHuba, żeby lepiej pokazać,
   co robią (opis, zrzuty, linki). Na razie projekty są tylko jako klikalne linki do repozytoriów w Release info oraz pliki README w terminalu. Termin: po magisterce, bez pośpiechu.
 - **Maszynologia: przejście przy otwieraniu projektu.** Po wejściu w projekt (np. `open <projekt>` w terminalu lub kliknięcie) ma się pokazać
