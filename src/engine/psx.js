@@ -332,10 +332,13 @@ export function initPersonaStage(cv, parts) {
   const ro = new ResizeObserver(() => { const [w, h] = dims(); if (w === W && h === Hh) return; W = w; Hh = h; P.resize(W, Hh); span = Math.min(1.25, 1.4 * W / Hh / 4.2); }); ro.observe(cv);
   const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 }));
   let active = -1;
-  const io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) active = +e.target.dataset.p; else if (+e.target.dataset.p === active) active = -1; }); },
-    { rootMargin: '-40% 0px -40% 0px' });
-  parts.forEach(p => io.observe(p));
+  // aktywna persona = część najbliższa linii pod sceną (62% wysokości okna), liczona z położenia w każdej klatce, więc nie zależy od kolejności
+  // ani kierunku przewijania (zdarzenia przecięcia gubiły stan przy powrocie na górę); gdy żadna część nie jest blisko okna: -1 (wszystkie neutralne)
+  const pick = () => { const line = innerHeight * .62; let best = -1, bd = 1e9;
+    parts.forEach((el, i) => { const r = el.getBoundingClientRect(), d = Math.abs((r.top + r.bottom) / 2 - line); if (d < bd) { bd = d; best = i; } });
+    return bd < innerHeight * .75 ? best : -1; };
   loop(cv, RM ? 4 : 24, t => {
+    active = pick();
     ms.forEach((m, i) => {
       const on = active === i, off = active >= 0 && !on, tg = { z: on ? .7 : off ? -1 : 0, s: on ? .48 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
       for (const k in tg) c[k] += (tg[k] - c[k]) * .12;
@@ -350,7 +353,7 @@ export function initPersonaStage(cv, parts) {
     });
     P.render();
   });
-  return () => { io.disconnect(); ro.disconnect(); };
+  return () => { ro.disconnect(); };
 }
 
 /* ---------- walkman → muzyka: słuchawki wylatują z karty, obracają się wokół osi nauszników (pałąk idzie do tyłu, jakby
