@@ -34,21 +34,10 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
 - **Kontakt (telefon): animacja wejścia.** Najazd na telefon; telefon dzwoni, z jego przycisków bije światło. Wyskakuje pikselowy
   dymek z liniami od telefonu, jak od kogoś, kto krzyczy do słuchawki, z napisem „HALO? CZY TO KRZYK?!”. Odpowiedzią są trzy kropki
   („...”), które dodają grozy. Potem ditherowy przeskok do sekcji kontaktu (jak w przejściach walkman → muzyka i persony). Na telefonie ta sama animacja.
-- **Persony, sekcja: błędy sceny z maskami.** Przy powrocie na górę (przewijanie wstecz) kolejność części się psuje; czasem środkowa
-  persona nie wychodzi na wprost, a pozostałe nie ciemnieją. Do naprawy: aktywną personę wybierać z położenia części względem środka
-  ekranu przy każdym przewinięciu (a nie ze zdarzeń przecięcia), z wygładzonym przejściem.
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
-- **Przewijanie sekcjami (Krzyk, wariant B – skok blokowy):** sprawdzić na gładziku (Mac) i ewentualnie dodać punkt zatrzymania w środku kolażu.
+- **Przewijanie sekcjami (Krzyk, wariant B – skok blokowy):** sprawdzić na gładziku (Mac); przystanki pośrednie przy wysokim kolażu są już dodane (nie testowane na gładziku).
 - **Generator sigili (`/sigen/`): styl suwaków i pasków.** Zmienić wygląd pasków (suwaki gęstości i grubości, panel) na bardziej imersyjny,
   w stylistyce pixel haunted (np. pikselowe, ditherowane suwaki w kolorach krwi i kości słoniowej, nawiedzony klimat zamiast domyślnych kontrolek).
-- **Maszynologia na telefonie: znikają ramki.** W wersji na telefon ramki wokół paneli (Release info i terminal) nie są widoczne. Do sprawdzenia i naprawy
-  (m.in. rysowanie ramki na wąskim ekranie i moment jej animacji po wejściu przez kurtynę).
-- **Przełącznik PL/EN na telefonie: lepsze umiejscowienie.** Na telefonie klawisze języka (prawy górny róg, obok kart) zasłaniają dużo treści.
-  Znaleźć miejsce, które nic nie zasłania (np. wmontowane w układ strony albo chowane przy przewijaniu), zachowując spójność między bramą a podstronami.
-- **Kurtyna przejścia przy kartach (telefon): rozciągnięte piksele.** Na telefonie przy przejściu z kart (kurtyna z sigili/pikseli) piksele
-  się rozciągają: ich wysokość i szerokość nie zachowują proporcji. Do sprawdzenia w `src/engine/veil.js`. Prawdopodobna przyczyna (niepotwierdzona):
-  płótno liczone z `innerHeight`, a rozciągane CSS-em do `100svh`; na telefonie te wartości różnią się przez pasek przeglądarki, więc piksele wychodzą
-  prostokątne. Trzeba utrzymać kwadratowe piksele (rozmiar płótna i rozmiar wyświetlania z tej samej wysokości).
 - **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).
   Autor dośle zdjęcia; wtedy zaproponować warianty (np. próg + dither Bayera w czerni i krwi, z żarzącymi się oczami, rozpad w piksele przy odkodowaniu
   razem z resztą animacji wejścia). Używać tylko zdjęć dostarczonych przez autora i bez innych osób; zdjęcie ma być częścią animowanego odkodowania strony.
