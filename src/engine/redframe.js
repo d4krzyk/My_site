@@ -29,6 +29,13 @@ export function redFrame(pre){
       [[4,10],[4,11],[3,12],[3,13],[3,14],[4,15]].forEach(([a,b],i)=>P(a,b,i<3?'s':'d'));
       P(16,5,'D'); P(5,16,'D'); };
     corner(2,2,1,1); corner(W-3,H-3,-1,-1);
+    // wąski ekran (telefon): panel jest bardzo wysoki, więc same narożniki znikają z widoku; dodajemy boczne szyny z węzłami,
+    // żeby ramka była widoczna przez cały czas przewijania (kropkowana linia, co ok. 60 px romb, końce gasną ku narożnikom)
+    if(W<260){ const y0=26, y1=H-27, n=y1-y0;
+      for(const X of [3,W-4]){
+        for(let y=y0;y<=y1;y++){ const k=Math.min(y-y0,y1-y)/22, fadeK=k<1?(k<.4?'D':k<.75?'d':'s'):'s'; if(y%3===0) continue; put(X,y,y%12===1?'#':fadeK); }
+        for(let y=y0+30;y<y1-20;y+=60){ put(X,y,'w'); put(X-1,y,'#'); put(X+1,y,'#'); put(X,y-1,'#'); put(X,y+1,'#'); put(X,y-2,'s'); put(X,y+2,'s'); put(X-2,y,'d'); put(X+2,y,'d'); }
+      } }
     // --- u góry: cieniowany romb ze skrzydłami z trzech kresek (środkowa najdłuższa, z grotem), końce lekko uniesione
     const ty=6, X=Math.round(cx);
     const dia=(rr)=>{ for(let i=-rr;i<=rr;i++){ const j=rr-Math.abs(i); put(X+i,ty-j,i<=0?'w':'#'); put(X+i,ty+j,i<0?'s':'d'); } };

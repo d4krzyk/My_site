@@ -124,7 +124,8 @@ button{-webkit-user-select:none;user-select:none}
 @media (max-width:700px){
   .spread.stack .scard .sr{left:calc(100% + 12px);right:auto;top:50%;transform:translateY(-50%);text-align:left;font-size:13px}
   .cards-nav .deck{right:2px;top:2px}
-  .lang-keys{top:24px;right:146px}
+  .lang-keys{top:24px;right:146px;transition:transform .25s ease,opacity .25s ease}
+  .lang-keys.away{transform:translateY(-90px);opacity:0;pointer-events:none}
 }
 /* przełącznik języka w rozkładzie */
 /* szczelina: nowa strona wyłania się przez poziome rozcięcie */
