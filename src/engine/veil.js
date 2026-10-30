@@ -20,9 +20,12 @@ export function veilGo(href, kind, navigate) {
   const [hi, mid, deep] = PAL[kind] || PAL.brama;
   if (RM) { navigate(href); busy = false; return; }
   const cv = document.createElement('canvas'); cv.className = 'veil';
-  cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100svh;z-index:200;image-rendering:pixelated;pointer-events:none';
+  cv.style.cssText = 'position:fixed;left:0;top:0;z-index:200;image-rendering:pixelated;pointer-events:none';
   (document.getElementById('veil') || document.body).appendChild(cv);      // #veil z layoutu: React go nie przebudowuje przy zmianie strony
   const W = Math.ceil(innerWidth / PX), H = Math.ceil(innerHeight / PX); cv.width = W; cv.height = H;
+  // rozmiar wyświetlania = rozmiar płótna × PX (a nie 100vw × 100svh): na telefonie innerHeight różni się od svh przez pasek przeglądarki,
+  // co rozciągałoby piksele do prostokątów; teraz każdy piksel ma dokładnie PX × PX, a nadmiar poza ekranem jest ucinany
+  cv.style.width = W * PX + 'px'; cv.style.height = H * PX + 'px';
   const x = cv.getContext('2d'); x.imageSmoothingEnabled = false;
   const SH = sprites(hi), SM = sprites(mid);
   const NC = Math.ceil(W / CW), col = Array.from({ length: NC }, (_, i) => ({ d: Math.random() * 260 + Math.abs(i - NC / 2) / NC * 120, v: .55 + Math.random() * .5, g: Array.from({ length: Math.ceil(H / 10) + 4 }, () => Math.floor(Math.random() * 18)) }));
