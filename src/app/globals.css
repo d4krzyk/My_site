@@ -413,3 +413,6 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .pj-ov canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
 .pj-link{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);padding:6px 14px;font-size:18px;color:#05030a;background:#e9e2cf;text-decoration:none;border:2px solid #8a0b16}
 .pj-link:hover,.pj-link:focus-visible{background:#fff;outline:2px dashed #ff3a3a;outline-offset:3px}
+/* pole wyborów: gdy trwa animacja jednej opcji, pozostałe są zablokowane i przygaszone (wspólna blokada w initRooms) */
+.k-fx.rooms-busy [data-room]{cursor:progress}
+.k-fx.rooms-busy [data-room]:not(.chosen){pointer-events:none;opacity:.35;filter:grayscale(.7);transition:opacity .25s,filter .25s}

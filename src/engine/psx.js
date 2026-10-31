@@ -128,16 +128,18 @@ export function makeMask(P, kind, seed) {
 /* ---------- pole wyborów ---------- */
 export function initRooms(root, { assets, go }) {
   const stop = [];
-  const items = [...root.querySelectorAll('[data-room]')];
+  const items = [...root.querySelectorAll('[data-room]')], room = { busy: false };
+  const setRoomBusy = v => { room.busy = v; root.classList.toggle('rooms-busy', v); items.forEach(b => { if (v) b.setAttribute('aria-disabled', 'true'); else { b.removeAttribute('aria-disabled'); b.classList.remove('chosen'); } }); };
   items.forEach(btn => {
     const kind = btn.dataset.room, cv = btn.querySelector('canvas');
     const wide = kind === 'phone', P = ps1(cv, wide ? 144 : 176, wide ? 120 : 176);
     lights(P);
-    const st = { hot: false, busy: false, t0: 0, now: 0 };
+    // zajętość jest wspólna dla wszystkich kart: dopóki trwa animacja jednej, pozostałe są zablokowane i przygaszone (inaczej animacje nakładają się na siebie)
+    const st = { hot: false, t0: 0, now: 0, get busy() { return room.busy; }, set busy(v) { setRoomBusy(v); } };
     btn.addEventListener('pointerenter', () => { st.hot = true; }); btn.addEventListener('pointerleave', () => { st.hot = false; });
     btn.addEventListener('focus', () => { st.hot = true; }); btn.addEventListener('blur', () => { st.hot = false; });
     let tick = () => {}, click = () => go(kind);
-    btn.addEventListener('click', () => { if (st.busy) return; click(); });
+    btn.addEventListener('click', () => { if (room.busy) return; btn.classList.add('chosen'); click(); if (!room.busy) btn.classList.remove('chosen'); });
 
     if (kind === 'walkman') {
       loadPSX(P, assets.walkman).then(m => { const o = fit(m, 1.1); o.rotation.set(-.15, .5, .1); P.scene.add(o);
