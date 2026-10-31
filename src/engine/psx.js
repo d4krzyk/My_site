@@ -340,7 +340,8 @@ export function initPersonaStage(cv, parts) {
   // niska rozdzielczość w proporcjach płótna (minimum 120 px szerokości bez zmiany proporcji, inaczej maski się rozciągają)
   const dims = () => { const w = cv.clientWidth / 4 || 120, h = cv.clientHeight / 4 || 60, k = Math.max(1, 120 / w); return [Math.round(w * k), Math.max(30, Math.round(h * k))]; };
   let [W, Hh] = dims();
-  const P = ps1(cv, W, Hh); lights(P); P.cam.position.set(0, .02, 3); P.cam.lookAt(0, 0, 0);
+  // kamera daleko, wąski kąt (prawie ortograficznie): na płótnie szerokości okna maski przy krawędziach nie wyginają się od perspektywy
+  const CAMD = 7.5, FOV = 14; const P = ps1(cv, W, Hh); lights(P); P.cam.fov = FOV; P.cam.updateProjectionMatrix(); P.cam.position.set(0, .02, CAMD); P.cam.lookAt(0, 0, 0);
   const ms = ['haunt', 'sleaze', 'sacral'].map((k, i) => { const m = makeMask(P, k, 11 + i * 7); P.scene.add(m); return m; });
   let span = Math.min(1.25, 1.4 * W / Hh / 4.2);
   // płótno mierzone przed ułożeniem strony miało złe proporcje (rozciągnięte maski na telefonie): przeliczamy przy każdej zmianie rozmiaru
@@ -348,7 +349,7 @@ export function initPersonaStage(cv, parts) {
   const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 })), pr = ms.map(() => 0);   // pr: 0 = maska w rzędzie u góry, 1 = w lewym górnym rogu
   let active = -1, shown = -1, cnFor = -2;
   // nazwa obok maski w rogu: kontener dla falującej wstążki (initPersonaTitles dokłada do niego płótna) i tagu persony
-  const cn = document.createElement('div'); cn.className = 'kp-cn'; cn.setAttribute('aria-hidden', 'true'); cn.innerHTML = '<i></i>'; cv.parentElement.appendChild(cn);
+  const cn = document.createElement('div'); cn.className = 'kp-cn'; cn.setAttribute('aria-hidden', 'true'); cn.innerHTML = ''; cv.parentElement.appendChild(cn);
   const ease = x => x * x * (3 - 2 * x);
   // aktywna persona = część najbliższa linii pod sceną (62% wysokości okna), liczona z położenia w każdej klatce, więc nie zależy od kolejności
   // ani kierunku przewijania (zdarzenia przecięcia gubiły stan przy powrocie na górę); gdy żadna część nie jest blisko okna: -1 (wszystkie neutralne)
@@ -360,7 +361,7 @@ export function initPersonaStage(cv, parts) {
     // kolejność: najpierw poprzednia maska wraca do cienia w rzędzie, dopiero potem następna wychodzi i ląduje w rogu
     if (shown !== active) { if (shown < 0 || pr[shown] < .02) shown = active; }
     SEATED = shown >= 0 && pr[shown] > .92 ? shown : -1;
-    const halfH = 2.6 * Math.tan(17.5 * Math.PI / 180), halfW = halfH * W / Hh,   // połowa widoku na głębokości maski w rogu (z ≈ .4)
+    const halfH = (CAMD - .4) * Math.tan(FOV / 2 * Math.PI / 180), halfW = halfH * W / Hh,   // połowa widoku na głębokości maski w rogu (z ≈ .4)
        fac = Math.min(1, Math.max(.55, W / Hh / 2.4)), cs = .36 * fac;
     const cx = -halfW + cs * 1.05 + .14, cy = halfH - cs * 1.3 - .08, now = performance.now();
     ms.forEach((m, i) => {
@@ -374,7 +375,7 @@ export function initPersonaStage(cv, parts) {
         const p0 = pose(st - 1), p1 = pose(st); rx = -.18; ry = p0[0] + (p1[0] - p0[0]) * k3; rz = p0[1] + (p1[1] - p0[1]) * k3; }     // poważna: szarpnięcia manekina
       if (on) rx -= .12;                                                                                                                 // wychyla się ku widzowi
       // lot do rogu: łukiem w górę, w rogu maska patrzy w środek strony
-      x += (cx - x) * pe; y += (cy - y) * pe + Math.sin(pe * Math.PI) * .18; ry += .55 * pe;
+      x += (cx - x) * pe; y += (cy - y) * pe + Math.sin(pe * Math.PI) * .07; ry += .3 * pe;
       // dukanie w rytmie wpisywanych liter (tylko gdy maska już siedzi w rogu)
       const talk = pe > .8 && TALK.k === i && now - TALK.t < 170 ? TALK.n : 0;
       if (talk) {
@@ -385,7 +386,7 @@ export function initPersonaStage(cv, parts) {
       m.position.set(x, y, c.z); m.scale.setScalar(sc); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
     });
     // nazwa obok maski: pojawia się, gdy maska wyląduje, gaśnie, gdy maska zaczyna wracać
-    if (SEATED !== cnFor) { cnFor = SEATED; if (SEATED >= 0) { const el = parts[SEATED], tag = el.querySelector('.kp-tag'); cn.querySelector('i').textContent = tag ? tag.textContent : ''; } }
+    if (SEATED !== cnFor) { cnFor = SEATED; if (SEATED >= 0) { const el = parts[SEATED], tag = el.querySelector('.kp-tag'); } }
     cn.classList.toggle('on', SEATED >= 0 && active === SEATED);
     cn.style.left = ((cx + cs * 1.05 - .08 + halfW) / (2 * halfW) * 100) + '%'; cn.style.top = ((halfH - cy) / (2 * halfH) * 100) + '%';
     P.render();
@@ -581,8 +582,8 @@ export function initPersonaTitles(parts) {
       const on = SEATED === i; life = clamp(life + (on ? 1 : -1) * d / 900, 0, 1);   // pojawia się, gdy maska wyląduje w rogu
       if (life <= 0.002 || !mat.uniforms.map.value) { if (!cleared) { r.clear(); cleared = true; } return; }
       cleared = false; r.clear(); const cr = 1 + 1.6 * (1 - ss(life)), g = ss(life);
-      cam.position.x = Math.sin(t / 2600) * .35; cam.position.y = Math.sin(t / 3300) * .15; cam.lookAt(0, 0, 0);
-      for (const [dt, a] of [[450, .06], [360, .1], [270, .16], [180, .25], [90, .42], [0, 1]]) { shape(Q(Math.max(0, t - dt)), .62 * cr); gain.value = g * a * (a < 1 ? 1.4 : .95); r.render(scene, cam); }   // ruch skokowy (~11 kl./s) i wielokrotne echo: sześć kopii w czasie, coraz słabszych
+      cam.position.x = Math.sin(t / 2600) * .08; cam.position.y = Math.sin(t / 3300) * .04; cam.lookAt(0, 0, 0);
+      shape(Q(t), .36 * cr); gain.value = g * .95; r.render(scene, cam);   // jedna kopia (bez echa w czasie), łagodniejsza fala; ruch skokowy ~11 kl./s
     });
     stops.push(() => { ro.disconnect(); r.dispose(); cv.remove(); h.classList.remove('kp-gl'); });
   });
