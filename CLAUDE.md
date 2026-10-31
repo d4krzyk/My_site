@@ -85,7 +85,7 @@ przeliczania liczby znaków co klatkę: każda jej zmiana rozstawiała cały kr�
 ## Nazwy person (sekcja Krzyk → persony)
 
 Nazwa aktywnej persony to niskorozdzielcza, miękka tekstura na wstążce z 8 wielokątów (`initPersonaTitles` w `src/engine/psx.js`): mapowanie afiniczne,
-przyciąganie wierzchołków do pikseli, łagodna fala i skręt biegnące bez przerwy (bez echa/smugi: napis ma się nie powtarzać), wzór z dema PS1 z Euskal 2001. Wstążka stoi w rogu obok maski (zob. „Persony w rogu i dźwięk”). Przy wejściu słowo wynurza się
+przyciąganie wierzchołków do pikseli, fala i skręt biegnące bez przerwy oraz smuga ruchu (echo), wzór z dema PS1 z Euskal 2001; **stylu wstążki nie zmieniać**. Wstążka stoi w rogu obok maski (zob. „Persony w rogu i dźwięk”). Przy wejściu słowo wynurza się
 z ciemności jako pognieciona kreska i się prostuje, przy wyjściu zwija się i gaśnie. Zwykły `h3` zostaje w stronie (ukryty wizualnie), a przy ograniczeniu
 animacji w systemie nagłówek jest zwykłym tekstem.
 

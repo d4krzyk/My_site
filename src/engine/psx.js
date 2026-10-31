@@ -582,8 +582,8 @@ export function initPersonaTitles(parts) {
       const on = SEATED === i; life = clamp(life + (on ? 1 : -1) * d / 900, 0, 1);   // pojawia się, gdy maska wyląduje w rogu
       if (life <= 0.002 || !mat.uniforms.map.value) { if (!cleared) { r.clear(); cleared = true; } return; }
       cleared = false; r.clear(); const cr = 1 + 1.6 * (1 - ss(life)), g = ss(life);
-      cam.position.x = Math.sin(t / 2600) * .08; cam.position.y = Math.sin(t / 3300) * .04; cam.lookAt(0, 0, 0);
-      shape(Q(t), .36 * cr); gain.value = g * .95; r.render(scene, cam);   // jedna kopia (bez echa w czasie), łagodniejsza fala; ruch skokowy ~11 kl./s
+      cam.position.x = Math.sin(t / 2600) * .35; cam.position.y = Math.sin(t / 3300) * .15; cam.lookAt(0, 0, 0);
+      for (const [dt, a] of [[450, .06], [360, .1], [270, .16], [180, .25], [90, .42], [0, 1]]) { shape(Q(Math.max(0, t - dt)), .62 * cr); gain.value = g * a * (a < 1 ? 1.4 : .95); r.render(scene, cam); }   // ruch skokowy (~11 kl./s) i wielokrotne echo: sześć kopii w czasie, coraz słabszych
     });
     stops.push(() => { ro.disconnect(); r.dispose(); cv.remove(); h.classList.remove('kp-gl'); });
   });
