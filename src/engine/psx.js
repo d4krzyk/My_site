@@ -126,14 +126,15 @@ export function makeMask(P, kind, seed) {
 }
 
 /* ---------- pole wyborów ---------- */
-const PHONE_CAM_Z = 2.05;   // odległość kamery od telefonu w karcie (też używana do dopasowania rozmiaru na starcie przejścia kontaktu)
+const PHONE_CAM_Z = 1.05;   // odległość kamery od leżącego telefonu w niskiej płycie kontaktu (też używana do dopasowania rozmiaru na starcie przejścia kontaktu)
+const PHONE_TILT = -.42;    // telefon w płycie leży na boku (obrót o 90°) i jest lekko odchylony do tyłu, jak położony na stole
 export function initRooms(root, { assets, go }) {
   const stop = [];
   const items = [...root.querySelectorAll('[data-room]')], room = { busy: false };
   const setRoomBusy = v => { room.busy = v; root.classList.toggle('rooms-busy', v); items.forEach(b => { if (v) b.setAttribute('aria-disabled', 'true'); else { b.removeAttribute('aria-disabled'); b.classList.remove('chosen'); } }); };
   items.forEach(btn => {
     const kind = btn.dataset.room, cv = btn.querySelector('canvas');
-    const tall = kind === 'phone', P = ps1(cv, tall ? 120 : 176, tall ? 160 : 176);     // telefon: płótno pionowe 3:4 (model jest wysoki i wąski)
+    const wide = kind === 'phone', P = ps1(cv, wide ? 210 : 176, wide ? 90 : 176);     // telefon: niska, szeroka płyta (model leży na boku)
     lights(P);
     // zajętość jest wspólna dla wszystkich kart: dopóki trwa animacja jednej, pozostałe są zablokowane i przygaszone (inaczej animacje nakładają się na siebie)
     const st = { hot: false, t0: 0, now: 0, get busy() { return room.busy; }, set busy(v) { setRoomBusy(v); } };
@@ -219,9 +220,10 @@ export function initRooms(root, { assets, go }) {
         // nakładka startuje od razu; telefon w karcie chowa się dopiero po pierwszej narysowanej klatce nakładki (bez przerwy, w której go nie widać)
         click = () => { if (RM) return go(kind); st.busy = true; ring = 0;
           phoneCall(assets, cv, () => go(kind, true), () => { cv.style.visibility = ''; st.busy = false; }, () => { cv.style.visibility = 'hidden'; }); };
-        tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0;
-          o.rotation.set(.1 + Math.sin(t / 2000) * .06, Math.sin(t / 1500) * (st.hot ? .8 : .45) + r, -.06 + r * .5 + (st.hot ? Math.sin(t / 60) * .03 : 0));
-          o.position.y = Math.sin(t / 1000) * .02; };
+        // leży na boku: ekran do widza, słuchawka w lewo; przy najechaniu drga jak wibrujący telefon
+        tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0, buzz = st.hot ? Math.sin(t / 40) * .035 : 0;
+          o.rotation.set(PHONE_TILT + Math.sin(t / 2000) * .04, Math.sin(t / 1700) * .16 + r, Math.PI / 2 + buzz + r * .5);
+          o.position.set(st.hot ? Math.sin(t / 33) * .006 : 0, Math.sin(t / 1000) * .012, 0); };
       }).catch(() => {});
     }
     loop(cv, RM ? 4 : 20, (t) => { st.now = t; tick(t); P.render(); });
@@ -328,41 +330,68 @@ function personaPortal(pickCv, xs, arrive, done) {
 
 /* ---------- sekcja person: trzy maski lewitują u góry; przy części danej persony ona wychyla się na wprost,
    a pozostałe cofają się w cień jak nieodblokowane postacie ---------- */
-let ACTIVE = -1;   // aktywna persona (z initPersonaStage), czytana przez nagłówki i głosy
+let ACTIVE = -1;   // aktywna persona (z initPersonaStage), czytana przez nagłówki
+let SEATED = -1;   // persona, której maska siedzi już w rogu (czytają ją głosy: opis zaczyna się pisać dopiero po wylądowaniu maski)
+const TALK = { k: -1, n: 0, t: 0 };   // „mówienie": persvoice zgłasza każdą wpisaną literę, maska w rogu rusza się w jej rytmie
 export const personaActive = () => ACTIVE;
+export const personaSeated = () => SEATED;
+export function setPersonaTalk(k, n) { TALK.k = k; TALK.n = n; TALK.t = performance.now(); }
 export function initPersonaStage(cv, parts) {
   // niska rozdzielczość w proporcjach płótna (minimum 120 px szerokości bez zmiany proporcji, inaczej maski się rozciągają)
   const dims = () => { const w = cv.clientWidth / 4 || 120, h = cv.clientHeight / 4 || 60, k = Math.max(1, 120 / w); return [Math.round(w * k), Math.max(30, Math.round(h * k))]; };
   let [W, Hh] = dims();
-  const P = ps1(cv, W, Hh); lights(P); P.cam.position.set(0, .02, 3); P.cam.lookAt(0, 0, 0);
+  // kamera daleko, wąski kąt (prawie ortograficznie): na płótnie szerokości okna maski przy krawędziach nie wyginają się od perspektywy
+  const CAMD = 7.5, FOV = 14; const P = ps1(cv, W, Hh); lights(P); P.cam.fov = FOV; P.cam.updateProjectionMatrix(); P.cam.position.set(0, .02, CAMD); P.cam.lookAt(0, 0, 0);
   const ms = ['haunt', 'sleaze', 'sacral'].map((k, i) => { const m = makeMask(P, k, 11 + i * 7); P.scene.add(m); return m; });
   let span = Math.min(1.25, 1.4 * W / Hh / 4.2);
   // płótno mierzone przed ułożeniem strony miało złe proporcje (rozciągnięte maski na telefonie): przeliczamy przy każdej zmianie rozmiaru
   const ro = new ResizeObserver(() => { const [w, h] = dims(); if (w === W && h === Hh) return; W = w; Hh = h; P.resize(W, Hh); span = Math.min(1.25, 1.4 * W / Hh / 4.2); }); ro.observe(cv);
-  const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 }));
-  let active = -1;
+  const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 })), pr = ms.map(() => 0);   // pr: 0 = maska w rzędzie u góry, 1 = w lewym górnym rogu
+  let active = -1, shown = -1, cnFor = -2;
+  // nazwa obok maski w rogu: kontener dla falującej wstążki (initPersonaTitles dokłada do niego płótna) i tagu persony
+  const cn = document.createElement('div'); cn.className = 'kp-cn'; cn.setAttribute('aria-hidden', 'true'); cn.innerHTML = ''; cv.parentElement.appendChild(cn);
+  const ease = x => x * x * (3 - 2 * x);
   // aktywna persona = część najbliższa linii pod sceną (62% wysokości okna), liczona z położenia w każdej klatce, więc nie zależy od kolejności
   // ani kierunku przewijania (zdarzenia przecięcia gubiły stan przy powrocie na górę); gdy żadna część nie jest blisko okna: -1 (wszystkie neutralne)
   const pick = () => { const line = innerHeight * .62; let best = -1, bd = 1e9;
     parts.forEach((el, i) => { const r = el.getBoundingClientRect(), d = Math.abs((r.top + r.bottom) / 2 - line); if (d < bd) { bd = d; best = i; } });
     return bd < innerHeight * .75 ? best : -1; };
-  loop(cv, RM ? 4 : 24, t => {
+  loop(cv, RM ? 4 : 24, (t, d) => {
     active = pick(); ACTIVE = active;
+    // kolejność: najpierw poprzednia maska wraca do cienia w rzędzie, dopiero potem następna wychodzi i ląduje w rogu
+    if (shown !== active) { if (shown < 0 || pr[shown] < .02) shown = active; }
+    SEATED = shown >= 0 && pr[shown] > .92 ? shown : -1;
+    const halfH = (CAMD - .4) * Math.tan(FOV / 2 * Math.PI / 180), halfW = halfH * W / Hh,   // połowa widoku na głębokości maski w rogu (z ≈ .4)
+       fac = Math.min(1, Math.max(.55, W / Hh / 2.4)), cs = .36 * fac;
+    const cx = -halfW + cs * 1.05 + .14, cy = halfH - cs * 1.3 - .08, now = performance.now();
     ms.forEach((m, i) => {
-      const on = active === i, off = active >= 0 && !on, tg = { z: on ? .7 : off ? -1 : 0, s: on ? .48 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
+      const tgP = i === shown && active === shown ? 1 : 0; pr[i] += Math.sign(tgP - pr[i]) * Math.min(Math.abs(tgP - pr[i]), (d || 40) / 850);
+      const pe = ease(pr[i]), on = active === i, off = active >= 0 && !on, tg = { z: i === shown ? .4 : off ? -.6 : 0, s: i === shown ? .36 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
       for (const k in tg) c[k] += (tg[k] - c[k]) * .12;
-      let x = (i - 1) * span, y = c.y + Math.sin(t / 900 + i * 2) * .05, rx = 0, ry = 0, rz = 0;
+      let x = (i - 1) * span, y = c.y + Math.sin(t / 900 + i * 2) * .05, rx = 0, ry = 0, rz = 0, sc = c.s * Math.min(1, Math.max(.55, W / Hh / 2.4));
       if (i === 0) { x += (Math.random() - .5) * .01; ry = (Math.floor(t / 1300) % 3 - 1) * .3; rz = Math.sin(t / 333) * .03; }          // lękowa: drży, rozgląda się nerwowo
       if (i === 1) { y += Math.abs(Math.sin(t / 380)) * .06; rz = Math.sin(t / 520) * .2; ry = Math.sin(t / 1400) * .2; }                  // wyluzowana: podskakuje, kiwa się
       if (i === 2) { const st = Math.floor(t / 1500), pose = k => [[-.28, .06], [0, 0], [.24, -.05], [0, .03]][((k % 4) + 4) % 4], k3 = Math.min(1, (t % 1500) / 90);
         const p0 = pose(st - 1), p1 = pose(st); rx = -.18; ry = p0[0] + (p1[0] - p0[0]) * k3; rz = p0[1] + (p1[1] - p0[1]) * k3; }     // poważna: szarpnięcia manekina
       if (on) rx -= .12;                                                                                                                 // wychyla się ku widzowi
-      // wąski ekran: mniejsze maski, żeby się nie nakładały
-      m.position.set(x, y, c.z); m.scale.setScalar(c.s * Math.min(1, Math.max(.55, W / Hh / 2.4))); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
+      // lot do rogu: łukiem w górę, w rogu maska patrzy w środek strony
+      x += (cx - x) * pe; y += (cy - y) * pe + Math.sin(pe * Math.PI) * .07; ry += .3 * pe;
+      // dukanie w rytmie wpisywanych liter (tylko gdy maska już siedzi w rogu)
+      const talk = pe > .8 && TALK.k === i && now - TALK.t < 170 ? TALK.n : 0;
+      if (talk) {
+        if (i === 0) { x += talk % 2 ? .012 : -.012; rz += talk % 2 ? .05 : -.05; sc *= talk % 2 ? 1.06 : 1; if (talk % 7 === 0) ry += talk % 14 ? -.3 : .3; }   // nerwowe drżenie i strzelanie na boki
+        else if (i === 1) { y += talk % 2 ? .08 : 0; rz += talk % 4 < 2 ? -.14 : .14; }                                                                    // podskoki i kiwanie głową
+        else { ry += [0, .2, -.2, 0][(talk / 5 | 0) % 4]; sc *= talk % 3 ? 1.05 : 1; }                                                                      // sztywne szarpnięcia manekina
+      }
+      m.position.set(x, y, c.z); m.scale.setScalar(sc); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
     });
+    // nazwa obok maski: pojawia się, gdy maska wyląduje, gaśnie, gdy maska zaczyna wracać
+    if (SEATED !== cnFor) { cnFor = SEATED; if (SEATED >= 0) { const el = parts[SEATED], tag = el.querySelector('.kp-tag'); } }
+    cn.classList.toggle('on', SEATED >= 0 && active === SEATED);
+    cn.style.left = ((cx + cs * 1.05 - .08 + halfW) / (2 * halfW) * 100) + '%'; cn.style.top = ((halfH - cy) / (2 * halfH) * 100) + '%';
     P.render();
   });
-  return () => { ro.disconnect(); };
+  return () => { ro.disconnect(); cn.remove(); };
 }
 
 /* ---------- walkman → muzyka: słuchawki wylatują z karty, obracają się wokół osi nauszników (pałąk idzie do tyłu, jakby
@@ -407,7 +436,7 @@ const BAYC = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5], bthC = (x, 
 let hcBusy = false;
 function hc90e(assets, arrive, done) {
   if (hcBusy) return; hcBusy = true;
-  const ov = document.createElement('div'); ov.className = 'hc-ov'; ov.innerHTML = '<canvas></canvas><span class="hc-skip dos">[ Esc ] pomiń</span>'; document.body.appendChild(ov);
+  const ov = document.createElement('div'); ov.className = 'hc-ov'; ov.innerHTML = '<canvas></canvas><span class="hc-skip dos">[ Esc ] ' + (document.documentElement.lang === 'en' ? 'skip' : 'pomiń') + '</span>'; document.body.appendChild(ov);
   // pionowy ekran (telefon): cały widok obrócony o 90°, kamera trzymana pionowo, obraz na LCD w formacie 9:16
   const portrait = innerHeight > innerWidth;
   const cv = ov.querySelector('canvas'); const P = ps1(cv, portrait ? 216 : 384, portrait ? 384 : 216, { clear: 0x000000, alpha: 1 });
@@ -457,7 +486,7 @@ function hc90e(assets, arrive, done) {
 let phBusy = false;
 function phoneCall(assets, pickCv, arrive, done, shown) {
   if (phBusy) return; phBusy = true;
-  const ov = document.createElement('div'); ov.className = 'ph-ov'; ov.innerHTML = '<canvas></canvas><canvas></canvas><span class="hc-skip dos">[ Esc ] pomiń</span>'; document.body.appendChild(ov);
+  const ov = document.createElement('div'); ov.className = 'ph-ov'; ov.innerHTML = '<canvas></canvas><canvas></canvas><span class="hc-skip dos">[ Esc ] ' + (document.documentElement.lang === 'en' ? 'skip' : 'pomiń') + '</span>'; document.body.appendChild(ov);
   const [cv, c2] = ov.querySelectorAll('canvas'), W = innerWidth, H = innerHeight;
   const dv = W < 700 ? 2 : 3, P = ps1(cv, Math.ceil(W / dv), Math.ceil(H / dv), { alpha: 0 }); lights(P); P.cam.position.set(0, 0, 3); P.cam.lookAt(0, 0, 0);
   c2.width = W; c2.height = H; const x = c2.getContext('2d');
@@ -481,7 +510,7 @@ function phoneCall(assets, pickCv, arrive, done, shown) {
   }).catch(end);
   loop(cv, 30, t => { if (finished || !o) return; if (t0 === null) t0 = t; const e = t - t0, lt = e - 500;
     const k1 = ease(clamp(e / 1000, 0, 1)), ring = e < 900 ? Math.sin(e / 18) * .1 * (1 - e / 900) : 0;
-    o.position.lerpVectors(p0, new THREE.Vector3(0, 0, 0), k1); o.scale.setScalar(s0 + (1 - s0) * k1); o.rotation.set(.1 * (1 - k1), (1 - k1) * .45 + ring, ring * .5);
+    o.position.lerpVectors(p0, new THREE.Vector3(0, 0, 0), k1); o.scale.setScalar(s0 + (1 - s0) * k1); o.rotation.set(PHONE_TILT * (1 - k1), ring, Math.PI / 2 * (1 - k1) + ring * .5);   // z leżącego na boku podnosi się do pionu
     keys.intensity = e < 1400 ? (.6 + .4 * Math.sin(e / 50)) * 1.2 : 0; keys.position.set(o.position.x, o.position.y - .25, .5);
     // kamera: z (0,0,3) na oś ekranu, w takiej odległości, żeby LCD zmieścił się w oknie (94%)
     o.updateMatrixWorld(true); scr.getWorldPosition(camT); camN.set(0, 0, 1).applyQuaternion(scr.getWorldQuaternion(new THREE.Quaternion()));
@@ -518,7 +547,7 @@ export function initPersonaTitles(parts) {
   const stops = [];
   parts.forEach((el, i) => {
     const name = el.dataset.name, h = el.querySelector('h3'); if (!name || !h) return;
-    const cv = document.createElement('canvas'); cv.className = 'kp-title'; cv.setAttribute('aria-hidden', 'true'); el.insertBefore(cv, h); h.classList.add('kp-gl');
+    const cv = document.createElement('canvas'); cv.className = 'kp-title'; cv.setAttribute('aria-hidden', 'true'); const corner = el.closest('section').querySelector('.kp-cn'); if (corner) corner.appendChild(cv); else el.insertBefore(cv, h); h.classList.add('kp-gl');   // wstążka stoi w rogu obok maski
     const r = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true }); r.setPixelRatio(1); r.setClearColor(0x000000, 0); r.autoClear = false;
     const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 3, .1, 50); cam.position.set(0, 0, 7); cam.lookAt(0, 0, 0);
     const res = new THREE.Vector2(1, 1), tint = new THREE.Vector3(...TITLE_COL[i % 3].map(v => v / 255)), gain = { value: 0 };
@@ -550,7 +579,7 @@ export function initPersonaTitles(parts) {
       pos.needsUpdate = true; col.needsUpdate = true; };
     let life = 0, cleared = true;
     loop(cv, 24, (t, d) => {
-      const on = ACTIVE === i; life = clamp(life + (on ? 1 : -1) * d / 900, 0, 1);
+      const on = SEATED === i; life = clamp(life + (on ? 1 : -1) * d / 900, 0, 1);   // pojawia się, gdy maska wyląduje w rogu
       if (life <= 0.002 || !mat.uniforms.map.value) { if (!cleared) { r.clear(); cleared = true; } return; }
       cleared = false; r.clear(); const cr = 1 + 1.6 * (1 - ss(life)), g = ss(life);
       cam.position.x = Math.sin(t / 2600) * .35; cam.position.y = Math.sin(t / 3300) * .15; cam.lookAt(0, 0, 0);

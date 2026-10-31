@@ -112,7 +112,7 @@ function slitTo(stage, title, sub, back){
   const dim=document.createElement('canvas'); dim.className='sdim'; sp.appendChild(dim);
   const cards=[0,1,2].map(i=>{ const b=document.createElement('button'); b.type='button'; b.className='scard'; b.innerHTML=`<img alt="" src="${opts.backs[i]}"><span class="sn"></span><span class="sr dos"></span>`; sp.appendChild(b); return b; });
   // język zmienia wspólny przełącznik w rogu (LangKeys); karty tylko przepisują podpisy
-  const syncLang=()=>{ L=opts.text[opts.lang()]; NAMES=L.names; ROADS=L.roads; sp.setAttribute('aria-label',L.dialog); btn.setAttribute('aria-label',L.dialog); label(); };
+  const syncLang=()=>{ L=opts.text[opts.lang()]; NAMES=L.names; ROADS=L.roads; sp.setAttribute('aria-label',L.dialog); btn.setAttribute('aria-label',L.dialog); label(true); };
   const onLang=()=>{ if(!st.isConnected){ removeEventListener('krzyk-lang',onLang); return; } syncLang(); }; addEventListener('krzyk-lang',onLang);
   st.appendChild(sp);
   // żar i iskierki nad spalonym rogiem trzeciej karty (Maszynologia), widoczne tylko gdy karta leży awersem do góry
@@ -126,7 +126,9 @@ function slitTo(stage, title, sub, back){
   const place=(b,x,y,r,s,sx=1)=>{ b.style.transform=`translate(-50%,-50%) translate(${x}px,${y}px) rotate(${r}deg) scale(${s*sx},${s})`; };
   function drawDim(k){ const w=dim.width=Math.ceil(st.clientWidth/3), h=dim.height=Math.ceil(st.clientHeight/3), c=dim.getContext('2d'), d=c.createImageData(w,h);
     for(let y=0;y<h;y++) for(let x=0;x<w;x++){ if(bth(x,y)<k){ d.data[(y*w+x)*4+3]=235; } } c.putImageData(d,0,0); }
-  function label(){ cards.forEach((b,i)=>{ b.querySelector('.sn').textContent=NAMES[i]; b.querySelector('.sr').textContent=i===here?L.here:ROADS[i]; b.classList.toggle('cur',i===here); b.disabled=i===here; }); }
+  function label(fx){ cards.forEach((b,i)=>{ const sn=b.querySelector('.sn'), sr=b.querySelector('.sr'), tn=NAMES[i], tr=i===here?L.here:ROADS[i];
+    if(fx&&!RM&&!sp.hidden) import('./xlate').then(({decodeSwap})=>{ decodeSwap(sn,tn,{delay:i*70}); decodeSwap(sr,tr,{delay:i*70+120}); }); else { sn.textContent=tn; sr.textContent=tr; }
+    b.classList.toggle('cur',i===here); b.disabled=i===here; }); }
   async function flip(b,i,toFace){ const img=b.querySelector('img'); const [x,y,r]=ARC[i];
     for(const s of [.66,.33,.06]){ place(b,x,y,r,1,s); await sleep(FR); }
     img.src=toFace?opts.faces[i]:opts.backs[i]; b.classList.toggle('face',toFace);

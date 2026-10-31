@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import CardsNav from '@/components/CardsNav';
 import { asset } from '@/lib/base';
+import { getLang, applyLangStatic } from '@/lib/lang';
 
 const HREF = { brama: '/', krzyk: '/krzyk/', maszynologia: '/maszynologia/' };
 
@@ -12,6 +13,8 @@ export default function Maszyn() {
   const router = useRouter();
   useEffect(() => {
     let alive = true;
+    // etykiety i nazwa działu: start bez animacji; potem teksty z data-anim animuje engine/maszyn (dekodowanie), tu tylko reszta
+    const ap = first => ref.current && applyLangStatic(ref.current, getLang(), el => first !== true && el.hasAttribute('data-anim')); ap(true); const onl = () => ap(); addEventListener('krzyk-lang', onl);
     import('@/engine/maszyn').then(({ initMaszyn }) => {
       if (alive && ref.current) initMaszyn(ref.current, { assets: { ornL: asset('/maszyn/ornL.png'), ornR: asset('/maszyn/ornR.png') } });
     });
@@ -21,20 +24,20 @@ export default function Maszyn() {
     import('@/engine/term').then(({ initTerm }) => {
       if (alive && ref.current) initTerm(ref.current.querySelector('.term'), { go: k => k === 'sigen' ? import('@/engine/veil').then(({ veilGo }) => veilGo('/sigen/', 'sigen', h => router.push(h))) : router.push(HREF[k] || '/') });
     });
-    return () => { alive = false; if (offPager) offPager(); };
+    return () => { alive = false; removeEventListener('krzyk-lang', onl); if (offPager) offPager(); };
   }, [router]);
   return (
     <>
       <CardsNav current={2} />
       <main className="sec maszyn" ref={ref}>
-        <h1 className="sr-only">Maszynologia [IT]</h1>
-        <div className="m-prompt dos" aria-hidden="true">C:\MASZYNOLOGIA&gt; <span className="m-cur" /></div>
+        <h1 className="sr-only" data-en="Machinology [IT]">Maszynologia [IT]</h1>
+        <div className="m-prompt dos" aria-hidden="true"><span data-anim="" data-en="C:\MACHINOLOGY&gt; ">C:\MASZYNOLOGIA&gt; </span><span className="m-cur" /></div>
         <div className="cracktro" aria-hidden="true"><canvas id="demo" width="320" height="200" /></div>
         <div className="m-panel rf">
           <div className="nfo-wrap">
             <canvas id="ornL" className="orn-img" aria-hidden="true" />
             <div className="nfo-mid">
-              <div className="nfo-title" aria-hidden="true">Maszynologia</div>
+              <div className="nfo-title" aria-hidden="true" data-anim="" data-en="Machinology">Maszynologia</div>
               <div className="nfo-sub dos">[ IT ] · RELEASE INFO · REV.2026</div>
               <pre id="nfo" className="selectable" />
             </div>
@@ -46,7 +49,7 @@ export default function Maszyn() {
           <div className="t-out dos selectable" role="log" aria-live="polite" />
           <form className="t-line">
             <label className="t-ps dos" htmlFor="t-in" />
-            <input id="t-in" className="t-in dos" type="text" autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck="false" enterKeyHint="send" aria-label="polecenie" />
+            <input id="t-in" className="t-in dos" type="text" autoComplete="off" autoCapitalize="off" autoCorrect="off" spellCheck="false" enterKeyHint="send" aria-label="polecenie" data-en-aria="command" />
           </form>
         </section>
       </main>

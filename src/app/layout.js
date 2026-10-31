@@ -3,6 +3,7 @@ import { BASE } from '@/lib/base';
 import './globals.css';
 import CursorInit from '@/components/CursorInit';
 import LangKeys from '@/components/LangKeys';
+import SoundIcon from '@/components/SoundIcon';
 
 const martian = Martian_Mono({ subsets: ['latin', 'latin-ext'], weight: ['300', '400', '600'], variable: '--font-martian', display: 'swap' });
 const vt = VT323({ subsets: ['latin', 'latin-ext'], weight: '400', variable: '--font-vt', display: 'swap' });
@@ -23,7 +24,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pl" className={`${martian.variable} ${vt.variable}`}>
       <head><style dangerouslySetInnerHTML={{ __html: faces }} /></head>
-      <body>{children}<LangKeys /><CursorInit /><div id="veil" aria-hidden="true" /></body>
+      <body>{children}<LangKeys /><SoundIcon /><CursorInit /><div id="veil" aria-hidden="true" /></body>
     </html>
   );
 }

@@ -1,4 +1,6 @@
 // brama (tunel, sztandary słońca i księżyca z paleniem i popiołem w sigile, okno z ramkami, pęknięcie okna)
+import { soundChoice, setSound, audio } from '@/lib/sound';
+import { blip } from './voices';
 import { RM, rnd, clamp, FONTS, loop, N, bth, makeGlyph, drawGlyph } from './core';
 export function initGate(root, opts){
   const $ = id => root.querySelector('#'+id);
@@ -395,21 +397,33 @@ FONTS().then(()=>{
   fit();
   const tints={red:{hi:[150,18,30],lo:[70,8,16]}}; const tint='red';
   const T={
-    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
-    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology'}
+    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY',sOn:'[ z dźwiękiem ]',sOff:'[ bez dźwięku ]',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
+    en:{warn:'WARNING: FLASHING IMAGES',sOn:'[ sound on ]',sOff:'[ sound off ]',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',s1:'music · image · unveilings',s2:'projects · experience · CV',mach:'Machinology'}
   };
   let lang=opts.lang;
   const frame=()=>{ const s=T[lang]; const w=40; const ctr=(str,ch=' ')=>{const n=[...str.replace(/\uFE0E/g,'')].length; const l=Math.floor((w-n)/2); return ch.repeat(Math.max(0,l))+str+ch.repeat(Math.max(0,w-n-l));};
     $('gFrame').innerHTML=
       `<button type="button" class="enter" id="gEnter">${s.enter}<span class="cur"></span></button>\n`+
       `<button type="button" class="calm" id="gCalm" hidden>${s.calm}</button>`+
+      `<span class="gsnd"><span class="gsw" id="gsW">${s.warn}</span><span class="gsb"><button type="button" class="gs" id="gsOn" data-v="1" aria-pressed="false">${s.sOn}</button><button type="button" class="gs" id="gsOff" data-v="0" aria-pressed="false">${s.sOff}</button></span></span>`+
       `<span class="gl gb"><span class="w">D. K.</span><span class="gx"></span><span class="yr">2026</span></span>`;
     gateOuter($('gFrame'));
     $('gEnter').onclick=()=>go(false); $('gCalm').onclick=()=>go(true);
+    // wybór dźwięku przy ostrzeżeniu: klik zapamiętuje wybór (lib/sound), przy „z dźwiękiem" od razu gra krótki znak
+    const syncSnd=()=>{ const c=soundChoice(); $('gsOn')&&$('gsOn').setAttribute('aria-pressed',String(c==='on')); $('gsOff')&&$('gsOff').setAttribute('aria-pressed',String(c==='off')); };
+    gate.querySelectorAll('.gs').forEach(b=>{ b.onclick=()=>{ const on=b.dataset.v==='1'; setSound(on); if(on){ const a=audio(); if(a) blip(a.ctx,a.master,1,'o',1,true,a.ctx.currentTime+.02); } }; });
+    syncSnd(); if(!gate._snd){ gate._snd=true; addEventListener('krzyk-sound',()=>syncSnd()); }
     $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; };
   // język zmienia wspólny przełącznik w rogu (LangKeys)
-  const onLang=e=>{ if(!gate.isConnected){ removeEventListener('krzyk-lang',onLang); return; } lang=e.detail; frame(); }; addEventListener('krzyk-lang',onLang);
-  frame();
+  // zmiana języka: stary napis rozsypuje się w bloki i rozkodowuje w nowy (jak zejście w bramie); na końcu ramka przycisków dopasowuje się do nowej szerokości
+  let lt=0;
+  const onLang=e=>{ if(!gate.isConnected){ removeEventListener('krzyk-lang',onLang); return; } if(e.detail===lang) return; lang=e.detail;
+    const s=T[lang], calmHidden=!$('gCalm')||$('gCalm').hidden;
+    import('./xlate').then(({decodeSwap})=>{
+      const me=++lt; let n=0;
+      Promise.all([['gEnter',s.enter],['gCalm',s.calm],['gsW',s.warn],['gsOn',s.sOn],['gsOff',s.sOff],['gTitle',s.title],['gIntro',s.intro],['gS1',s.s1],['gS2',s.s2],['gMach',s.mach]].map(([id,t])=>$(id)?decodeSwap($(id),t,{delay:n++*60}):0))
+        .then(()=>{ if(me!==lt||!gate.isConnected) return; frame(); if($('gCalm')) $('gCalm').hidden=calmHidden; }); }); }; addEventListener('krzyk-lang',onLang);
+  frame(); import('./gatecards');     // moduł kart pobiera się z góry, żeby wyłanianie ruszyło bez opóźnienia po zejściu
   // wybór drogi: wybrana karta się spala (ogień od dołu, piksele żarzą się i odlatują jako popiół), druga gaśnie w cieniu, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
   let picked=false;
   gate.querySelectorAll('.path').forEach((b,i)=>b.addEventListener('click',()=>{ if(picked||!gate.querySelector('.paths.ready')&&!RM) return; picked=true;

@@ -1,6 +1,11 @@
 // terminal Maszynologii: wirtualny system plików (CV, projekty, kontakt), polecenia linuksowe, krzyk przy próbie zmian;
 // wyjście wjeżdża linia po linii jak w demoscenie (linia ASCII przelatuje, rozwiera się w górę i w dół, znaki rozkodowują się z bloków)
 import { RM } from './core';
+import { getLang } from '@/lib/lang';
+
+// język terminala: komunikaty, pomoc i pliki tekstowe są dwujęzyczne; ścieżki i polecenia zostają, jak w prawdziwym systemie plików
+let lg = 'pl';
+const tr = (pl, en) => lg === 'en' ? en : pl;
 
 const BL = '░▒▓';
 const HOME = '/home/daniel';
@@ -60,8 +65,38 @@ const FILES = {
   '/proc/version': ['Linux version 6.6.6-krzyk (gcc 13) #1 SMP PREEMPT'],
   '/var/log/syslog': ['crond: odpalono dekoder sine-scrollera', 'sshd: gość zalogowany z przeglądarki', 'kernel: wykryto próbę rm -rf, odmówiono z krzykiem'],
 };
+const FILES_EN = {
+  '/home/daniel/cv.txt': ['DANIEL KRZYKOWSKI — MSc COMPUTER SCIENCE (AI) · PYTHON & ML ENGINEER', '', 'PROFILE', '  Computer science graduate, now a master\'s student in artificial intelligence at UMK in Toruń.', '  I work in the network operations center (NOC) at MSK TORMAN. My thesis extends', '  Visual Echoes 2.0 (originally from Facebook AI Research): better 3D perception through', '  more precise modelling of orientation.', '', 'EXPERIENCE', '  10.2025 →  NOC Operator, MSK TORMAN (UCI)', '  09.2023    Software Engineer, Luxolis (09-10.2023)', '  08.2023    Intern, Pfeifer & Langen Polska (08-09.2023)', '', 'EDUCATION', '  10.2024 →  MSc, UMK Toruń: computer science (specialization: artificial intelligence)', '  10.2020 –  BEng in computer science, UMK Toruń (until 05.2024)', '', 'SKILLS', '  Python · C / C++ · C# / .NET · JavaScript · PHP · REST API · React · Selenium', '  PostgreSQL / MySQL · NumPy · Pandas · scikit-learn · PyTorch', '  Linux / Bash · Git · Docker · Network Monitoring · Incident Management · IT Operations', '', 'LANGUAGES', '  Polish: native · English: B2', '', 'More: ls ~/doswiadczenie · ls ~/projekty · cat ~/kontakt.txt'],
+  '/home/daniel/o-mnie.txt': ['Computer scientist (MSc, artificial intelligence) and Python & ML Engineer.', 'Sound and image. In art and in code.', 'Interests: IT · music · photography · DIY · running.'],
+  '/home/daniel/kontakt.txt': ['github ..... github.com/d4krzyk', 'linkedin ... linkedin.com/in/d4krzyk', '', 'More in the Krzyk section → contact.'],
+  '/home/daniel/umiejetnosci.txt': ['languages .. Python · C / C++ · C# / .NET · JavaScript · PHP', 'web ......... REST API · React · Selenium', 'data ........ PostgreSQL / MySQL · NumPy · Pandas · scikit-learn · PyTorch', 'systems ..... Linux / Bash · Git · Docker', 'it ops ...... Network Monitoring · Incident Management · IT Operations', '', 'soft: communication · teamwork · creativity · attention to detail · problem solving · analytical thinking · task prioritization'],
+  '/home/daniel/.bashrc': ['export PS1="\\u@\\h:\\w\\$ "', 'alias cv="cat ~/cv.txt"', 'alias projekty="ls ~/projekty"', '# greetz: to everyone who still writes by hand'],
+  '/home/daniel/projekty/visual-echoes-2.0/README.md': P('VISUAL ECHOES 2.0', ['Master\'s thesis · 2025 → · author', 'Stack: python · pytorch · habitat', '',
+    'How many agent orientations must be rendered acoustically for a model that predicts depth from an image and an echo to work well?',
+    'An extension of VisualEchoes from 4 directions to 36 orientations every 10°.', 'Result: the curve saturates at 9-12 orientations; going from 4 to 9 gives 6.7× more than the rest of the extension to 36.']),
+  '/home/daniel/projekty/wikirooms/README.md': P('WIKIROOMS', ['A research and development project.', 'Backend: FastAPI · Alembic · PostgreSQL · Docker Compose (with pgAdmin).']),
+  '/home/daniel/projekty/remuz.io/README.md': P('REMUZ.IO', ['Thesis project: a multitrack audio editor in the browser.', 'Wavesurfer.js: real-time waveform preview and editing.', 'Stack: javascript · node.js']),
+  '/home/daniel/projekty/musicclubapp/README.md': P('MUSICCLUBAPP', ['An app for meeting people with a similar taste in music.', 'Shared artists and genres from the Deezer catalog drive friend suggestions; posts, chat, notifications, PL/EN.', 'Stack: spring boot · postgresql · react + vite · docker compose']),
+  '/home/daniel/projekty/shadowdetection/README.md': P('SHADOWDETECTION', ['Estimating the direction of a light source from the geometry of shadows in an image, in GIFs and video.', 'Data: SBU Shadow Dataset, VIDIT.', 'Stack: python']),
+  '/home/daniel/projekty/gameinjava/README.md': P('GAMEINJAVA', ['A game in Java.', 'Stack: java']),
+  '/home/daniel/doswiadczenie/msk-torman.txt': ['NOC OPERATOR · MSK TORMAN (UCI) · 10.2025 →', 'Operational oversight of the MSK TORMAN network in a NOC environment: network and systems monitoring,', 'recognizing and handling incidents, escalation to technical teams, documenting events.'],
+  '/home/daniel/doswiadczenie/luxolis.txt': ['SOFTWARE ENGINEER · LUXOLIS · 09.2023 – 10.2023', 'Data preparation, model selection, API design, deployment and maintenance of AI-based solutions.'],
+  '/home/daniel/doswiadczenie/pfeifer-langen.txt': ['INTERNSHIP · PFEIFER & LANGEN POLSKA · 08.2023 – 09.2023', 'Helpdesk, assisting with network infrastructure tasks, first work with Power BI (data visualization and analysis).'],
+  '/home/daniel/edukacja/umk-torun.txt': ['UMK TORUŃ (Nicolaus Copernicus University)', '10.2024 →      MSc: computer science, specialization artificial intelligence', '10.2020 – 05.2024  BEng in computer science'],
+  '/etc/passwd': ['root:x:0:0:root:/root:/bin/nologin', 'daniel:x:1000:1000:Daniel:/home/daniel:/bin/bash', 'gosc:x:1001:1001:guest:/home/daniel:/bin/bash'],
+  '/var/log/syslog': ['crond: launched the sine-scroller decoder', 'sshd: guest logged in from a browser', 'kernel: rm -rf attempt detected, refused with a scream'],
+};
 const T0 = Date.now();
 const PROJ_KEY = { 'visual-echoes-2.0': 'VE', wikirooms: 'WR', 'remuz.io': 'RM', musicclubapp: 'MC', shadowdetection: 'SD', gameinjava: 'GJ' };   // animacje przejścia (engine/projopen)
+const DESC_EN = {
+  '/': 'system root', '/bin': 'commands', '/etc': 'system configuration', '/home': 'home directories', '/proc': 'processor and kernel', '/tmp': 'temporary files (empty)',
+  '/usr': 'programs and resources', '/usr/bin': 'programs', '/usr/share': 'resources', '/var': 'variable data', '/var/log': 'system logs',
+  '/home/daniel': 'home directory · CV, projects, experience, contact', '/home/daniel/projekty': 'projects · each with README.md and github.url',
+  '/home/daniel/doswiadczenie': 'work experience · NOC, AI, helpdesk', '/home/daniel/edukacja': 'education · UMK Toruń',
+  '/home/daniel/projekty/visual-echoes-2.0': 'master\'s thesis · echo, image and depth', '/home/daniel/projekty/wikirooms': 'research and development project · fastapi, postgresql',
+  '/home/daniel/projekty/remuz.io': 'thesis project · multitrack audio editor', '/home/daniel/projekty/musicclubapp': 'people with a similar taste in music',
+  '/home/daniel/projekty/shadowdetection': 'light direction from the geometry of shadows', '/home/daniel/projekty/gameinjava': 'a game in java',
+};
 const DESC = {
   '/': 'korzeń systemu', '/bin': 'polecenia', '/etc': 'konfiguracja systemu', '/home': 'katalogi domowe', '/proc': 'procesor i jądro', '/tmp': 'pliki tymczasowe (pusto)',
   '/usr': 'programy i zasoby', '/usr/bin': 'programy', '/usr/share': 'zasoby', '/var': 'dane zmienne', '/var/log': 'logi systemowe',
@@ -81,10 +116,10 @@ const norm = (cwd, p) => {
 };
 const isDir = p => !!FS[p];
 const isFile = p => !!FILES[p] || (() => { const i = p.lastIndexOf('/'), d = FS[p.slice(0, i) || '/'], n = p.slice(i + 1); return d && ((d.f || []).includes(n) || (d.h || []).includes(n)); })();
-const read = p => FILES[p] || ['(plik binarny albo pusty)'];
+const read = p => (lg === 'en' && FILES_EN[p]) || FILES[p] || [tr('(plik binarny albo pusty)', '(binary or empty file)')];
 const short = p => p === HOME ? '~' : p.startsWith(HOME + '/') ? '~' + p.slice(HOME.length) : p;
 
-const SCREAM = ['███ K R Z Y K ███', 'BRAK UPRAWNIEŃ!!!'];
+const SCREAM = () => ['███ K R Z Y K ███', tr('BRAK UPRAWNIEŃ!!!', 'PERMISSION DENIED!!!')];
 const DENY = new Set(['rm', 'rmdir', 'mv', 'cp', 'mkdir', 'touch', 'chmod', 'chown', 'chgrp', 'ln', 'dd', 'mkfs', 'kill', 'killall', 'pkill', 'shutdown', 'reboot', 'halt', 'poweroff',
   'apt', 'apt-get', 'pacman', 'dnf', 'yum', 'pip', 'npm', 'useradd', 'userdel', 'passwd', 'mount', 'umount', 'fdisk', 'crontab', 'systemctl', 'service', 'iptables', 'truncate', 'shred', 'wget', 'curl', 'scp', 'rsync', 'git']);
 const EDIT = new Set(['nano', 'vim', 'vi', 'emacs', 'ed', 'code']);
@@ -123,14 +158,50 @@ const HELP = [
   'clear (Ctrl+L) ........... czyści ekran',
   'exit ..................... wyjście do bramy',
 ];
+const HELP_EN = [
+  'COMMANDS (tap a file or directory name in the output to open it; Tab completes, ↑↓ history)', '',
+  '— files and directories —',
+  'ls [-l] [-a] [path] ...... directory contents; -l details, -a hidden files (ll = ls -la)',
+  'cd [path] ................ change directory: cd projekty · cd .. · cd ~ · cd /etc',
+  'pwd ...................... current directory',
+  'tree [path] .............. directory tree',
+  'find [path] -name x ...... search by name, e.g. find ~ -name readme',
+  'cat <file> ............... print a file (also: less, more)',
+  'head <file> · tail <file>  first / last 5 lines',
+  'grep <word> <file> ....... lines containing the word, e.g. grep python cv.txt',
+  'wc <file> ................ lines, words, characters',
+  'file <path> .............. kind of file', 'du ....................... directory sizes',
+  '', '— shortcuts —',
+  'cv ....................... cat ~/cv.txt',
+  'projekty / projects ...... list of projects',
+  'open <project> ........... project README, e.g. open wikirooms',
+  'cat github.url ........... opens the project repository on GitHub',
+  'kontakt · o-mnie ......... cat ~/kontakt.txt · cat ~/o-mnie.txt',
+  '', '— system —',
+  'whoami · id · hostname ... who and where you are',
+  'uname [-a] ............... kernel and system',
+  'uptime · date · cal ...... uptime, date, calendar',
+  'ps · top ................. processes',
+  'df -h · free -h .......... disk and memory',
+  'env · echo <text> ........ environment variables · print text',
+  'history · which <cmd> .... command history · path of a command',
+  'man <command> ............ short description of a command',
+  '', '— fun —',
+  'neofetch · cowsay <text> · matrix · banner <text>',
+  '', '— site —',
+  'brama · krzyk ............ go to another section',
+  'clear (Ctrl+L) ........... clears the screen',
+  'exit ..................... leave for the gate',
+];
+const MAN_EN = { ls: 'ls — lists directory contents. -l details, -a hidden files.', cd: 'cd — changes directory. cd .. up, cd ~ home.', cat: 'cat — prints a file.', rm: 'rm — in this system: a scream.', grep: 'grep PATTERN FILE — lines containing the pattern.', open: 'open PROJECT — opens the project README.' };
 const MAN = { ls: 'ls — wypisuje zawartość katalogu. -l szczegóły, -a ukryte pliki.', cd: 'cd — zmienia katalog. cd .. w górę, cd ~ do domu.', cat: 'cat — wyświetla plik.', rm: 'rm — w tym systemie: krzyk.', grep: 'grep WZÓR PLIK — wiersze zawierające wzór.', open: 'open PROJEKT — otwiera README projektu.' };
 
 export function initTerm(root, { go } = {}) {
   const out = root.querySelector('.t-out'), form = root.querySelector('.t-line'), inp = root.querySelector('.t-in'), ps = root.querySelector('.t-ps');
-  let cwd = HOME; const hist = []; let hi = 0, queue = Promise.resolve();
+  lg = getLang(); let cwd = HOME; const hist = []; let hi = 0, queue = Promise.resolve();
   const prompt = () => `${ME}@${HOST}:${short(cwd)}$`;
   const hp = root.querySelector('.t-path'), hd = root.querySelector('.t-desc');
-  const setPs = () => { ps.textContent = prompt(); if (hp) hp.textContent = short(cwd); if (hd) hd.textContent = DESC[cwd] || ''; };
+  const setPs = () => { ps.textContent = prompt(); if (hp) hp.textContent = short(cwd); if (hd) hd.textContent = (lg === 'en' ? DESC_EN : DESC)[cwd] || ''; };
 
   /* ---------- wyjście: linie wjeżdżają schodkowo, znaki rozkodowują się z bloków ---------- */
   // linia = tablica segmentów {t, c(klasa), cmd(polecenie po dotknięciu)}
@@ -164,7 +235,7 @@ export function initTerm(root, { go } = {}) {
     }));
     return queue;
   };
-  const link = async url => { await print([[seg('otwieram ', 'dim'), seg(url, 'dir')]]); window.open(url, '_blank', 'noopener'); };
+  const link = async url => { await print([[seg(tr('otwieram ', 'opening '), 'dim'), seg(url, 'dir')]]); window.open(url, '_blank', 'noopener'); };
   // wiersze bez dekodowania, do animacji klatkowych (matrix)
   const raw = (n, cls) => { const rows = Array.from({ length: n }, () => { const r = document.createElement('div'); r.className = 'tl on pre plain ' + cls; out.appendChild(r); return r; }); out.scrollTo({ top: out.scrollHeight, behavior: 'instant' }); return rows; };
   const anim = (ms, fps, f) => new Promise(done => { if (RM) { f(1); return done(); } const t0 = performance.now(); let last = 0;
@@ -179,16 +250,16 @@ export function initTerm(root, { go } = {}) {
       rows.forEach((r, y) => { r.textContent = g[y].join(''); }); }).then(() => rows.forEach(r => r.remove())); });
   const scream = () => {
     root.classList.remove('shake'); void root.offsetWidth; root.classList.add('shake');
-    return print(SCREAM, 'scream');
+    return print(SCREAM(), 'scream');
   };
 
   /* ---------- polecenia ---------- */
   const listing = (p, flags) => {
-    const d = FS[p]; if (!d) return [`ls: nie ma dostępu do '${p}': Nie ma takiego pliku ani katalogu`];
+    const d = FS[p]; if (!d) return [tr(`ls: nie ma dostępu do '${p}': Nie ma takiego pliku ani katalogu`, `ls: cannot access '${p}': No such file or directory`)];
     const all = [...(d.d || []).map(n => [n, 1]), ...(d.f || []).map(n => [n, 0]), ...(flags.includes('a') ? (d.h || []).map(n => [n, 0]) : [])];
     if (!all.length) return [];
     const full = n => (p === '/' ? '' : p) + '/' + n;
-    if (flags.includes('l')) return all.map(([n, dir]) => [seg(`${dir ? 'drwxr-xr-x' : '-r--r--r--'} 1 daniel daniel ${String(dir ? 4096 : (read(full(n)).join('\n').length || 64)).padStart(5)} paź 24 2026 `, 'dim'),
+    if (flags.includes('l')) return all.map(([n, dir]) => [seg(`${dir ? 'drwxr-xr-x' : '-r--r--r--'} 1 daniel daniel ${String(dir ? 4096 : (read(full(n)).join('\n').length || 64)).padStart(5)} ${tr('paź', 'Oct')} 24 2026 `, 'dim'),
       seg(n + (dir ? '/' : ''), dir ? 'dir' : 'file', dir ? `cd ${full(n)}` : `cat ${full(n)}`)]);
     const line = []; all.forEach(([n, dir], i) => { if (i) line.push(seg('   ')); line.push(seg(n + (dir ? '/' : ''), dir ? 'dir' : 'file', dir ? `cd ${full(n)}` : `cat ${full(n)}`)); });
     return [line];
@@ -201,7 +272,7 @@ export function initTerm(root, { go } = {}) {
     return outl;
   };
   const allPaths = (p = '/', acc = []) => { const d = FS[p] || {}; (d.d || []).forEach(n => { const f = (p === '/' ? '' : p) + '/' + n; acc.push(f + '/'); allPaths(f, acc); }); (d.f || []).forEach(n => acc.push((p === '/' ? '' : p) + '/' + n)); return acc; };
-  const fileArg = (cmd, a) => { if (!a) return [`${cmd}: brak argumentu`]; const p = norm(cwd, a); if (isDir(p)) return [`${cmd}: ${a}: To jest katalog`]; if (!isFile(p)) return [`${cmd}: ${a}: Nie ma takiego pliku ani katalogu`]; return read(p); };
+  const fileArg = (cmd, a) => { if (!a) return [tr(`${cmd}: brak argumentu`, `${cmd}: missing operand`)]; const p = norm(cwd, a); if (isDir(p)) return [tr(`${cmd}: ${a}: To jest katalog`, `${cmd}: ${a}: Is a directory`)]; if (!isFile(p)) return [tr(`${cmd}: ${a}: Nie ma takiego pliku ani katalogu`, `${cmd}: ${a}: No such file or directory`)]; return read(p); };
   // banner: pikselowy krój 3×5 z bloków
   const FONT5 = { a: '010101111101101', b: '110101110101110', c: '011100100100011', d: '110101101101110', e: '111100110100111', f: '111100110100100', g: '011100101101011', h: '101101111101101', i: '111010010010111',
     j: '001001001101010', k: '101101110101101', l: '100100100100111', m: '101111111101101', n: '110101101101101', o: '010101101101010', p: '110101110100100', q: '010101101110011', r: '110101110101101',
@@ -222,55 +293,55 @@ export function initTerm(root, { go } = {}) {
     if (DENY.has(cmd)) return scream();
     if (EDIT.has(cmd)) return scream();
     switch (cmd) {
-      case 'help': case '?': return print(HELP);
+      case 'help': case '?': return print(lg === 'en' ? HELP_EN : HELP);
       case 'ls': case 'dir': case 'll': return print(listing(norm(cwd, a[0] || '.'), cmd === 'll' ? 'la' : flags));
       case 'pwd': return print([cwd]);
-      case 'cd': { const p = norm(cwd, a[0] || '~'); if (!isDir(p)) return print([`cd: ${a[0]}: ${isFile(p) ? 'To nie jest katalog' : 'Nie ma takiego pliku ani katalogu'}`], 'err'); cwd = p; setPs(); return print(listing(cwd, '')); }
+      case 'cd': { const p = norm(cwd, a[0] || '~'); if (!isDir(p)) return print([`cd: ${a[0]}: ${isFile(p) ? tr('To nie jest katalog', 'Not a directory') : tr('Nie ma takiego pliku ani katalogu', 'No such file or directory')}`], 'err'); cwd = p; setPs(); return print(listing(cwd, '')); }
       case 'cat': case 'less': case 'more': case 'bat': { const p = norm(cwd, a[0] || ''); if (p.endsWith('.url') && isFile(p)) return link(read(p)[0]); return print(fileArg(cmd, a[0])); }
       case 'head': return print(fileArg(cmd, a[0]).slice(0, 5));
       case 'tail': return print(fileArg(cmd, a[0]).slice(-5));
       case 'wc': { const f = fileArg(cmd, a[0]); return print([`${f.length} ${f.join(' ').split(/\s+/).length} ${f.join('\n').length} ${a[0] || ''}`]); }
       case 'file': { const p = norm(cwd, a[0] || '.'); return print([`${a[0]}: ${isDir(p) ? 'directory' : isFile(p) ? 'UTF-8 Unicode text' : 'cannot open'}`]); }
-      case 'grep': { if (a.length < 2) return print(['użycie: grep WZÓR PLIK'], 'err'); const f = fileArg('grep', a[1]); const hits = f.filter(l => l.toLowerCase().includes(a[0].toLowerCase())); return print(hits.length ? hits : ['(brak dopasowań)']); }
+      case 'grep': { if (a.length < 2) return print([tr('użycie: grep WZÓR PLIK', 'usage: grep PATTERN FILE')], 'err'); const f = fileArg('grep', a[1]); const hits = f.filter(l => l.toLowerCase().includes(a[0].toLowerCase())); return print(hits.length ? hits : [tr('(brak dopasowań)', '(no matches)')]); }
       case 'tree': return print([short(norm(cwd, a[0] || '.')), ...tree(norm(cwd, a[0] || '.'))]);
       case 'find': { const base = norm(cwd, a[0] || '.'); const name = (args[args.indexOf('-name') + 1] || '').replace(/\*/g, ''); return print(allPaths(base).filter(p => p.startsWith(base) && p.includes(name)).map(p => [seg(p, p.endsWith('/') ? 'dir' : 'file', p.endsWith('/') ? `cd ${p}` : `cat ${p}`)])); }
       case 'du': return print(['4.0K\t./kontakt.txt', '8.0K\t./cv.txt', '1.3M\t./projekty', '666K\t./doswiadczenie', '1.9M\t.']);
       case 'cv': return print(read(HOME + '/cv.txt'));
       case 'kontakt': return print(read(HOME + '/kontakt.txt'));
       case 'o-mnie': case 'about': return print(read(HOME + '/o-mnie.txt'));
-      case 'projekty': case 'projects': return print([...listing(HOME + '/projekty', ''), '', 'open <projekt> albo dotknij nazwy.']);
-      case 'open': case 'xdg-open': { const n = (a[0] || '').toLowerCase().replace(/\/$/, ''); const m = PROJ.find(p => p === n || p.startsWith(n)); if (!n || !m) return print([`open: nie znam projektu '${a[0] || ''}'. Dostępne: ${PROJ.join(', ')}`], 'err'); cwd = HOME + '/projekty/' + m; setPs(); const pk = PROJ_KEY[m], gh = (FILES[cwd + '/github.url'] || [])[0]; if (pk && gh) { const r = inp.getBoundingClientRect(); import('./projopen').then(x => { if (!x.projectBusy()) x.openProject(pk, gh, { x: r.left + Math.min(r.width, 40), y: r.top + r.height / 2 }); }); } return print([...read(cwd + '/README.md'), '', [seg('github.url', 'file', `cat ${cwd}/github.url`), seg('  → repozytorium na GitHubie', 'dim')]]); }
-      case 'whoami': { const ua = navigator.userAgent, os = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Mac/.test(ua) ? 'macOS' : /Win/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'nieznany system';
-        const br = /Edg\//.test(ua) ? 'Edge' : /Firefox/.test(ua) ? 'Firefox' : /Chrome/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : 'przeglądarka'; return print([ME, `gość odwiedzający stronę · ${br} na ${os}`], ''); }
-      case 'id': return print([`uid=1001(${ME}) gid=1001(${ME}) grupy=1001(${ME}),100(goscie)`]);
+      case 'projekty': case 'projects': return print([...listing(HOME + '/projekty', ''), '', tr('open <projekt> albo dotknij nazwy.', 'open <project> or tap a name.')]);
+      case 'open': case 'xdg-open': { const n = (a[0] || '').toLowerCase().replace(/\/$/, ''); const m = PROJ.find(p => p === n || p.startsWith(n)); if (!n || !m) return print([tr(`open: nie znam projektu '${a[0] || ''}'. Dostępne: ${PROJ.join(', ')}`, `open: unknown project '${a[0] || ''}'. Available: ${PROJ.join(', ')}`)], 'err'); cwd = HOME + '/projekty/' + m; setPs(); const pk = PROJ_KEY[m], gh = (FILES[cwd + '/github.url'] || [])[0]; if (pk && gh) { const r = inp.getBoundingClientRect(); import('./projopen').then(x => { if (!x.projectBusy()) x.openProject(pk, gh, { x: r.left + Math.min(r.width, 40), y: r.top + r.height / 2 }); }); } return print([...read(cwd + '/README.md'), '', [seg('github.url', 'file', `cat ${cwd}/github.url`), seg(tr('  → repozytorium na GitHubie', '  → repository on GitHub'), 'dim')]]); }
+      case 'whoami': { const ua = navigator.userAgent, os = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Mac/.test(ua) ? 'macOS' : /Win/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : tr('nieznany system', 'unknown system');
+        const br = /Edg\//.test(ua) ? 'Edge' : /Firefox/.test(ua) ? 'Firefox' : /Chrome/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : tr('przeglądarka', 'browser'); return print([ME, tr(`gość odwiedzający stronę · ${br} na ${os}`, `guest visiting the site · ${br} on ${os}`)], ''); }
+      case 'id': return print([`uid=1001(${ME}) gid=1001(${ME}) groups=1001(${ME}),100(goscie)`]);
       case 'hostname': return print([HOST]);
       case 'uname': return print([flags.includes('a') ? `Linux ${HOST} 6.6.6-krzyk #1 SMP PREEMPT x86_64 KrzykOS` : 'Linux']);
       case 'uptime': { const s = Math.floor((Date.now() - T0) / 1000); return print([` ${new Date().toTimeString().slice(0, 8)} up ${Math.floor(s / 60)} min, 1 user, load average: 0.66, 0.06, 0.13`]); }
       case 'date': return print([new Date().toString()]);
-      case 'cal': { const d = new Date(), y = d.getFullYear(), m = d.getMonth(), first = (new Date(y, m, 1).getDay() + 6) % 7, n = new Date(y, m + 1, 0).getDate(); const rows = ['    ' + d.toLocaleString('pl', { month: 'long' }) + ' ' + y, 'Pn Wt Śr Cz Pt So Nd']; let r = '   '.repeat(first);
+      case 'cal': { const d = new Date(), y = d.getFullYear(), m = d.getMonth(), first = (new Date(y, m, 1).getDay() + 6) % 7, n = new Date(y, m + 1, 0).getDate(); const rows = ['    ' + d.toLocaleString(tr('pl', 'en'), { month: 'long' }) + ' ' + y, tr('Pn Wt Śr Cz Pt So Nd', 'Mo Tu We Th Fr Sa Su')]; let r = '   '.repeat(first);
         for (let i = 1; i <= n; i++) { r += String(i).padStart(2) + ' '; if ((first + i) % 7 === 0) { rows.push(r); r = ''; } } if (r) rows.push(r); return print(rows); }
       case 'ps': return print(['  PID TTY          TIME CMD', '    1 tty1     00:00:01 init', '  404 tty1     00:00:13 cracktro', '  666 tty1     00:00:00 krzyk', ' 1337 tty1     00:00:00 bash', ` 2026 tty1     00:00:00 ps`]);
       case 'top': case 'htop': return print(['top - 1 user, load average: 0.66', 'Tasks: 5 total, 1 running', '%Cpu(s): 13.0 us, 6.6 sy, 80.4 id', '  PID USER     %CPU %MEM COMMAND', '  404 daniel   12.0  4.2 cracktro', '  666 daniel    6.6  0.6 krzyk', ' 1337 daniel    0.3  0.1 bash']);
-      case 'df': return print(['System plików   Rozm. Użyte Dost. %Uż. Zamont. na', '/dev/kaseta     60M   59M   1M   98% /', 'tmpfs           640K  0     640K  0%  /tmp']);
-      case 'free': return print(['              total   used   free', 'Mem:          640K   512K   128K', 'Swap:         0B     0B     0B   (640K powinno każdemu wystarczyć)']);
-      case 'env': case 'printenv': return print([`USER=${ME}`, `HOME=${HOME}`, `PWD=${cwd}`, 'SHELL=/bin/bash', 'TERM=vt100-krzyk', 'LANG=pl_PL.UTF-8']);
-      case 'export': case 'alias': case 'unalias': return print([`${cmd}: zmiany środowiska nie przetrwają, ale niech ci będzie.`]);
+      case 'df': return print([tr('System plików   Rozm. Użyte Dost. %Uż. Zamont. na', 'Filesystem      Size  Used Avail Use% Mounted on'), '/dev/kaseta     60M   59M   1M   98% /', 'tmpfs           640K  0     640K  0%  /tmp']);
+      case 'free': return print(['              total   used   free', 'Mem:          640K   512K   128K', 'Swap:         0B     0B     0B   ' + tr('(640K powinno każdemu wystarczyć)', '(640K ought to be enough for anybody)')]);
+      case 'env': case 'printenv': return print([`USER=${ME}`, `HOME=${HOME}`, `PWD=${cwd}`, 'SHELL=/bin/bash', 'TERM=vt100-krzyk', tr('LANG=pl_PL.UTF-8', 'LANG=en_US.UTF-8')]);
+      case 'export': case 'alias': case 'unalias': return print([tr(`${cmd}: zmiany środowiska nie przetrwają, ale niech ci będzie.`, `${cmd}: environment changes won't persist, but fine, have it your way.`)]);
       case 'echo': return print([args.join(' ')]);
       case 'history': return print(hist.map((h, i) => `${String(i + 1).padStart(4)}  ${h}`));
       case 'which': case 'type': return print(a.map(x => `/usr/bin/${x}`));
-      case 'man': return print([MAN[a[0]] || (a[0] ? `Brak strony podręcznika dla ${a[0]}. Spróbuj: help` : 'Którą stronę podręcznika? np. man ls')]);
+      case 'man': return print([(lg === 'en' ? MAN_EN : MAN)[a[0]] || (a[0] ? tr(`Brak strony podręcznika dla ${a[0]}. Spróbuj: help`, `No manual entry for ${a[0]}. Try: help`) : tr('Którą stronę podręcznika? np. man ls', 'Which manual page? e.g. man ls'))]);
       case 'clear': case 'cls': out.textContent = ''; return;
       case 'neofetch': case 'fastfetch': { const L = [['~≈~≈~≈~≈~≈~', 'sky'], ['  ▄▀▀▀▀▀▄', 'red'], [' █ ▀█ █▀ █', 'red'], ['▐▌   ▄   ▐▌', 'red'], ['█▌  ▐█▌  ▐█', 'red'], ['▐▌  ▀▀▀  ▐▌', 'red'], [' ▀▄     ▄▀', 'red'], ['   ▀▄ ▄▀', 'red'], ['    █ █', 'red']];
-        const R = [seg(`${ME}@${HOST}`, 'dir'), seg('------------------', 'dim'), seg('OS: KrzykOS 2026'), seg('Kernel: 6.6.6-krzyk'), seg('Shell: bash 5.2'), seg('Stack: python · pytorch · docker · linux'), seg('Projekty: ' + PROJ.length), seg(''), seg('')];
+        const R = [seg(`${ME}@${HOST}`, 'dir'), seg('------------------', 'dim'), seg('OS: KrzykOS 2026'), seg('Kernel: 6.6.6-krzyk'), seg('Shell: bash 5.2'), seg('Stack: python · pytorch · docker · linux'), seg(tr('Projekty: ', 'Projects: ') + PROJ.length), seg(''), seg('')];
         return print(L.map(([t, c], k) => [seg(t.padEnd(13), c), R[k]]), 'pre'); }
-      case 'cowsay': { const t = args.join(' ') || 'muu'; return print([' ' + '_'.repeat(t.length + 2), `< ${t} >`, ' ' + '-'.repeat(t.length + 2), '        \\   ^__^', '         \\  (oo)\\_______', '            (__)\\       )\\/\\', '                ||----w |', '                ||     ||']); }
+      case 'cowsay': { const t = args.join(' ') || tr('muu', 'moo'); return print([' ' + '_'.repeat(t.length + 2), `< ${t} >`, ' ' + '-'.repeat(t.length + 2), '        \\   ^__^', '         \\  (oo)\\_______', '            (__)\\       )\\/\\', '                ||----w |', '                ||     ||']); }
       case 'matrix': case 'cmatrix': return rain();
       case 'banner': case 'figlet': return print(banner(args.join(' ') || 'krzyk'), 'red pre');
-      case 'brama': case 'krzyk': case 'maszynologia': if (go) { await print([`przechodzę: ${cmd}…`]); setTimeout(() => go(cmd), 400); } return;
-      case 'sigen': if (go) { await print(['sigen: proces ukryty, inicjalizacja…', '[▓▓▓▓▓▓▓▓░░] ładowanie modułów: rama · symetria · znaki · rdzeń', '[▓▓▓▓▓▓▓▓▓▓] gotowe. otwieram generator.']); setTimeout(() => go('sigen'), 500); } return;   // nie ma go w help
-      case 'exit': case 'logout': case 'quit': if (go) { await print(['logout', 'Do zobaczenia przy bramie.']); setTimeout(() => go('brama'), 600); } return;
-      case 'hello': case 'cześć': case 'czesc': case 'hej': return print(['Cześć. Wpisz help, żeby zobaczyć, co tu można.']);
-      default: return print([`${cmd0}: nie znaleziono polecenia. Wpisz help.`], 'err');
+      case 'brama': case 'krzyk': case 'maszynologia': if (go) { await print([tr(`przechodzę: ${cmd}…`, `going to: ${cmd}…`)]); setTimeout(() => go(cmd), 400); } return;
+      case 'sigen': if (go) { await print(lg === 'en' ? ['sigen: hidden process, initializing…', '[▓▓▓▓▓▓▓▓░░] loading modules: frame · symmetry · glyphs · core', '[▓▓▓▓▓▓▓▓▓▓] done. opening the generator.'] : ['sigen: proces ukryty, inicjalizacja…', '[▓▓▓▓▓▓▓▓░░] ładowanie modułów: rama · symetria · znaki · rdzeń', '[▓▓▓▓▓▓▓▓▓▓] gotowe. otwieram generator.']); setTimeout(() => go('sigen'), 500); } return;   // nie ma go w help
+      case 'exit': case 'logout': case 'quit': if (go) { await print(['logout', tr('Do zobaczenia przy bramie.', 'See you at the gate.')]); setTimeout(() => go('brama'), 600); } return;
+      case 'hello': case 'hi': case 'cześć': case 'czesc': case 'hej': return print([tr('Cześć. Wpisz help, żeby zobaczyć, co tu można.', 'Hello. Type help to see what you can do here.')]);
+      default: return print([tr(`${cmd0}: nie znaleziono polecenia. Wpisz help.`, `${cmd0}: command not found. Type help.`)], 'err');
     }
   };
 
@@ -292,5 +363,11 @@ export function initTerm(root, { go } = {}) {
       if (opts.length === 1) { parts[parts.length - 1] = opts[0]; inp.value = parts.join(' '); } else if (opts.length > 1) print([opts.join('   ')], 'dim'); }
   });
   setPs();
-  print([[seg('help', 'file', 'help'), seg(' — lista poleceń', 'dim')]]);
+  print([[seg('help', 'file', 'help'), seg(tr(' — lista poleceń', ' — list of commands'), 'dim')]]);
+  // zmiana języka: opis katalogu i podpowiedź na górze rozkodowują się w nowy tekst; wcześniejsze wyjście terminalu zostaje jak historia, nowe polecenia odpowiadają już w nowym języku
+  const onLang = e => { if (!root.isConnected) { removeEventListener('krzyk-lang', onLang); return; } if (e.detail === lg) return; lg = e.detail;
+    import('./xlate').then(({ decodeSwap }) => {
+      if (hd) decodeSwap(hd, (lg === 'en' ? DESC_EN : DESC)[cwd] || '');
+      const hint = out.querySelector('.tl .dim'); if (hint && /lista poleceń|list of commands/.test(hint.textContent)) decodeSwap(hint, tr(' — lista poleceń', ' — list of commands'), { delay: 120 }); }); };
+  addEventListener('krzyk-lang', onLang);
 }

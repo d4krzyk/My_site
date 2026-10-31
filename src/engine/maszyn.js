@@ -3,6 +3,7 @@ import { buildOrn, ornCanvas } from './nfoorn';
 import { pixelDecode } from './pixdecode';
 import { PROJECT_KEYS, openProject, projectBusy } from './projopen';
 import { pageReady } from './ready';
+import { getLang } from '@/lib/lang';
 import { RM, rnd, clamp, FONTS, loop, N, fbm, bth, oneBit, makeGlyph, drawGlyph } from './core';
 export function initMaszyn(root, opts) {
   const $ = id => root.querySelector('#'+id);
@@ -20,7 +21,7 @@ export function initMaszyn(root, opts) {
   if (pre && wrap) {
     const L = {};
     /* ---- pełny profil IT: treść złożona z bloków ---- */
-    const BLOCKS = [
+    const BL_PL = [
       {kv: [['AUTOR', 'DANIEL KRZYKOWSKI'], ['TYTUŁ', 'MSc COMPUTER SCIENCE (AI)'], ['ROLA', 'PYTHON & ML ENGINEER'], ['UCZELNIA', 'UMK TORUŃ'], ['JĘZYKI', 'PL NATYWNY · EN B2']]},
       {h: 'PROFIL'},
       {p: 'Absolwent informatyki, student magisterski sztucznej inteligencji na UMK w Toruniu. Pracuję w centrum operacji sieciowych (NOC) w MSK TORMAN. Praca magisterska rozwija system Visual Echoes 2.0 (pierwotnie z Facebook AI Research): lepsza percepcja 3D dzięki dokładniejszemu modelowaniu orientacji w przestrzeni.'},
@@ -44,6 +45,33 @@ export function initMaszyn(root, opts) {
       {h: 'KONTAKT'},
       {kv: [['GITHUB', 'github.com/d4krzyk'], ['LINKEDIN', 'linkedin.com/in/d4krzyk']]},
     ];
+    // wersja angielska: tłumaczone są opisy, nazwy własne (Visual Echoes, MSK TORMAN, repozytoria, UMK) zostają
+    const BL_EN = [
+      {kv: [['AUTHOR', 'DANIEL KRZYKOWSKI'], ['DEGREE', 'MSc COMPUTER SCIENCE (AI)'], ['ROLE', 'PYTHON & ML ENGINEER'], ['SCHOOL', 'UMK TORUŃ'], ['LANGUAGES', 'PL NATIVE · EN B2']]},
+      {h: 'PROFILE'},
+      {p: 'Computer science graduate, now a master\'s student in artificial intelligence at Nicolaus Copernicus University (UMK) in Toruń. I work in the network operations center (NOC) at MSK TORMAN. My thesis extends the Visual Echoes 2.0 system (originally from Facebook AI Research): better 3D perception through more precise modelling of spatial orientation.'},
+      {h: 'EXPERIENCE'},
+      {e: ['NOC OPERATOR · MSK TORMAN', '10.2025 → NOW', 'Operational oversight of the MSK TORMAN network in a NOC environment: network and systems monitoring, recognizing and handling incidents, escalation to technical teams, documenting events.']},
+      {e: ['INTERNSHIP · PFEIFER & LANGEN POLSKA', '08.2023 – 09.2023', 'Helpdesk, assisting with network infrastructure tasks, first work with Power BI (data visualization and analysis).']},
+      {e: ['SOFTWARE ENGINEER · LUXOLIS', '09.2023 – 10.2023', 'Data preparation, model selection, API design, deployment and maintenance of AI-based solutions.']},
+      {h: 'SELECTED PROJECT'},
+      {e: ['VISUAL ECHOES 2.0', 'MASTER\'S THESIS · 2025 →', 'A 3D perception system for autonomous agents: echo as a supervisory signal for depth estimation from RGB images. My contribution: the 4-direction classification replaced by modelling 36 orientations (every 10°) for finer angular resolution; the curve saturates at 9-12 orientations.']},
+      {h: 'EDUCATION'},
+      {e: ['MSc · COMPUTER SCIENCE (AI)', 'UMK TORUŃ · 10.2024 → NOW', '']},
+      {e: ['BEng · COMPUTER SCIENCE', 'UMK TORUŃ · 10.2020 – 05.2024', '']},
+      {h: 'SKILLS'},
+      {kv: [['LANGUAGES', 'Python · C / C++ · C# / .NET · JavaScript · PHP'], ['WEB', 'REST API · React · Selenium'], ['DATA', 'PostgreSQL / MySQL · NumPy · Pandas · scikit-learn · PyTorch'], ['SYSTEMS', 'Linux / Bash · Git · Docker'], ['IT OPS', 'Network Monitoring · Incident Management · IT Operations']]},
+      {h: 'SOFT SKILLS'},
+      {p: 'Charisma and communication · teamwork · creativity · adapting to the project · attention to detail · problem solving · analytical and critical thinking · prioritizing tasks and time'},
+      {h: 'OTHER RELEASES'},
+      {c: ['WIKIROOMS ·÷· REMUZ.IO ·÷· MUSICCLUBAPP', 'SHADOWDETECTION ·÷· GAMEINJAVA']},
+      {h: 'INTERESTS'},
+      {c: ['IT · MUSIC · PHOTOGRAPHY · DIY · RUNNING']},
+      {h: 'CONTACT'},
+      {kv: [['GITHUB', 'github.com/d4krzyk'], ['LINKEDIN', 'linkedin.com/in/d4krzyk']]},
+    ];
+    let lang = getLang(), BLOCKS = lang === 'en' ? BL_EN : BL_PL;
+    const TITLE = () => lang === 'en' ? '·─═≡ I T   P R O F I L E ≡═─·' : '·─═≡ P R O F I L   I T ≡═─·';
     // linki w NFO: słowo kluczowe w wierszu -> litera klasy (A..H) -> adres; po wciśnięciu napis zapala się na czerwono i otwiera repozytorium
     const GH = 'https://github.com/d4krzyk/';
     const LINKS = { A: GH + 'MasterWorkVE-2.0', B: GH + 'WikiRooms-Project', C: GH + 'Remuz-io', D: GH + 'MusicClubApp', E: GH + 'ShadowDetection', F: GH + 'GameInJava', G: 'https://github.com/d4krzyk', H: 'https://www.linkedin.com/in/d4krzyk' };
@@ -63,21 +91,23 @@ export function initMaszyn(root, opts) {
       }
       return linkify(rows);
     };
-    {
+    const layout = () => {
       const TW = 40, X0 = 23, ROW0 = 3;
       const body = compose(TW, 1); while (body.length && !body[0][0]) body.shift();
       const total = ROW0 + body.length + 2, ch = [], cl = [], heads = [2];
       for (let ri = 0; ri < total; ri++) {
         const r = new Array(X0 + TW).fill(' '), k = new Array(X0 + TW).fill(' '), ln = body[ri - ROW0];
-        if (ri === 2) { const t = '·─═≡ P R O F I L   I T ≡═─·'; const pad = X0 + Math.floor((TW - t.length) / 2); [...t].forEach((c, i) => { r[pad + i] = c; k[pad + i] = c === ' ' ? ' ' : /[A-Z]/.test(c) ? 'h' : 'd'; }); }
+        if (ri === 2) { const t = TITLE(); const pad = X0 + Math.floor((TW - t.length) / 2); [...t].forEach((c, i) => { r[pad + i] = c; k[pad + i] = c === ' ' ? ' ' : /[A-Z]/.test(c) ? 'h' : 'd'; }); }
         else if (ln) { [...ln[0]].forEach((c, i) => { r[X0 + i] = c; k[X0 + i] = ln[1][i] || ' '; }); if (ln[1].includes('h')) heads.push(ri); }
         ch.push(r.join('')); cl.push(k.join(''));
       }
       L.full = { cols: 86, ch, cl, heads };
       const cw = 31, cb = compose(cw); while (cb.length && !cb[0][0]) cb.shift();
-      L.compact = { cols: cw, ch: ['    ·─═≡ P R O F I L   I T ≡═─·', ...cb.map(r => r[0])], cl: ['dddddddhhhhhhhhhhhhhdddddd'.padEnd(31, ' '), ...cb.map(r => r[1].padEnd(r[0].length, ' '))] };
+      const ct = ' '.repeat(Math.max(0, Math.floor((cw - [...TITLE()].length) / 2))) + TITLE();
+      L.compact = { cols: cw, ch: [ct, ...cb.map(r => r[0])], cl: [[...ct].map(c => c === ' ' ? ' ' : /[A-Z]/.test(c) ? 'h' : 'd').join('').padEnd(31, ' '), ...cb.map(r => r[1].padEnd(r[0].length, ' '))] };
       L.compact.ch = L.compact.ch.map(l => l.slice(0, cw)); L.compact.cl = L.compact.cl.map(l => l.slice(0, cw));
-    }
+    };
+    layout();
     const CLASS = {d: 'd', h: 'h'};
     const esc = g => g === '&' ? '&amp;' : g === '<' ? '&lt;' : g === '>' ? '&gt;' : g;
     let mode = null, dec = null, sv = null;   // sv: stan „czytelności" wierszy przy przewijaniu (0 zaszyfrowany, 1 czytelny)
@@ -145,12 +175,13 @@ export function initMaszyn(root, opts) {
     pre.parentNode.insertBefore(cv, pre);
     const orn = ornCanvas(cv);
     const intro = pageReady().then(() => performance.now());
-    {
+    const buildO = () => {
       const G = L.full, W = G.cols * 4, H = G.ch.length * 8;
       orn.set(buildOrn(W, H, [
         { name: 'L', seed: 1911, grow: 'up', x: [4, 86], top: 62, motif: ['pendant', .76], bot: 46, cap: 'volute', clusters: [.1, .62, .88], crosses: [.36] },
         { name: 'R', seed: 666, grow: 'down', smooth: true, motif: ['moon', .44], x: [256, 340], top: 50, bot: 60, cap: 'pendants', clusters: [.28, .5, .9], crosses: [.72] }], G.heads.map(r => r * 8 + 4), opts.ornTone || 'white'));
-    }
+    };
+    buildO();
     const place = () => { const on = mode === 'full'; cv.style.display = on ? '' : 'none'; if (!on) return;
       Object.assign(cv.style, { left: pre.offsetLeft + 'px', top: pre.offsetTop + 'px', width: pre.offsetWidth + 'px', height: pre.offsetHeight + 'px' }); };
     // wspólna oś czasu po zejściu kurtyny (pageReady): 0 ms ramka (redframe), +250 tekst NFO rozkodowuje się znakami,
@@ -174,6 +205,21 @@ export function initMaszyn(root, opts) {
       place();
     };
     update();
+    // zmiana języka: tekst CV rozkodowuje się od nowa (bloki ▓▒░ od góry ku dołowi, jak przy wejściu na stronę), a ryciny rosną znów pod nowy układ wierszy.
+    // Gdy trwa jeszcze pierwsze rozkodowanie, wystarczy podmienić układ: kolejne klatki rysują już nowy tekst
+    const resetSv = () => { if (sv) { const z = zone(); sv.splice(0, sv.length, ...z); sv.dir = z.map(() => false); } };
+    const onLang = e => {
+      if (!root.isConnected) { removeEventListener('krzyk-lang', onLang); return; }
+      if (e.detail === lang) return; lang = e.detail; BLOCKS = lang === 'en' ? BL_EN : BL_PL;
+      layout(); buildO(); requestAnimationFrame(place);
+      import('./xlate').then(({ decodeSwap }) => root.querySelectorAll('[data-anim]').forEach((el, i) => decodeSwap(el, (lang === 'en' ? el.dataset.en : el.dataset.pl) || el.textContent, { delay: i * 80 })));   // nazwa działu (tytuł i prompt)
+      if (dec) return;                                         // trwa pierwsze rozkodowanie: ono dokończy już po nowemu
+      if (RM) { resetSv(); render(null); orn.grow(performance.now()); return; }
+      const t0 = performance.now(); dec = { t0, now: t0 }; orn.grow(t0 + 250);
+      const step = now => { dec.now = now; render(null); if (now - dec.t0 < 1700) requestAnimationFrame(step); else { dec = null; resetSv(); render(null); } };
+      requestAnimationFrame(step);
+    };
+    addEventListener('krzyk-lang', onLang);
     if ('ResizeObserver' in window) new ResizeObserver(update).observe(wrap);
     else addEventListener('resize', update, {passive: true});
     pre.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a.lk'); if (!a) return; e.preventDefault();

@@ -28,6 +28,17 @@ export function typeOut(el, { seed = 7, speed = 1, delay = 0 } = {}) {
     setTimeout(step, delay); });
 }
 
+// ponowne złożenie liter z nowego tekstu (zmiana języka): bez animacji (instant) albo z cofnięciem starego i napisaniem nowego
+export function reprep(el, text, seed = 7, instant = false) { delete el.dataset.prep; el.textContent = text; const sp = prep(el, seed); if (instant || RM) sp.forEach(s => s.classList.add('on')); return sp; }
+export async function retype(el, text, { seed = 7, speed = 1.6, delay = 0 } = {}) {
+  const old = [...el.querySelectorAll('.tw.on')].reverse(), step = Math.min(14, 240 / Math.max(1, old.length)), id = el._rt = (el._rt || 0) + 1;
+  if (RM) { reprep(el, text, seed, true); return; }
+  old.forEach((s, i) => setTimeout(() => s.classList.remove('on'), delay + i * step));
+  await new Promise(r => setTimeout(r, delay + old.length * step + 50));
+  if (el._rt !== id) return;                               // nowsza zmiana języka wyprzedziła tę
+  reprep(el, text, seed); return typeOut(el, { seed, speed });
+}
+
 // wczytanie kolażu: tło kolażu stoi od razu (bez zdjęć i ich cieni); zdjęcia wypełniają się wstecz, jakby ktoś je podgryzał do tyłu w czasie:
 // oko od prawego górnego rogu do lewego dolnego, kamienica od prawej, portret od lewej, staw przykleja się jak naklejka, drugi portret zwija się z góry rulonem
 const hash = (x, y) => { let n = Math.imul(x * 374761393 + y * 668265263, 1274126177); n ^= n >>> 13; n = Math.imul(n, 1103515245); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };

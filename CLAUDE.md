@@ -34,7 +34,7 @@ podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja
 Gdy persona staje się aktywna, jej opis wpisuje się litera po literze (`src/engine/persvoice.js`), a każda litera gra „blip” głosu (`src/engine/voices.js`,
 synteza WebAudio, bez plików dźwiękowych). Głosy: Anxtan to bardzo szybkie dukanie jak odwrócona nagrana mowa (narastanie i ucięcie, jąkanie), Nugis to wolne
 blipy ślizgające się w górę jak w Undertale (koniec słowa wyżej), Stoir to niski, obrażony głos z akcentem (spadek tonu, podniesienie na końcu słowa).
-Dźwięk jest domyślnie wyłączony; włącza go przycisk „głosy” pod nagłówkiem sekcji (przeglądarki wymagają kliknięcia). Przy ponownym wejściu na personę
+Dźwięk jest domyślnie wyłączony i bez wyboru; włącza go wybór w bramie albo ikonka oscyloskopu w rogu (zob. „Persony w rogu i dźwięk”; przycisk „głosy” usunięty). Przy ponownym wejściu na personę
 gra tylko jej imię. Przy ograniczeniu animacji nic z tego nie działa, a pełny tekst zostaje w DOM (ukryty span dla czytników ekranu).
 
 ## Otwieranie projektów (Maszynologia)
@@ -61,7 +61,7 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 ## Wybór sekcji i przewijanie (Krzyk)
 
 - **Blokada kart:** dopóki trwa animacja jednej opcji (walkman, maski, kaseta, telefon), pozostałe są nieaktywne i przygaszone (`rooms-busy` w `initRooms`, wspólna flaga dla wszystkich kart).
-- **Telefon na wyborze** ma płótno pionowe 3:4 skalowane z oknem (`.k-pick-phone`), kamera w karcie jest w `PHONE_CAM_Z` (używa jej też przejście kontaktu do dopasowania rozmiaru na starcie).
+- **Układ wyboru (A0):** bez napisu „wybierz”; trzy płyty w rzędzie (muzyka, persony, obraz), mniejsze i nieco powyżej środka, pod nimi niski, szeroki pasek kontaktu z leżącym telefonem (płótno 210×90, `PHONE_CAM_Z`, `PHONE_TILT`); całość w jednym ekranie. Na telefonie płyty jedna pod drugą na pełną szerokość, pasek kontaktu na końcu. Przejście kontaktu startuje z leżącego telefonu w płycie i w locie podnosi go do pionu.
 - **Przewijanie sekcjami (wariant B):** `points()` w `klatki.js`: skok od sekcji do sekcji, górna krawędź sekcji u góry okna; tylko sekcja wyższa od okna o >12% dostaje dodatkowy
   przystanek u dołu; sekcja person ma przystanek dla każdej persony; za ostatnim przystankiem jeden skok na sam dół, potem ruch w dół nic nie robi.
 
@@ -85,12 +85,48 @@ przeliczania liczby znaków co klatkę: każda jej zmiana rozstawiała cały kr�
 ## Nazwy person (sekcja Krzyk → persony)
 
 Nazwa aktywnej persony to niskorozdzielcza, miękka tekstura na wstążce z 8 wielokątów (`initPersonaTitles` w `src/engine/psx.js`): mapowanie afiniczne,
-przyciąganie wierzchołków do pikseli, fala i skręt biegnące bez przerwy oraz smuga ruchu, wzór z dema PS1 z Euskal 2001. Przy wejściu słowo wynurza się
+przyciąganie wierzchołków do pikseli, fala i skręt biegnące bez przerwy oraz smuga ruchu (echo), wzór z dema PS1 z Euskal 2001; **stylu wstążki nie zmieniać**. Wstążka stoi w rogu obok maski (zob. „Persony w rogu i dźwięk”). Przy wejściu słowo wynurza się
 z ciemności jako pognieciona kreska i się prostuje, przy wyjściu zwija się i gaśnie. Zwykły `h3` zostaje w stronie (ukryty wizualnie), a przy ograniczeniu
 animacji w systemie nagłówek jest zwykłym tekstem.
 
+## Język PL/EN i animowana zmiana
+
+Przełącznik języka (`LangKeys`, zdarzenie `krzyk-lang`, `src/lib/lang.js`) zmienia tylko teksty informacyjne. **Nazwy własne zostają bez zmian:** persony (Anxtan, Nugis, Stoir), KRZYK, imię i nazwisko autora,
+nazwy projektów i instytucji, napisy w tle (wersy kolażu, listing cracktro, ekran Nokii w przejściu kontaktu). Nazwy działów mają wersje (Brama/Gate, Maszynologia/Machinology: też tytuł i prompt na stronie Maszynologii).
+Zmiana jest animowana zgodnie z motywem miejsca, żeby nie było nagłego przeskoku:
+- **Krzyk (maszyna do pisania):** nagłówki i podpisy cofają się wstecz i piszą od nowa (`retype` w `krzykfx.js`, `src/engine/krzyklang.js`), akapity tak samo bez rozbijania na litery (`typeSwap` w `xlate.js`);
+  opis aktywnej persony czyta się od nowa jej głosem (`persvoice.js`). Teksty poza oknem podmieniają się od razu. Teksty dwujęzyczne w znacznikach: atrybut `data-en` (oryginał PL zostaje w `data-pl`), `data-en-aria` dla etykiet;
+  start strony ustawia język w `useLayoutEffect` (bez mignięcia polskiego tekstu).
+- **Maszynologia i brama (dekodowanie):** stary tekst rozsypuje się w bloki ▓▒░ i rozkodowuje w nowy (`decodeSwap`). NFO układa się od nowa z `BL_PL`/`BL_EN` w `maszyn.js` (długość wierszy jest inna, więc ryciny rosną znów pod nowy układ);
+  terminal ma dwujęzyczne pomoc, `man`, komunikaty i pliki (`FILES_EN`, `lg`/`tr` w `term.js`), ścieżki i polecenia zostają polskie jak w systemie plików (`projekty`, `doswiadczenie`).
+- Przy ograniczeniu animacji (`RM`) tekst podmienia się natychmiast.
+- Dodając nowy tekst informacyjny, dodaj od razu wersję angielską w tym samym miejscu (`data-en`, słownik albo drugi blok).
+
+## Muzyka (pokój z telewizorem)
+
+Sekcja `#k-muzyka` w Krzyku (`src/engine/muzyka.js`, markup w `krzyk/page.js`, style `.mu-*` w `globals.css`): kanciasta wyrwa w zinie (tło strony z tego miejsca, `bg-mid.webp`, brzegi: raster, suche pociągnięcia czarnego pędzla, czerwony tusz; bez taśm i bez białego brzegu),
+za nią ciemny pokój PSX: dywan okrągły, ściana w pasy, okno z roletami po prawej (światło miasta, paski na podłodze i ścianie), plakat, kable, telewizor po lewej z magnetowidem, jedna kaseta i pilot na dywanie.
+Modele w `public/krzyk/3d/` (`old_tv`, `vhs_player`, `vhs_tape`, `remote`). Z siatki magnetowidu wycięty jest wbudowany, leżący fragment kasety (`stripFront`), bo animowana kaseta jest osobna (inaczej były dwie).
+Sterowanie tylko klikiem w obiekty (bez przycisków): kaseta → wsuwa się do magnetowidu i rusza klip, magnetowid → wysuwa kasetę, pilot → zmienia klip, telewizor → kamera najeżdża i ekran wypełnia kadr (Esc albo kolejny klik cofa).
+Ekran i wyświetlacz VFD to płótna 2D przyklejone homografią do modelu. **Nie dodawać migających cząsteczek** (kurz, losowe kreski na ekranie): wyglądały źle i zostały usunięte; szum jest tylko na pustym ekranie.
+Telefon (≤700 px): wariant „dwa piętra” — scena pionowa 288×480 (`LAYOUTS.port`): telewizor z magnetowidem u góry, dywan z kasetą i pilotem pod nim, zoom dopasowany do szerokości; układ przełącza się też przy zmianie szerokości (`applyLayout`).
+Tabliczka „muzyka” (tekstura płyty wyboru, krzywo) w prawym górnym rogu. Później: plakietki z tytułami utworów, z których wysuwa się kaseta i rusza klip z YouTube.
+
+## Persony w rogu i dźwięk
+
+- **Maski (`initPersonaStage` w `psx.js`):** trzy maski stoją u góry w rzędzie. Aktywna persona wyjeżdża łukiem w lewy górny róg sceny (sticky), maska patrzy w środek strony, obok niej stoi nazwa jako falująca wstążka PS1 (`initPersonaTitles` dokłada jej płótno do kontenera `.kp-cn`, pojawia się po wylądowaniu maski; tag persony zostaje tylko w opisie), a pozostałe maski zostają u góry przyciemnione.
+  Płótno z maskami (`.kp-stage-in`) ma szerokość okna, kamera stoi daleko z wąskim kątem (`CAMD`, `FOV`), żeby maski przy krawędziach się nie wyginały, i leży na pierwszym planie, więc maski mogą wychodzić poza brązową planszę (jej tło `.kp-stage::before` zostaje szerokości planszy; plansza ma być jeszcze przerobiona).
+  Przejście jest po kolei: najpierw poprzednia maska wraca do rzędu (cień), dopiero potem następna wychodzi do rogu. Opis zaczyna się pisać po wylądowaniu maski (`personaSeated` zamiast `personaActive` w `persvoice`).
+  Dukanie: `persvoice` zgłasza każdą wpisaną literę (`setPersonaTalk`), maska w rogu rusza się w jej rytmie, każda inaczej (Anxtan drży i strzela na boki, Nugis podskakuje i kiwa głową, Stoir szarpie się jak manekin); działa też bez dźwięku.
+- **Dźwięk (`src/lib/sound.js`):** stan w `localStorage` (`krzyk-sound`: `on`/`off`, domyślnie brak wyboru = wyłączony), zdarzenie `krzyk-sound`, wspólny `AudioContext` (`audio()`); po odświeżeniu strony wznawiany pierwszym gestem.
+  Wybór „z dźwiękiem / bez dźwięku” pod ostrzeżeniem w ramce bramy (`gate.js`, `.gsnd`) i ikonka oscyloskopu w lewym dolnym rogu każdej strony (`components/SoundIcon.js`, w `layout.js`): wykończenie A (srebrny monitor ze śrubkami i cieniem), płaska linia = wył, fala krzyku z poświatą = wł,
+  pod spodem „dźwięk” i „wł/wył” (EN: „sound”, „on/off”). Gdy nie ma jeszcze wyboru, ikonka kilka razy pulsuje. Głosy person (`persvoice`) grają tylko przy włączonym dźwięku.
+
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
 
+- **Ustalone w wizualizacjach (artefakt „Wizualizacje dla Krzyku”), do wdrożenia:**
+  - (wdrożone) Persony (A2) i dźwięk: zob. sekcja „Persony w rogu i dźwięk” wyżej.
+  - (wdrożone) Muzyka (A1): zob. sekcja „Muzyka (pokój z telewizorem)” wyżej.
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
 - **Do sprawdzenia na prawdziwych urządzeniach (nie testowane, tylko emulacja w Chromium):** przewijanie sekcjami w Krzyku na gładziku (Mac); animacje na prawdziwym telefonie i tablecie; Safari (m.in. powrót z GitHuba przyciskiem „wstecz”).
 - **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).
