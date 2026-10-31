@@ -402,3 +402,8 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .kp-title{display:block;width:min(100%,27rem);aspect-ratio:3.6/1;margin:0 0 2px;image-rendering:pixelated;pointer-events:none}
 .kp-part[data-p="1"] .kp-title{margin-left:auto;margin-right:auto}.kp-part[data-p="2"] .kp-title{margin-left:auto}
 .kp-gl{position:absolute!important;width:1px;height:1px;margin:-1px!important;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* czytanie opisu persony: litery odsłaniane po kolei (pełny tekst zostaje w DOM), przycisk włączający głosy */
+.kp-part .kc{visibility:hidden}.kp-part .kc.on{visibility:visible}
+.kp-snd{all:unset;cursor:pointer;display:inline-block;margin:0 0 8px;padding:3px 9px 2px;font-size:14px;color:#a9acbb;border:1px solid #3d4159;background:#0d0d12}
+.kp-snd:hover{color:#fff;border-color:#a8161f}.kp-snd[aria-pressed="true"]{color:#05030a;background:#c4121d;border-color:#c4121d}
+.kp-snd:focus-visible{outline:2px dashed #ff3a3a;outline-offset:2px}

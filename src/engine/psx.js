@@ -325,7 +325,8 @@ function personaPortal(pickCv, xs, arrive, done) {
 
 /* ---------- sekcja person: trzy maski lewitują u góry; przy części danej persony ona wychyla się na wprost,
    a pozostałe cofają się w cień jak nieodblokowane postacie ---------- */
-let ACTIVE = -1;   // aktywna persona (z initPersonaStage), czytana przez nagłówki
+let ACTIVE = -1;   // aktywna persona (z initPersonaStage), czytana przez nagłówki i głosy
+export const personaActive = () => ACTIVE;
 export function initPersonaStage(cv, parts) {
   // niska rozdzielczość w proporcjach płótna (minimum 120 px szerokości bez zmiany proporcji, inaczej maski się rozciągają)
   const dims = () => { const w = cv.clientWidth / 4 || 120, h = cv.clientHeight / 4 || 60, k = Math.max(1, 120 / w); return [Math.round(w * k), Math.max(30, Math.round(h * k))]; };

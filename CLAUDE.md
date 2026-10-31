@@ -9,12 +9,12 @@ Tła i grafiki działu Krzyk powstają ze skryptów generujących (kolaż, tła,
 
 Na stronie są pokazane jako teatralne maski w stylu PS1 (nie głowy).
 
-1. **Lękowa** — boi się i dużo analizuje, overthinking, często mówi szybko i dużo, wiecznie przestraszona życiem.
+1. **Lękowa** (nazwa na stronie: **Anxtan**) — boi się i dużo analizuje, overthinking, często mówi szybko i dużo, wiecznie przestraszona życiem.
    Estetyka: haunted, nawiedzona.
-2. **Wyluzowana** — spokojna, nie przejmuje się życiem, cieszy się prostymi chwilami; bardzo energiczna, głośna,
+2. **Wyluzowana** (nazwa na stronie: **Nugis**) — spokojna, nie przejmuje się życiem, cieszy się prostymi chwilami; bardzo energiczna, głośna,
    czasem zbyt impulsywna i nie przemyśla niektórych rzeczy; traci czas na głupotki, dużo goofy momentów.
    Estetyka: indie sleaze / hyperpop, chilled 2000s.
-3. **Poważna** (biała maska, męski gotycki makijaż, bez aureoli; rusza się szarpnięciami jak manekin) — skupiona na rozwoju wewnętrznym, nie traci czasu na głupoty; posępna i zadziorna, patrzy z góry,
+3. **Poważna** (nazwa na stronie: **Stoir**; biała maska, męski gotycki makijaż, bez aureoli; rusza się szarpnięciami jak manekin) — skupiona na rozwoju wewnętrznym, nie traci czasu na głupoty; posępna i zadziorna, patrzy z góry,
    obserwatorska; wysokie skupienie na duchowości i poczuciu połączenia ze sobą.
    Estetyka: gotycka, sakralna.
 
@@ -28,6 +28,14 @@ ani w opisach commitów i PR-ów — szczegóły zna tylko autor.
 
 Na ekranie LCD kamery jest na razie zastępcze zdjęcie (`public/krzyk/lcd.webp`). Gdy powstanie sekcja ze zdjęciami,
 podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja jest obrócona o 90°, a obraz na LCD ma format 9:16.
+
+## Głosy person (czytanie opisu)
+
+Gdy persona staje się aktywna, jej opis wpisuje się litera po literze (`src/engine/persvoice.js`), a każda litera gra „blip” głosu (`src/engine/voices.js`,
+synteza WebAudio, bez plików dźwiękowych). Głosy: Anxtan to bardzo szybkie dukanie jak odwrócona nagrana mowa (narastanie i ucięcie, jąkanie), Nugis to wolne
+blipy ślizgające się w górę jak w Undertale (koniec słowa wyżej), Stoir to niski, obrażony głos z akcentem (spadek tonu, podniesienie na końcu słowa).
+Dźwięk jest domyślnie wyłączony; włącza go przycisk „głosy” pod nagłówkiem sekcji (przeglądarki wymagają kliknięcia). Przy ponownym wejściu na personę
+gra tylko jej imię. Przy ograniczeniu animacji nic z tego nie działa, a pełny tekst zostaje w DOM (ukryty span dla czytników ekranu).
 
 ## Telefon → kontakt (przejście)
 
