@@ -70,6 +70,10 @@ animacji w systemie nagłówek jest zwykłym tekstem.
 - **Przewijanie sekcjami (Krzyk, wariant B – skok blokowy) – DO NAPRAWY (zgłoszone przez autora 2026-10-31):** obecnie nie ma przewijania „sekcja po sekcji”; zamiast tego
   strona przewija się dziwnie w połowie sekcji (przystanki pośrednie wypadają w środku sekcji). Ma skakać między sekcjami, a nie zatrzymywać się w połowie.
   Dodatkowo sprawdzić na gładziku (Mac); przystanki pośrednie przy wysokim kolażu są dodane (nie testowane na gładziku).
+- **Brama (strona główna), początek strony – BŁĄD (zgłoszone przez autora 2026-10-31):** niektóre kręgi czasem się zacinają zamiast obracać się płynnie i ciągle, w różnym tempie.
+  Gdzie szukać: `src/engine/gate.js`, rysowanie kręgów ze znaków (zmienna `rings`, pętla z `rot`, okolice linii 424–440). Uwaga z odczytu kodu (nie diagnoza zacinania): rotacja to
+  `rot = (i % 2 ? 1 : -1) * t / 24000`, czyli kręgi różnią się tylko kierunkiem, a nie tempem, więc „różne tempo” dziś w ogóle nie istnieje. Przyczyna zacinania niepotwierdzona
+  (do sprawdzenia: stan zegara `t` i jego resetowanie, ograniczanie klatek, `loop()` z `core.js`, ukrywanie kręgów poza ekranem). Cel: każdy krąg obraca się bez przerwy i płynnie, każdy z własną prędkością.
 - **Krzyk, wybór sekcji: blokować pozostałe przyciski po wybraniu opcji (zgłoszone przez autora 2026-10-31).** Gdy trwa animacja przejścia (walkman → muzyka, maski → persony,
   kaseta → obraz, telefon → kontakt), pozostałe przyciski wyboru mają być nieaktywne, bo kliknięcie drugiego uruchamia kolejną animację i animacje nakładają się na siebie.
   Dziś blokuje się tylko ta sama karta (`st.busy` w `initRooms`, `psx.js`) oraz każde przejście osobno (`hcBusy`, `ppBusy`, `phBusy`), ale nie ma wspólnej blokady między kartami.
