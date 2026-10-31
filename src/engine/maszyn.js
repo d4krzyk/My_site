@@ -1,7 +1,7 @@
 // strona Maszynologia: cracktro (listing asm, copper, sine-scroller z dekodowaniem) i plik NFO z ornamentami; przeniesione z planszy
 import { buildOrn, ornCanvas } from './nfoorn';
 import { pixelDecode } from './pixdecode';
-import { PROJECT_KEYS } from './projopen';
+import { PROJECT_KEYS, openProject, projectBusy } from './projopen';
 import { pageReady } from './ready';
 import { RM, rnd, clamp, FONTS, loop, N, fbm, bth, oneBit, makeGlyph, drawGlyph } from './core';
 export function initMaszyn(root, opts) {
@@ -123,7 +123,10 @@ export function initMaszyn(root, opts) {
       if (sv) sv.vis = G.ch.map((_, r) => { const y = top + r * lh; return y + lh > 0 && y < H; });   // poza oknem tekst zostaje czytelny w DOM (kopiowanie, szukanie)
       return G.ch.map((_, r) => { const y = top + r * lh; return y >= 0 && y + lh <= H ? 1 : 0; }); };
     let sRaf = 0, sLast = 0;
-    const sStep = now => { const dt = Math.min(64, now - sLast); sLast = now; const tg = zone(); let moving = false; sv.tick++;
+    // tekst jest przerysowywany podczas animacji przewijania; gdyby wypadło to między wciśnięciem a puszczeniem przycisku myszy, element pod kursorem znikałby z DOM
+    // i przeglądarka nie wysłałaby kliknięcia (link by nie zadziałał), więc na czas trzymania przycisku przerysowanie czeka
+    let pressed = false; pre.addEventListener('pointerdown', () => { pressed = true; }); addEventListener('pointerup', () => { pressed = false; }, true); addEventListener('pointercancel', () => { pressed = false; }, true);
+    const sStep = now => { if (pressed) { sLast = now; sRaf = requestAnimationFrame(sStep); return; } const dt = Math.min(64, now - sLast); sLast = now; const tg = zone(); let moving = false; sv.tick++;
       const mid = innerHeight / 2 - pre.getBoundingClientRect().top, lh = pre.offsetHeight / tg.length;
       for (let r = 0; r < tg.length; r++) { if (sv[r] === tg[r]) continue; moving = true;
         // rozszyfrowanie po kolei, w kierunku czytania od krawędzi, którą wiersz wjechał: najwyżej ~2 wiersze naraz
@@ -174,9 +177,11 @@ export function initMaszyn(root, opts) {
     if ('ResizeObserver' in window) new ResizeObserver(update).observe(wrap);
     else addEventListener('resize', update, {passive: true});
     pre.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a.lk'); if (!a) return; e.preventDefault();
-      const url = a.href, key = PROJECT_KEYS[a.dataset.k], at = { x: e.clientX, y: e.clientY }; a.classList.add('zap');
-      // projekty (A-F): animacja przejścia w kolorze projektu, po niej repozytorium; GitHub i LinkedIn autora otwierają się od razu
-      setTimeout(() => { a.classList.remove('zap'); if (key && !RM) import('./projopen').then(m => m.openProject(key, url, at)); else window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
+      const url = a.href, key = PROJECT_KEYS[a.dataset.k], at = { x: e.clientX, y: e.clientY };
+      // projekty (A-F): animacja przejścia w kolorze projektu zaczyna się od razu, po niej repozytorium; dopóki trwa, kolejne kliknięcia są ignorowane.
+      // GitHub i LinkedIn autora otwierają się po krótkim błysku, bez animacji
+      if (key && !RM) { if (projectBusy()) return; a.classList.add('zap'); setTimeout(() => a.classList.remove('zap'), 260); openProject(key, url, at); return; }
+      a.classList.add('zap'); setTimeout(() => { a.classList.remove('zap'); window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
     // kopiowanie: sam tekst CV, bez wcięcia pod ryciny
     pre.addEventListener('copy', e => {
       const sel = getSelection(); if (!sel || sel.isCollapsed || !pre.contains(sel.anchorNode) && !pre.contains(sel.focusNode)) return;

@@ -147,6 +147,7 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
 }
 
 let busy = false;
+export const projectBusy = () => busy;
 const DUR = 900;      // czas zawalenia strony w ciemność (ms)
 export function openProject(key, url, origin) {
   const open = () => { const w = window.open(url, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } return !!w; };
@@ -171,10 +172,13 @@ export function openProject(key, url, origin) {
       S[i + 3] = 255; }
     cx2.putImageData(shade, 0, 0); };
   let phase = 'collapse', t0 = 0, last = -1e9, done = false, raf = 0;
-  const close = () => { cancelAnimationFrame(raf); removeEventListener('keydown', onKey); ov.classList.add('out'); setTimeout(() => { ov.remove(); busy = false; }, 380); };
+  const close = () => { cancelAnimationFrame(raf); removeEventListener('keydown', onKey); removeEventListener('keydown', guard, true); ov.classList.add('out'); setTimeout(() => { ov.remove(); busy = false; }, 380); };
   const finish = () => { if (done) return; done = true; cancelAnimationFrame(raf); if (phase === 'scene') render(END[key]);
     ov.style.background = '#000'; if (open()) close();
-    else { ov.style.cursor = 'default'; cv.style.visibility = ''; cc.remove(); const a = document.createElement('a'); a.className = 'pj-link dos'; a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'github ›'; a.addEventListener('click', () => setTimeout(close, 50)); ov.append(a); a.focus(); } };
+    else { removeEventListener('keydown', guard, true); ov.style.cursor = 'default'; cv.style.visibility = ''; cc.remove(); const a = document.createElement('a'); a.className = 'pj-link dos'; a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'github ›'; a.addEventListener('click', () => setTimeout(close, 50)); ov.append(a); a.focus(); } };
+  // na czas animacji nakładka przejmuje klawiaturę: nic nie trafia do terminala ani do strony pod spodem (poza Esc, który pomija animację)
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  const guard = e => { if (e.key !== 'Escape') { e.preventDefault(); e.stopPropagation(); } }; addEventListener('keydown', guard, true);
   const onKey = e => { if (e.key === 'Escape') finish(); }; addEventListener('keydown', onKey); ov.addEventListener('click', e => { if (!e.target.closest('a')) finish(); });
   const step = now => { raf = requestAnimationFrame(step); if (!t0) t0 = now; const t = now - t0; if (t - last < 30) return; last = t;
     if (phase === 'collapse') { collapse(Math.min(t, DUR)); if (t > DUR + 180) { phase = 'scene'; t0 = now; last = -1e9; ov.style.background = '#000'; cc.remove(); cv.style.visibility = ''; render(0, 0); } return; }
