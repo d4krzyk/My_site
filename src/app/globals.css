@@ -124,7 +124,8 @@ button{-webkit-user-select:none;user-select:none}
 @media (max-width:700px){
   .spread.stack .scard .sr{left:calc(100% + 12px);right:auto;top:50%;transform:translateY(-50%);text-align:left;font-size:13px}
   .cards-nav .deck{right:2px;top:2px}
-  .lang-keys{top:24px;right:146px}
+  .lang-keys{top:24px;right:146px;transition:transform .25s ease,opacity .25s ease}
+  .lang-keys.away{transform:translateY(-90px);opacity:0;pointer-events:none}
 }
 /* przełącznik języka w rozkładzie */
 /* szczelina: nowa strona wyłania się przez poziome rozcięcie */
@@ -362,18 +363,53 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .sg-stage canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
 .sg-stage.bg0{background:#0a0a10}.sg-stage.bg1{background:#e8e3d8}
 .sg-stage.bg2{background:repeating-conic-gradient(#2a2a33 0 25%,#1a1a20 0 50%) 0 0/24px 24px}
-.sg-panel{display:flex;flex-direction:column;gap:12px;font-size:15px}
-.sg-row{display:flex;flex-direction:column;gap:5px}
-.sg-k{color:#ff5a3c;letter-spacing:1px;text-transform:uppercase;font-size:13px}
-.sg-chips{display:flex;flex-wrap:wrap;gap:6px}
-.sg-chips button,.sg-acts button{all:unset;cursor:pointer;box-sizing:border-box;padding:3px 8px 2px;font-family:var(--f-dos);font-size:15px;color:#a9acbb;background:#121219;
-  border:2px solid #34364a;border-bottom-width:4px;clip-path:polygon(2px 0,calc(100% - 2px) 0,100% 2px,100% calc(100% - 2px),calc(100% - 2px) 100%,2px 100%,0 calc(100% - 2px),0 2px)}
-.sg-chips button:hover,.sg-acts button:hover{color:#fff;border-color:#a8161f}
-.sg-chips button[aria-pressed="true"]{color:#000;background:#ff3a3a;border-color:#a8161f;border-bottom-width:2px;transform:translateY(2px)}
+/* panel w stylu przeklętego BIOS-u: pasek tytułu, kropkowane etykiety, [■] zamiast przycisków, suwaki z czerwonych bloków i mrugającym kursorem */
+.sg-panel{position:relative;display:flex;flex-direction:column;gap:12px;font-size:15px;padding:44px 18px 18px;background:#05030a;border:2px solid #e9e2cf;box-shadow:0 0 0 4px #05030a,0 0 0 6px #8a0b16}
+.sg-panel::before{content:"SIGEN SETUP UTILITY  \00b7  (C) KRZYK BIOS v6.66";position:absolute;left:0;right:0;top:0;padding:6px 10px;background:#e9e2cf;color:#8a0b16;font-size:16px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.sg-foot{margin:6px 0 0;padding-top:8px;border-top:1px dashed #6e717d;color:#6e717d;font-size:13px}
+.sg-row{display:flex;flex-direction:row;align-items:baseline;gap:10px}
+.sg-k{flex:none;min-width:120px;color:#e9e2cf;font-size:16px}
+.sg-k::after{content:" ......";color:#3d4159}
+.sg-chips{display:flex;flex-wrap:wrap;gap:2px 10px}
+.sg-chips button,.sg-acts button{all:unset;cursor:pointer;box-sizing:border-box;font-family:var(--f-dos);font-size:15px;color:#8a8d9c}
+.sg-chips button::before{content:"[ ]";color:#6e717d;margin-right:4px}
+.sg-chips button:hover,.sg-acts button:hover{color:#fff}
+.sg-chips button[aria-pressed="true"]{color:#ff3a3a}
+.sg-chips button[aria-pressed="true"]::before{content:"[\25a0]";color:#ff3a3a}
 .sg-chips button:focus-visible,.sg-acts button:focus-visible{outline:2px dashed #ff3a3a;outline-offset:2px}
-.sg-sw::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;background:var(--sw);box-shadow:0 0 0 1px #000}
+.sg-chips button.sg-sw::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;background:var(--sw);box-shadow:0 0 0 1px #6e717d}
+.sg-chips button.sg-sw[aria-pressed="true"]::before{box-shadow:0 0 0 2px #ff3a3a}
 .sg-acts{display:flex;flex-wrap:wrap;gap:8px}
-.sg-acts button{color:#f2efe9;border-color:#a8161f;background:#2a0609}
-.sg-panel input[type=range]{width:min(320px,100%);accent-color:#ff3a3a}
-.sg-seed{width:140px;font-family:var(--f-dos);font-size:15px;background:#0d0d12;color:#f2efe9;border:2px solid #34364a;padding:2px 6px}
+.sg-acts button{color:#05030a;background:#c4121d;padding:2px 8px}
+.sg-acts button:hover{color:#05030a;background:#ff3a3a}
+.sg-panel input[type=range]{-webkit-appearance:none;appearance:none;height:20px;margin:0;background:transparent;width:min(300px,100%);cursor:pointer}
+.sg-panel input[type=range]::-webkit-slider-runnable-track{height:16px;background:linear-gradient(90deg,transparent var(--p),#05030a var(--p)),repeating-linear-gradient(90deg,#c4121d 0 9px,transparent 9px 11px);outline:1px solid #3d4159}
+.sg-panel input[type=range]::-moz-range-track{height:16px;background:linear-gradient(90deg,transparent var(--p),#05030a var(--p)),repeating-linear-gradient(90deg,#c4121d 0 9px,transparent 9px 11px);outline:1px solid #3d4159}
+.sg-panel input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:18px;margin-top:-1px;border:0;border-radius:0;background:#e9e2cf;animation:sgblink 1s steps(1) infinite}
+.sg-panel input[type=range]::-moz-range-thumb{width:10px;height:18px;border:0;border-radius:0;background:#e9e2cf;animation:sgblink 1s steps(1) infinite}
+.sg-panel input[type=range]:focus-visible{outline:2px dashed #ff3a3a;outline-offset:3px}
+@keyframes sgblink{50%{background:transparent}}
+.sg-seed{width:140px;font-family:var(--f-dos);font-size:15px;background:#05030a;color:#ff3a3a;border:1px solid #3d4159;padding:2px 6px}
+@media (prefers-reduced-motion:reduce){.sg-panel input[type=range]::-webkit-slider-thumb{animation:none}.sg-panel input[type=range]::-moz-range-thumb{animation:none}}
+@media (max-width:520px){.sg-row{flex-direction:column;gap:4px}.sg-panel{padding:40px 12px 14px}.sg-panel::before{font-size:13px}}
 @media (max-width:860px){.sg-grid{grid-template-columns:1fr}.sigen{padding-top:74px}.sg-head{padding-right:0}}
+/* telefon → kontakt: model 3D (PS1) i nad nim ostry ekranik LCD */
+.ph-ov{position:fixed;inset:0;z-index:50;cursor:pointer}
+.ph-ov canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+@media (pointer:coarse){.ph-ov .hc-skip{display:none}}
+/* nagłówki person: nazwa rysowana na wstążce PS1 (canvas obok nagłówka); sam h3 zostaje w stronie dla czytników ekranu i wyszukiwarek */
+.kp-part{position:relative}
+.kp-title{display:block;width:min(100%,27rem);aspect-ratio:3.6/1;margin:0 0 2px;image-rendering:pixelated;pointer-events:none}
+.kp-part[data-p="1"] .kp-title{margin-left:auto;margin-right:auto}.kp-part[data-p="2"] .kp-title{margin-left:auto}
+.kp-gl{position:absolute!important;width:1px;height:1px;margin:-1px!important;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* czytanie opisu persony: litery odsłaniane po kolei (pełny tekst zostaje w DOM), przycisk włączający głosy */
+.kp-part .kc{visibility:hidden}.kp-part .kc.on{visibility:visible}
+.kp-snd{all:unset;cursor:pointer;display:inline-block;margin:0 0 8px;padding:3px 9px 2px;font-size:14px;color:#a9acbb;border:1px solid #3d4159;background:#0d0d12}
+.kp-snd:hover{color:#fff;border-color:#a8161f}.kp-snd[aria-pressed="true"]{color:#05030a;background:#c4121d;border-color:#c4121d}
+.kp-snd:focus-visible{outline:2px dashed #ff3a3a;outline-offset:2px}
+/* przejście przy otwieraniu projektu (engine/projopen): nakładka z płótnem 320x180 (poziomo) albo 180 x proporcje ekranu (pionowo, telefon) */
+.pj-ov{position:fixed;inset:0;z-index:60;background:#000;cursor:pointer;transition:opacity .38s}
+.pj-ov.out{opacity:0;pointer-events:none}
+.pj-ov canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;image-rendering:pixelated}
+.pj-link{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);padding:6px 14px;font-size:18px;color:#05030a;background:#e9e2cf;text-decoration:none;border:2px solid #8a0b16}
+.pj-link:hover,.pj-link:focus-visible{background:#fff;outline:2px dashed #ff3a3a;outline-offset:3px}

@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RM, loop, clamp, makeGlyph, drawGlyph } from './core';
+import { drawLCD, bay, hash, T_NOISE } from './nokia';
 
 const ease = k => k * k * (3 - 2 * k), easeOut = k => 1 - Math.pow(1 - k, 3);
 const TAU = Math.PI * 2;
@@ -211,7 +212,10 @@ export function initRooms(root, { assets, go }) {
         m.rotation.set(Math.PI / 2, 0, -Math.PI / 2, 'ZYX');
         const o = fit(m, 1.1); P.scene.add(o); P.cam.position.set(0, 0, 1.75); P.cam.lookAt(0, 0, 0);
         let ring = 0;
-        click = () => { st.busy = true; ring = 1; st.t0 = st.now; setTimeout(() => { st.busy = false; ring = 0; go(kind); }, RM ? 0 : 600); };
+        // klik: telefon dzwoni, wylatuje z karty, kamera najeżdża na ekranik; krzyk na LCD, zielony szum przenosi do kontaktu
+        // nakładka startuje od razu; telefon w karcie chowa się dopiero po pierwszej narysowanej klatce nakładki (bez przerwy, w której go nie widać)
+        click = () => { if (RM) return go(kind); st.busy = true; ring = 0;
+          phoneCall(assets, cv, () => go(kind, true), () => { cv.style.visibility = ''; st.busy = false; }, () => { cv.style.visibility = 'hidden'; }); };
         tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0;
           o.rotation.set(.1 + Math.sin(t / 2000) * .06, Math.sin(t / 1500) * (st.hot ? .8 : .45) + r, -.06 + r * .5 + (st.hot ? Math.sin(t / 60) * .03 : 0));
           o.position.y = Math.sin(t / 1000) * .02; };
@@ -321,6 +325,8 @@ function personaPortal(pickCv, xs, arrive, done) {
 
 /* ---------- sekcja person: trzy maski lewitują u góry; przy części danej persony ona wychyla się na wprost,
    a pozostałe cofają się w cień jak nieodblokowane postacie ---------- */
+let ACTIVE = -1;   // aktywna persona (z initPersonaStage), czytana przez nagłówki i głosy
+export const personaActive = () => ACTIVE;
 export function initPersonaStage(cv, parts) {
   // niska rozdzielczość w proporcjach płótna (minimum 120 px szerokości bez zmiany proporcji, inaczej maski się rozciągają)
   const dims = () => { const w = cv.clientWidth / 4 || 120, h = cv.clientHeight / 4 || 60, k = Math.max(1, 120 / w); return [Math.round(w * k), Math.max(30, Math.round(h * k))]; };
@@ -332,10 +338,13 @@ export function initPersonaStage(cv, parts) {
   const ro = new ResizeObserver(() => { const [w, h] = dims(); if (w === W && h === Hh) return; W = w; Hh = h; P.resize(W, Hh); span = Math.min(1.25, 1.4 * W / Hh / 4.2); }); ro.observe(cv);
   const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 }));
   let active = -1;
-  const io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) active = +e.target.dataset.p; else if (+e.target.dataset.p === active) active = -1; }); },
-    { rootMargin: '-40% 0px -40% 0px' });
-  parts.forEach(p => io.observe(p));
+  // aktywna persona = część najbliższa linii pod sceną (62% wysokości okna), liczona z położenia w każdej klatce, więc nie zależy od kolejności
+  // ani kierunku przewijania (zdarzenia przecięcia gubiły stan przy powrocie na górę); gdy żadna część nie jest blisko okna: -1 (wszystkie neutralne)
+  const pick = () => { const line = innerHeight * .62; let best = -1, bd = 1e9;
+    parts.forEach((el, i) => { const r = el.getBoundingClientRect(), d = Math.abs((r.top + r.bottom) / 2 - line); if (d < bd) { bd = d; best = i; } });
+    return bd < innerHeight * .75 ? best : -1; };
   loop(cv, RM ? 4 : 24, t => {
+    active = pick(); ACTIVE = active;
     ms.forEach((m, i) => {
       const on = active === i, off = active >= 0 && !on, tg = { z: on ? .7 : off ? -1 : 0, s: on ? .48 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
       for (const k in tg) c[k] += (tg[k] - c[k]) * .12;
@@ -350,7 +359,7 @@ export function initPersonaStage(cv, parts) {
     });
     P.render();
   });
-  return () => { io.disconnect(); ro.disconnect(); };
+  return () => { ro.disconnect(); };
 }
 
 /* ---------- walkman → muzyka: słuchawki wylatują z karty, obracają się wokół osi nauszników (pałąk idzie do tyłu, jakby
@@ -438,4 +447,108 @@ function hc90e(assets, arrive, done) {
       if (e > 5000) end();
     });
   }).catch(end);
+}
+
+/* ---------- telefon → kontakt: telefon wylatuje z karty, kamera najeżdża na ekran modelu, aż LCD wypełni okno (na telefonie: szerokość);
+   na ekranie „HALO? / CZY TO...?" i fala krzyku z wyciętym KRZYK; LCD rozsypuje się w zielony szum, który zalewa stronę i odsłania kontakt ---------- */
+let phBusy = false;
+function phoneCall(assets, pickCv, arrive, done, shown) {
+  if (phBusy) return; phBusy = true;
+  const ov = document.createElement('div'); ov.className = 'ph-ov'; ov.innerHTML = '<canvas></canvas><canvas></canvas><span class="hc-skip dos">[ Esc ] pomiń</span>'; document.body.appendChild(ov);
+  const [cv, c2] = ov.querySelectorAll('canvas'), W = innerWidth, H = innerHeight;
+  const dv = W < 700 ? 2 : 3, P = ps1(cv, Math.ceil(W / dv), Math.ceil(H / dv), { alpha: 0 }); lights(P); P.cam.position.set(0, 0, 3); P.cam.lookAt(0, 0, 0);
+  c2.width = W; c2.height = H; const x = c2.getContext('2d');
+  const tc = document.createElement('canvas'); tc.width = 168; tc.height = 96; const tx = tc.getContext('2d'), T = P.tex(tc);
+  const keys = new THREE.PointLight(0x9dff7a, 0, 1.2); P.scene.add(keys);
+  const HW = 3 * Math.tan(17.5 * Math.PI / 180), r0 = pickCv.getBoundingClientRect();
+  const s0 = r0.height / H * 3 / 1.75, p0 = new THREE.Vector3((r0.left + r0.width / 2 - W / 2) / (H / 2) * HW, -(r0.top + r0.height / 2 - H / 2) / (H / 2) * HW, 0);
+  let finished = false, jumped = false, shownCb = false, t0 = null, o = null, scr = null;
+  const end = () => { if (finished) return; finished = true; if (!jumped) arrive(); ov.remove(); P.r.dispose(); removeEventListener('keydown', key); phBusy = false; done(); };
+  const key = e => { if (e.key === 'Escape') end(); }; addEventListener('keydown', key); ov.addEventListener('click', end);
+  const camT = new THREE.Vector3(), camN = new THREE.Vector3(), corner = new THREE.Vector3(), camA = new THREE.Vector3(0, 0, 3);
+  // prostokąt ekranu na stronie (rzut rogów płaszczyzny LCD)
+  const rectOf = () => { let a = [1e9, 1e9, -1e9, -1e9]; for (const [u, v] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { corner.set(u * 1.43, v * .91, 0); scr.localToWorld(corner); corner.project(P.cam);
+    const X = (corner.x + 1) / 2 * W, Y = (1 - corner.y) / 2 * H; a = [Math.min(a[0], X), Math.min(a[1], Y), Math.max(a[2], X), Math.max(a[3], Y)]; } return a; };
+  loadPSX(P, assets.phone).then(m => {
+    m.rotation.set(Math.PI / 2, 0, -Math.PI / 2, 'ZYX');
+    // ekran w pliku: x od −2,35 do −0,53 (góra telefonu ku −X), z od −1,42 do 1,44, tuż nad przednią ścianką (y = 1)
+    scr = new THREE.Mesh(new THREE.PlaneGeometry(2.86, 1.82), new THREE.MeshBasicMaterial({ map: T }));
+    scr.position.set(-1.44, 1.015, .01); scr.rotation.set(-Math.PI / 2, Math.PI / 2, 0, 'YXZ'); m.add(scr);
+    o = fit(m, 1.1); P.scene.add(o);
+  }).catch(end);
+  loop(cv, 30, t => { if (finished || !o) return; if (t0 === null) t0 = t; const e = t - t0, lt = e - 500;
+    const k1 = ease(clamp(e / 1000, 0, 1)), ring = e < 900 ? Math.sin(e / 18) * .1 * (1 - e / 900) : 0;
+    o.position.lerpVectors(p0, new THREE.Vector3(0, 0, 0), k1); o.scale.setScalar(s0 + (1 - s0) * k1); o.rotation.set(.1 * (1 - k1), (1 - k1) * .45 + ring, ring * .5);
+    keys.intensity = e < 1400 ? (.6 + .4 * Math.sin(e / 50)) * 1.2 : 0; keys.position.set(o.position.x, o.position.y - .25, .5);
+    // kamera: z (0,0,3) na oś ekranu, w takiej odległości, żeby LCD zmieścił się w oknie (94%)
+    o.updateMatrixWorld(true); scr.getWorldPosition(camT); camN.set(0, 0, 1).applyQuaternion(scr.getWorldQuaternion(new THREE.Quaternion()));
+    const sw = 2.86 * scr.getWorldScale(corner).x, sh = 1.82 * corner.y, tn = Math.tan(17.5 * Math.PI / 180), d = Math.max(sh / (2 * tn * .94), sw / (2 * tn * (W / H) * .94));
+    const k2 = ease(clamp((e - 900) / 1700, 0, 1)); P.cam.position.lerpVectors(camA, camT.clone().addScaledVector(camN, d), k2); P.cam.lookAt(new THREE.Vector3().lerpVectors(new THREE.Vector3(), camT, k2));
+    const st = drawLCD(tx, lt, 0, 0, 168, 96); T.needsUpdate = true;
+    const sx = (Math.random() - .5) * st.shake * 6, sy = (Math.random() - .5) * st.shake * 6; cv.style.transform = c2.style.transform = `translate(${sx | 0}px,${sy | 0}px)`;
+    P.render(); if (!shownCb) { shownCb = true; shown(); } x.clearRect(0, 0, W, H);
+    // od 2 s nad modelem ostry obraz LCD w pełnej rozdzielczości, dokładnie w rzucie ekranu
+    const a2 = clamp((e - 2000) / 400, 0, 1); if (a2 > 0) { const [rx, ry, rx1, ry1] = rectOf(); x.fillStyle = `rgba(4,6,10,${.55 * a2})`; x.fillRect(0, 0, W, ry); x.fillRect(0, ry1, W, H - ry1); x.fillRect(0, ry, rx, ry1 - ry); x.fillRect(rx1, ry, W - rx1, ry1 - ry);   // obudowa przygasa, uwaga na ekranie
+      x.globalAlpha = a2; drawLCD(x, lt, rx, ry, rx1 - rx, ry1 - ry); x.globalAlpha = 1;
+      // szum wylewa się z ekranu na całą stronę (kratka jak piksele LCD), przy pełnym zalaniu skok do kontaktu, potem szum rzednie
+      const z = (lt - T_NOISE) / 1000, cs = Math.max(4, Math.round((rx1 - rx) / 84)), cx0 = (rx + rx1) / 2, cy0 = (ry + ry1) / 2, R = Math.hypot(W, H) * .7;
+      if (z > 0) { const out = z > 1.25 ? (z - 1.25) / .7 : 0, f = Math.floor(t / 70);
+        for (let yy = 0; yy < H; yy += cs) for (let xx = 0; xx < W; xx += cs) { const dd = Math.hypot(xx - cx0, (yy - cy0) * 1.3) / R, gx = xx / cs | 0, gy = yy / cs | 0;
+          if (bay(gx, gy) > z * 1.5 - dd || bay(gx + 1, gy + 2) < out * 1.2) continue; const v = hash(gx, gy, f); x.fillStyle = v < .45 ? '#16201a' : v < .8 ? '#6f9a5e' : '#a8cc8c'; x.fillRect(xx, yy, cs - 1, cs - 1); }
+        if (z > 1.1 && !jumped) { jumped = true; cv.style.visibility = 'hidden'; arrive(); }
+        if (out >= 1) end(); } }
+  });
+}
+
+/* ---------- nagłówki person: nazwa to niskorozdzielcza, miękka tekstura (mapowanie afiniczne, przyciąganie wierzchołków do pikseli) na wstążce
+   z 8 wielokątów; przez wstążkę biegnie fala i skręt, a z tyłu ciągnie się smuga ruchu. Fala żyje bez przerwy, dopóki persona jest aktywna;
+   przy wejściu słowo wynurza się z ciemności jako pognieciona kreska i prostuje się, przy wyjściu znowu zwija się i gaśnie. ---------- */
+const TITLE_COL = [[200, 240, 255], [255, 200, 235], [255, 235, 190]];
+export function initPersonaTitles(parts) {
+  if (RM) return () => {};
+  const PW = 6.4, PH = PW * 28 / 128 * 1.1, NX = 6, tri = a => 2 / Math.PI * Math.asin(Math.sin(a)), Q = ms => Math.floor(ms / 90) * 90, ss = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }, L = new THREE.Vector3(-.4, .5, 1).normalize();
+  const stops = [];
+  parts.forEach((el, i) => {
+    const name = el.dataset.name, h = el.querySelector('h3'); if (!name || !h) return;
+    const cv = document.createElement('canvas'); cv.className = 'kp-title'; cv.setAttribute('aria-hidden', 'true'); el.insertBefore(cv, h); h.classList.add('kp-gl');
+    const r = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true }); r.setPixelRatio(1); r.setClearColor(0x000000, 0); r.autoClear = false;
+    const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 3, .1, 50); cam.position.set(0, 0, 7); cam.lookAt(0, 0, 0);
+    const res = new THREE.Vector2(1, 1), tint = new THREE.Vector3(...TITLE_COL[i % 3].map(v => v / 255)), gain = { value: 0 };
+    const geo = new THREE.PlaneGeometry(1, 1, NX, 1); geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3), 3));
+    const base = geo.attributes.position.array.slice();
+    const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: null }, tint: { value: tint }, gain, res: { value: res } }, side: THREE.DoubleSide, transparent: true, depthTest: false, depthWrite: false, blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneFactor,
+      vertexShader: `uniform vec2 res; varying vec3 vUW; varying vec3 vCol; attribute vec3 color;
+        void main(){ vec4 p = projectionMatrix * modelViewMatrix * vec4(position,1.0); vec2 n = p.xy / p.w; n = floor(n * res * .5 + .5) / (res * .5); gl_Position = vec4(n * p.w, p.z, p.w); vUW = vec3(uv * p.w, p.w); vCol = color; }`,
+      fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float gain; varying vec3 vUW; varying vec3 vCol;
+        void main(){ vec2 uv = vUW.xy / vUW.z; vec4 t = texture2D(map, uv); vec3 c = min(vec3(1.0), t.rgb * t.a * tint * vCol * gain); gl_FragColor = vec4(c, max(c.r, max(c.g, c.b))); }` });   // addytywnie, alfa = jasność (premultiplied), tło strony prześwituje
+    scene.add(new THREE.Mesh(geo, mat));
+    const paint = () => { const c = document.createElement('canvas'); c.width = 128; c.height = 28; const x = c.getContext('2d'); x.textAlign = 'center'; x.textBaseline = 'middle';
+      let fs = 22; x.font = fs + 'px "Special Elite K"'; const mw = x.measureText(name).width; if (mw > 118) { fs = Math.floor(fs * 118 / mw); x.font = fs + 'px "Special Elite K"'; }
+      x.lineJoin = 'round'; x.fillStyle = '#fff'; x.fillText(name, 64, 15); x.strokeStyle = '#fff'; x.lineWidth = 1.2; x.strokeText(name, 64, 15);
+      const t = new THREE.CanvasTexture(c); t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; mat.uniforms.map.value = t; };
+    (document.fonts && document.fonts.load ? document.fonts.load('22px "Special Elite K"') : Promise.resolve()).then(paint, paint);
+    // rozdzielczość: ~1/3 rozmiaru na ekranie, kamera tak, by wstążka wypełniała szerokość
+    const size = () => { const w = Math.max(60, Math.round(cv.clientWidth / 3)), hh = Math.max(20, Math.round(cv.clientHeight / 3)); r.setSize(w, hh, false); res.set(w, hh); cam.aspect = w / hh;
+      cam.fov = 2 * Math.atan(PW * 1.12 / cam.aspect / 2 / 7) * 180 / Math.PI; cam.updateProjectionMatrix(); };
+    size(); const ro = new ResizeObserver(size); ro.observe(cv);
+    const shape = (t, am) => { const pos = geo.attributes.position, col = geo.attributes.color, tt = t / 1000, k = i;
+      const sp = [1.25, .95, .75][k], amp = [.8, 1.1, .9][k];                       // lękowa: nerwowa i szybka, wyluzowana: szeroka, poważna: ciężka
+      for (let v = 0; v < pos.count; v++) { const X = (base[v * 3] + 0) * PW, Y = base[v * 3 + 1] * PH;
+        // fala trójkątna (ostre załamania między wielokątami) zamiast sinusoidy
+        const tw = tri(X * 1.9 - tt * 1.5 * sp) * 1.5 * am * amp, yy = tri(X * 2.1 - tt * 1.9 * sp) * .62 * am * amp, zz = tri(X * 1.3 - tt * 1.3 * sp + 1.6) * 1.2 * am * amp + X * .3;
+        pos.setXYZ(v, X, yy + Y * Math.cos(tw), zz + Y * Math.sin(tw)); }
+      geo.computeVertexNormals(); const n = geo.attributes.normal;
+      for (let v = 0; v < pos.count; v++) { let nx = n.getX(v), ny = n.getY(v), nz = n.getZ(v); if (nz < 0) { nx = -nx; ny = -ny; nz = -nz; } const b = Math.min(1, .35 + Math.max(0, nx * L.x + ny * L.y + nz * L.z) * .75); col.setXYZ(v, b, b, b); }
+      pos.needsUpdate = true; col.needsUpdate = true; };
+    let life = 0, cleared = true;
+    loop(cv, 24, (t, d) => {
+      const on = ACTIVE === i; life = clamp(life + (on ? 1 : -1) * d / 900, 0, 1);
+      if (life <= 0.002 || !mat.uniforms.map.value) { if (!cleared) { r.clear(); cleared = true; } return; }
+      cleared = false; r.clear(); const cr = 1 + 1.6 * (1 - ss(life)), g = ss(life);
+      cam.position.x = Math.sin(t / 2600) * .35; cam.position.y = Math.sin(t / 3300) * .15; cam.lookAt(0, 0, 0);
+      for (const [dt, a] of [[450, .06], [360, .1], [270, .16], [180, .25], [90, .42], [0, 1]]) { shape(Q(Math.max(0, t - dt)), .62 * cr); gain.value = g * a * (a < 1 ? 1.4 : .95); r.render(scene, cam); }   // ruch skokowy (~11 kl./s) i wielokrotne echo: sześć kopii w czasie, coraz słabszych
+    });
+    stops.push(() => { ro.disconnect(); r.dispose(); cv.remove(); h.classList.remove('kp-gl'); });
+  });
+  return () => stops.forEach(f => f());
 }

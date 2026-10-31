@@ -1,6 +1,7 @@
 // strona Maszynologia: cracktro (listing asm, copper, sine-scroller z dekodowaniem) i plik NFO z ornamentami; przeniesione z planszy
 import { buildOrn, ornCanvas } from './nfoorn';
 import { pixelDecode } from './pixdecode';
+import { PROJECT_KEYS } from './projopen';
 import { pageReady } from './ready';
 import { RM, rnd, clamp, FONTS, loop, N, fbm, bth, oneBit, makeGlyph, drawGlyph } from './core';
 export function initMaszyn(root, opts) {
@@ -79,7 +80,7 @@ export function initMaszyn(root, opts) {
     }
     const CLASS = {d: 'd', h: 'h'};
     const esc = g => g === '&' ? '&amp;' : g === '<' ? '&lt;' : g === '>' ? '&gt;' : g;
-    let mode = null, dec = null;
+    let mode = null, dec = null, sv = null;   // sv: stan „czytelności" wierszy przy przewijaniu (0 zaszyfrowany, 1 czytelny)
     // rozkodowanie przy wczytaniu (jak w szczelinie): każdy znak przechodzi przez bloki ▓▒░, od góry ku dołowi, w rozrzuconej kolejności
     const BLK = '▓▒░', dh = (r, c) => { let n = (r * 7919 + c * 104729) ^ 0x5bd1e995; n = Math.imul(n ^ (n >>> 15), 0x2c1b3c6d); return ((n ^ (n >>> 13)) >>> 0) / 4294967296; };
     const render = (fx) => {
@@ -93,7 +94,7 @@ export function initMaszyn(root, opts) {
         const flush = () => {
           if (!run) return;
           const c = CLASS[k0];
-          if (LINKS[k0]) { html += `<a class="lk" href="${LINKS[k0]}" target="_blank" rel="noopener noreferrer">${run}</a>`; run = ''; return; }
+          if (LINKS[k0]) { html += `<a class="lk" data-k="${k0}" href="${LINKS[k0]}" target="_blank" rel="noopener noreferrer">${run}</a>`; run = ''; return; }
           html += c ? `<span class="${c}">${run}</span>` : run;
           run = '';
         };
@@ -104,6 +105,8 @@ export function initMaszyn(root, opts) {
           if (o) [g, k] = o;
           if (dec && g !== ' ') { const t = (dec.now - dec.t0 - (r / G.ch.length) * 900 - dh(r, c) * 420) / 150;
             if (t < 0) g = ' '; else if (t < 1) { g = BLK[Math.min(2, Math.floor(t * 3))]; k = 'd'; } }
+          if (sv && !dec && g !== ' ' && sv[r] < 1 && sv.vis[r]) { const a0 = G.ch[r].search(/\S/), n = G.ch[r].trimEnd().length - a0, j = sv.dir[r] ? n - 1 - (c - a0) : c - a0, d = sv[r] * (n + 4) - j;
+            if (d <= 0) g = ' '; else if (d <= 4) { g = SCR[(Math.floor(dh(r, c) * 97) + (sv.tick >> 2)) % SCR.length]; k = d < 1.2 ? 'h' : 'd'; } }
           if ((g === ' ' && !LINKS[k]) || k === 's') k = ' ';
           if (k !== k0) { flush(); k0 = k; }
           run += esc(g);
@@ -113,6 +116,24 @@ export function initMaszyn(root, opts) {
       }
       pre.innerHTML = out.join('\n');
     };
+    /* przewijanie: wiersz, który wjeżdża na ekran, rozszyfrowuje się od lewej krótkim frontem szyfru (4 znaki); wiersz, który dotyka
+       krawędzi okna (pas jednej linii u góry i u dołu), szyfruje się od prawej. Animują się więc naraz najwyżej 1-2 wiersze przy krawędzi. */
+    const SCR = '#$%&@01<>/|=+*ABCDEFXZ';
+    const zone = () => { const G = L[mode], top = pre.getBoundingClientRect().top, lh = pre.offsetHeight / G.ch.length, H = innerHeight;
+      if (sv) sv.vis = G.ch.map((_, r) => { const y = top + r * lh; return y + lh > 0 && y < H; });   // poza oknem tekst zostaje czytelny w DOM (kopiowanie, szukanie)
+      return G.ch.map((_, r) => { const y = top + r * lh; return y >= 0 && y + lh <= H ? 1 : 0; }); };
+    let sRaf = 0, sLast = 0;
+    const sStep = now => { const dt = Math.min(64, now - sLast); sLast = now; const tg = zone(); let moving = false; sv.tick++;
+      const mid = innerHeight / 2 - pre.getBoundingClientRect().top, lh = pre.offsetHeight / tg.length;
+      for (let r = 0; r < tg.length; r++) { if (sv[r] === tg[r]) continue; moving = true;
+        // rozszyfrowanie po kolei, w kierunku czytania od krawędzi, którą wiersz wjechał: najwyżej ~2 wiersze naraz
+        // wiersz głębiej niż 2 linie od krawędzi (duży skok: PageDown, kotwica, rzut palcem) od razu staje się czytelny
+        const y = r * lh, edge = Math.min(y - (mid - innerHeight / 2), mid + innerHeight / 2 - y - lh) / lh; if (tg[r] && edge > 2.5) { sv[r] = 1; continue; }
+        const nb = y > mid ? r - 1 : r + 1; if (tg[r] > sv[r] && tg[nb] && sv[nb] < .5 && sv.vis[nb]) continue;
+        sv.dir[r] = tg[r] < sv[r]; sv[r] += Math.sign(tg[r] - sv[r]) * Math.min(Math.abs(tg[r] - sv[r]), dt / 200); }
+      render(null); sRaf = moving ? requestAnimationFrame(sStep) : 0; };
+    const onScroll = () => { if (!sv || dec || sRaf) return; sLast = performance.now(); sRaf = requestAnimationFrame(sStep); };
+    const scrollFx = () => { if (RM) return; const z = zone(); sv = z.slice(); sv.dir = z.map(() => false); sv.vis = z.map(() => false); sv.tick = 0; zone(); addEventListener('scroll', onScroll, { passive: true }); };
     const avail = () => { const cs = getComputedStyle(wrap); let w = wrap.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       wrap.querySelectorAll(':scope > .orn-img').forEach(im => { if (getComputedStyle(im).display !== 'none') w -= im.offsetWidth + 6; }); return w; };
     const pick = () => avail() >= L.full.cols * parseFloat(getComputedStyle(pre).fontSize) * .5 ? 'full' : 'compact';   // znak DOS = pół wysokości kroju
@@ -135,7 +156,7 @@ export function initMaszyn(root, opts) {
       if (RM) { render(null); intro.then(at => { ornImgs.forEach(o => o.start(0)); orn.grow(at); }); return; }
       dec = { t0: Infinity, now: performance.now() };           // do startu tekst pusty (spacje trzymają szerokość wierszy)
       intro.then(at => { dec.t0 = at + 250; orn.grow(at + 600); ornImgs.forEach((o, i) => o.start(Math.max(0, at + 650 + i * 200 - performance.now()))); });
-      const step = now => { dec.now = now; render(null); if (!isFinite(dec.t0) || now - dec.t0 < 1600) requestAnimationFrame(step); else { dec = null; render(null); } };
+      const step = now => { dec.now = now; render(null); if (!isFinite(dec.t0) || now - dec.t0 < 1600) requestAnimationFrame(step); else { dec = null; scrollFx(); render(null); } };
       requestAnimationFrame(step);
     };
     const update = () => {
@@ -145,7 +166,7 @@ export function initMaszyn(root, opts) {
         mode = m;
         pre.classList.toggle('compact', m === 'compact');
         pre.style.width = m === 'full' ? L.full.cols * .5 + 'em' : '';   // znak DOS = pół em; trailing spacje są ucinane
-        if (first) decode(); else render(null);
+        if (first) decode(); else { if (sv) { const z = zone(); sv.splice(0, sv.length, ...z); sv.dir = z.map(() => false); } render(null); }
       }
       place();
     };
@@ -153,7 +174,9 @@ export function initMaszyn(root, opts) {
     if ('ResizeObserver' in window) new ResizeObserver(update).observe(wrap);
     else addEventListener('resize', update, {passive: true});
     pre.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a.lk'); if (!a) return; e.preventDefault();
-      const url = a.href; a.classList.add('zap'); setTimeout(() => { a.classList.remove('zap'); window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
+      const url = a.href, key = PROJECT_KEYS[a.dataset.k], at = { x: e.clientX, y: e.clientY }; a.classList.add('zap');
+      // projekty (A-F): animacja przejścia w kolorze projektu, po niej repozytorium; GitHub i LinkedIn autora otwierają się od razu
+      setTimeout(() => { a.classList.remove('zap'); if (key && !RM) import('./projopen').then(m => m.openProject(key, url, at)); else window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
     // kopiowanie: sam tekst CV, bez wcięcia pod ryciny
     pre.addEventListener('copy', e => {
       const sel = getSelection(); if (!sel || sel.isCollapsed || !pre.contains(sel.anchorNode) && !pre.contains(sel.focusNode)) return;

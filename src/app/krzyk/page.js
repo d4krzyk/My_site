@@ -14,14 +14,14 @@ const PICKS = [
 ];
 // persony: trzy części sekcji; maski lewitują u góry (scena 3D), przy części danej persony ona wychyla się do przodu
 const PERSONY = [
-  ['lękowa', 'haunted · nawiedzona', 'Boi się i analizuje wszystko po kilka razy. Mówi szybko i dużo, wiecznie przestraszona życiem.'],
-  ['wyluzowana', 'indie sleaze · hyperpop · chilled 2000s', 'Spokojna, cieszy się prostymi chwilami. Energiczna i głośna, czasem zbyt impulsywna; dużo głupotek i goofy momentów.'],
-  ['poważna', 'gotycka · sakralna', 'Skupiona na rozwoju wewnętrznym, nie traci czasu na głupoty. Posępna i zadziorna, patrzy z góry i obserwuje; szuka połączenia ze sobą.'],
+  ['Anxtan', 'haunted · nawiedzona', 'Boi się i analizuje wszystko po kilka razy. Mówi szybko i dużo, wiecznie przestraszona życiem.'],
+  ['Nugis', 'indie sleaze · hyperpop · chilled 2000s', 'Spokojna, cieszy się prostymi chwilami. Energiczna i głośna, czasem zbyt impulsywna; dużo głupotek i goofy momentów.'],
+  ['Stoir', 'gotycka · sakralna', 'Skupiona na rozwoju wewnętrznym, nie traci czasu na głupoty. Posępna i zadziorna, patrzy z góry i obserwuje; szuka połączenia ze sobą.'],
 ];
 // podrozdziały (treść później)
 const SUBS = [
   ['k-muzyka', 'A1', 'muzyka · taśmy', 'Tu będą klipy w odtwarzaczu.'],
-  ['k-persony', 'A2', 'persony', 'Tu zamieszkają trzy persony: lękowa, wyluzowana i poważna.'],
+  ['k-persony', 'A2', 'persony', 'Tu zamieszkają trzy persony: Anxtan, Nugis i Stoir.'],
   ['k-obraz', 'A3', 'obraz · DSC-V1', 'Tu będzie aparat Sony DSC-V1 do przeglądania zdjęć.'],
   ['k-kontakt', 'A4', 'kontakt', 'Tu będzie kontakt.'],
 ];
@@ -62,7 +62,7 @@ export default function Krzyk() {
                 <h2 data-type="" data-seed={code.charCodeAt(1)}>{h}</h2>
                 <div className="kp-stage" aria-hidden="true"><canvas /></div>
                 {PERSONY.map(([n, tag, d], i) => (
-                  <div className="kp-part" data-p={i} key={n}>
+                  <div className="kp-part" data-p={i} data-name={n} key={n}>
                     <h3 data-type="" data-seed={30 + i}>{n}</h3>
                     <p className="kp-tag dos">{tag}</p>
                     <p>{d}</p>

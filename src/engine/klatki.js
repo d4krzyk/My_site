@@ -49,7 +49,12 @@ export function initKlatki(sec, { mode = 'film' } = {}) {
   // przystanki: góra, pole wyborów, podrozdziały, a w sekcji person każda persona osobno (jej część pod sceną z maskami)
   const points = () => { const s = [0]; sec.querySelectorAll('.k-choose, .k-sub, .kp-part').forEach(el => { const r = el.getBoundingClientRect(), y = r.top + scrollY;
       s.push(el.classList.contains('kp-part') ? y - innerHeight * .42 : el.classList.contains('k-sub') ? y - 34 : y); });
-    s.sort((a, b) => a - b); return s.filter((v, i) => !i || v - s[i - 1] > 40); };
+    s.sort((a, b) => a - b); const base = s.filter((v, i) => !i || v - s[i - 1] > 40);
+    // gdy odstęp między przystankami jest większy niż okno (wysoki kolaż na szerokim ekranie), dokładamy równo rozłożone przystanki pośrednie,
+    // żeby jeden skok nie omijał części strony
+    const step = innerHeight * .9, out = [];
+    base.forEach((v, i) => { out.push(v); const nxt = base[i + 1]; if (nxt === undefined) return; const n = Math.ceil((nxt - v) / step) - 1; for (let k = 1; k <= n; k++) out.push(v + (nxt - v) * k / (n + 1)); });
+    return out; };
   const ov = overlay(); const { cv, x } = ov;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const film = async (y0, y1, idx, n) => {

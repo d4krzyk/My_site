@@ -7,9 +7,9 @@ import { OPTS, COLORS, randomize, build, draw, toPNG, toSVG, toHash, fromHash, b
 // ukryty generator sigili (wejście: komenda `sigen` w terminalu Maszynologii); stan siedzi w adresie (#s=…), więc linkiem dzieli się gotowym sigilem
 const T = {
   pl: { sub: 'generator sigili · ukryty proces', back: '◀ cd ~/maszynologia', frame: 'rama', sym: 'symetria', glyph: 'znaki', core: 'rdzeń', style: 'styl', density: 'gęstość', weight: 'grubość', color: 'kolor', extras: 'dodatki',
-    seed: 'ziarno', shape: '[ losuj kształt ]', all: '[ losuj wszystko ]', export: 'pobierz (przezroczyste tło)', link: 'kopiuj link', copied: 'skopiowano', bg: 'tło podglądu', bgs: ['ciemne', 'jasne', 'szachownica'] },
+    seed: 'ziarno', shape: '[ losuj kształt ]', all: '[ losuj wszystko ]', export: 'pobierz (przezroczyste tło)', link: 'kopiuj link', copied: 'skopiowano', bg: 'tło podglądu', bgs: ['ciemne', 'jasne', 'szachownica'], foot: 'ESC wyjście   ·   sigil zapisuje się w linku' },
   en: { sub: 'sigil generator · hidden process', back: '◀ cd ~/machinology', frame: 'frame', sym: 'symmetry', glyph: 'marks', core: 'core', style: 'style', density: 'density', weight: 'weight', color: 'colour', extras: 'extras',
-    seed: 'seed', shape: '[ random shape ]', all: '[ random all ]', export: 'download (transparent)', link: 'copy link', copied: 'copied', bg: 'preview background', bgs: ['dark', 'light', 'checker'] },
+    seed: 'seed', shape: '[ random shape ]', all: '[ random all ]', export: 'download (transparent)', link: 'copy link', copied: 'copied', bg: 'preview background', bgs: ['dark', 'light', 'checker'], foot: 'ESC exit   ·   the sigil lives in the link' },
 };
 const EN = { 'koło': 'circle', 'podwójne koło': 'double circle', 'kwadrat': 'square', 'romb': 'diamond', 'sześciokąt': 'hexagon', 'brak': 'none', 'lustro': 'mirror', 'cyber': 'cyber', 'linie': 'lines', 'łuki': 'arcs', 'runy': 'runes',
   'oko': 'eye', 'krzyż': 'cross', 'półksiężyc': 'crescent', 'gwiazda': 'star', 'cyber-piksel': 'cyber-pixel', 'tusz': 'ink', 'rycina': 'engraving', 'oś': 'axis', 'węzły': 'nodes', 'ciernie': 'thorns', 'krople': 'drops',
@@ -30,13 +30,15 @@ export default function Sigen() {
       x.putImageData(out, 0, 0); raf = requestAnimationFrame(step); };
     raf = requestAnimationFrame(step); return () => cancelAnimationFrame(raf);
   }, [s]);
+  const back = () => import('@/engine/veil').then(({ veilGo }) => veilGo('/maszynologia/', 'maszynologia', h => router.push(h)));
+  // ESC wraca do Maszynologii (jak wyjście z BIOS-u); nie przechwytuje klawisza w polu ziarna
+  useEffect(() => { const k = e => { if (e.key === 'Escape' && !e.target.closest?.('input')) back(); }; addEventListener('keydown', k); return () => removeEventListener('keydown', k); });
   if (!s) return <main className="sigen" />;
   const L = T[lang] || T.pl, tr = v => (lang === 'en' ? EN[v] || v.replace('promień', 'radial') : v), up = o => set({ ...s, ...o });
   const chips = (key, list) => (
     <div className="sg-row"><span className="sg-k">{L[key]}</span><div className="sg-chips">
       {list.map(v => <button type="button" key={v} aria-pressed={s[key] === v} onClick={() => up({ [key]: v })}>{tr(v)}</button>)}</div></div>);
   const save = async (blob, name) => { const u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000); };
-  const back = () => import('@/engine/veil').then(({ veilGo }) => veilGo('/maszynologia/', 'maszynologia', h => router.push(h)));
   return (
     <main className="sigen">
       <header className="sg-head">
@@ -51,8 +53,8 @@ export default function Sigen() {
         </div>
         <div className="sg-panel dos">
           {chips('frame', OPTS.frame)}{chips('sym', OPTS.sym)}{chips('glyph', OPTS.glyph)}{chips('core', OPTS.core)}{chips('style', OPTS.style)}
-          <div className="sg-row"><span className="sg-k">{L.density} · {s.density}</span><input type="range" min="3" max="14" value={s.density} onChange={e => up({ density: +e.target.value })} /></div>
-          <div className="sg-row"><span className="sg-k">{L.weight} · {s.weight}</span><input type="range" min="1" max="4" value={s.weight} onChange={e => up({ weight: +e.target.value })} /></div>
+          <div className="sg-row"><span className="sg-k">{L.density} · {s.density}</span><input type="range" min="3" max="14" value={s.density} style={{ '--p': `${(s.density - 3) / 11 * 100}%` }} onChange={e => up({ density: +e.target.value })} /></div>
+          <div className="sg-row"><span className="sg-k">{L.weight} · {s.weight}</span><input type="range" min="1" max="4" value={s.weight} style={{ '--p': `${(s.weight - 1) / 3 * 100}%` }} onChange={e => up({ weight: +e.target.value })} /></div>
           <div className="sg-row"><span className="sg-k">{L.color}</span><div className="sg-chips">{Object.entries(COLORS).map(([k, c]) => <button type="button" key={k} className="sg-sw" aria-pressed={s.color === k} onClick={() => up({ color: k })} style={{ '--sw': c }}>{tr(k)}</button>)}</div></div>
           <div className="sg-row"><span className="sg-k">{L.extras}</span><div className="sg-chips">{OPTS.extras.map(e => <button type="button" key={e} aria-pressed={s.extras.includes(e)} onClick={() => up({ extras: s.extras.includes(e) ? s.extras.filter(v => v !== e) : [...s.extras, e] })}>{tr(e)}</button>)}</div></div>
           <div className="sg-row"><span className="sg-k">{L.seed}</span><input className="sg-seed" type="number" value={s.seed} onChange={e => up({ seed: Math.abs(parseInt(e.target.value, 10) || 0) })} /></div>
@@ -61,6 +63,7 @@ export default function Sigen() {
             {[512, 1024, 2048].map(n => <button type="button" key={n} onClick={async () => save(await toPNG(s, n), `sigil-${s.seed}-${n}.png`)}>PNG {n}</button>)}
             <button type="button" onClick={() => save(new Blob([toSVG(s)], { type: 'image/svg+xml' }), `sigil-${s.seed}.svg`)}>SVG</button>
             <button type="button" onClick={() => { navigator.clipboard?.writeText(location.href).then(() => { setMsg(L.copied); setTimeout(() => setMsg(''), 1200); }); }}>{msg || L.link}</button></div></div>
+          <p className="sg-foot">{L.foot}</p>
         </div>
       </div>
     </main>
