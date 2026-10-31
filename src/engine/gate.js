@@ -416,7 +416,7 @@ FONTS().then(()=>{
       const me=++lt; let n=0;
       Promise.all([['gEnter',s.enter],['gCalm',s.calm],['gTitle',s.title],['gIntro',s.intro],['gS1',s.s1],['gS2',s.s2],['gMach',s.mach]].map(([id,t])=>$(id)?decodeSwap($(id),t,{delay:n++*60}):0))
         .then(()=>{ if(me!==lt||!gate.isConnected) return; frame(); if($('gCalm')) $('gCalm').hidden=calmHidden; }); }); }; addEventListener('krzyk-lang',onLang);
-  frame();
+  frame(); import('./gatecards');     // moduł kart pobiera się z góry, żeby wyłanianie ruszyło bez opóźnienia po zejściu
   // wybór drogi: wybrana karta się spala (ogień od dołu, piksele żarzą się i odlatują jako popiół), druga gaśnie w cieniu, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
   let picked=false;
   gate.querySelectorAll('.path').forEach((b,i)=>b.addEventListener('click',()=>{ if(picked||!gate.querySelector('.paths.ready')&&!RM) return; picked=true;
