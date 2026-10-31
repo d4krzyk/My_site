@@ -62,7 +62,7 @@ export default function Krzyk() {
                 <h2 data-type="" data-seed={code.charCodeAt(1)}>{h}</h2>
                 <div className="kp-stage" aria-hidden="true"><canvas /></div>
                 {PERSONY.map(([n, tag, d], i) => (
-                  <div className="kp-part" data-p={i} key={n}>
+                  <div className="kp-part" data-p={i} data-name={n} key={n}>
                     <h3 data-type="" data-seed={30 + i}>{n}</h3>
                     <p className="kp-tag dos">{tag}</p>
                     <p>{d}</p>

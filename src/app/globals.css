@@ -397,3 +397,8 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .ph-ov{position:fixed;inset:0;z-index:50;cursor:pointer}
 .ph-ov canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
 @media (pointer:coarse){.ph-ov .hc-skip{display:none}}
+/* nagłówki person: nazwa rysowana na wstążce PS1 (canvas obok nagłówka); sam h3 zostaje w stronie dla czytników ekranu i wyszukiwarek */
+.kp-part{position:relative}
+.kp-title{display:block;width:min(100%,27rem);aspect-ratio:3.6/1;margin:0 0 2px;image-rendering:pixelated;pointer-events:none}
+.kp-part[data-p="1"] .kp-title{margin-left:auto;margin-right:auto}.kp-part[data-p="2"] .kp-title{margin-left:auto}
+.kp-gl{position:absolute!important;width:1px;height:1px;margin:-1px!important;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

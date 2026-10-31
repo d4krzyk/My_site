@@ -35,6 +35,13 @@ Klik w telefon: model wylatuje z karty, kamera najeżdża na ekran modelu, aż L
 (Nokia 3310, `src/engine/nokia.js`): „HALO? / CZY TO...?", fala krzyku jak na oscyloskopie wycina z siebie KRZYK, potem zielony szum zalewa stronę
 i odsłania sekcję kontaktu.
 
+## Nazwy person (sekcja Krzyk → persony)
+
+Nazwa aktywnej persony to niskorozdzielcza, miękka tekstura na wstążce z 8 wielokątów (`initPersonaTitles` w `src/engine/psx.js`): mapowanie afiniczne,
+przyciąganie wierzchołków do pikseli, fala i skręt biegnące bez przerwy oraz smuga ruchu, wzór z dema PS1 z Euskal 2001. Przy wejściu słowo wynurza się
+z ciemności jako pognieciona kreska i się prostuje, przy wyjściu zwija się i gaśnie. Zwykły `h3` zostaje w stronie (ukryty wizualnie), a przy ograniczeniu
+animacji w systemie nagłówek jest zwykłym tekstem.
+
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
 
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).

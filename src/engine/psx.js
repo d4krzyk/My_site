@@ -325,6 +325,7 @@ function personaPortal(pickCv, xs, arrive, done) {
 
 /* ---------- sekcja person: trzy maski lewitują u góry; przy części danej persony ona wychyla się na wprost,
    a pozostałe cofają się w cień jak nieodblokowane postacie ---------- */
+let ACTIVE = -1;   // aktywna persona (z initPersonaStage), czytana przez nagłówki
 export function initPersonaStage(cv, parts) {
   // niska rozdzielczość w proporcjach płótna (minimum 120 px szerokości bez zmiany proporcji, inaczej maski się rozciągają)
   const dims = () => { const w = cv.clientWidth / 4 || 120, h = cv.clientHeight / 4 || 60, k = Math.max(1, 120 / w); return [Math.round(w * k), Math.max(30, Math.round(h * k))]; };
@@ -342,7 +343,7 @@ export function initPersonaStage(cv, parts) {
     parts.forEach((el, i) => { const r = el.getBoundingClientRect(), d = Math.abs((r.top + r.bottom) / 2 - line); if (d < bd) { bd = d; best = i; } });
     return bd < innerHeight * .75 ? best : -1; };
   loop(cv, RM ? 4 : 24, t => {
-    active = pick();
+    active = pick(); ACTIVE = active;
     ms.forEach((m, i) => {
       const on = active === i, off = active >= 0 && !on, tg = { z: on ? .7 : off ? -1 : 0, s: on ? .48 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
       for (const k in tg) c[k] += (tg[k] - c[k]) * .12;
@@ -496,4 +497,56 @@ function phoneCall(assets, pickCv, arrive, done, shown) {
         if (z > 1.1 && !jumped) { jumped = true; cv.style.visibility = 'hidden'; arrive(); }
         if (out >= 1) end(); } }
   });
+}
+
+/* ---------- nagłówki person: nazwa to niskorozdzielcza, miękka tekstura (mapowanie afiniczne, przyciąganie wierzchołków do pikseli) na wstążce
+   z 8 wielokątów; przez wstążkę biegnie fala i skręt, a z tyłu ciągnie się smuga ruchu. Fala żyje bez przerwy, dopóki persona jest aktywna;
+   przy wejściu słowo wynurza się z ciemności jako pognieciona kreska i prostuje się, przy wyjściu znowu zwija się i gaśnie. ---------- */
+const TITLE_COL = [[200, 240, 255], [255, 200, 235], [255, 235, 190]];
+export function initPersonaTitles(parts) {
+  if (RM) return () => {};
+  const PW = 6.4, PH = PW * 28 / 128 * 1.1, NX = 8, ss = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }, L = new THREE.Vector3(-.4, .5, 1).normalize();
+  const stops = [];
+  parts.forEach((el, i) => {
+    const name = el.dataset.name, h = el.querySelector('h3'); if (!name || !h) return;
+    const cv = document.createElement('canvas'); cv.className = 'kp-title'; cv.setAttribute('aria-hidden', 'true'); el.insertBefore(cv, h); h.classList.add('kp-gl');
+    const r = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true }); r.setPixelRatio(1); r.setClearColor(0x000000, 0); r.autoClear = false;
+    const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 3, .1, 50); cam.position.set(0, 0, 7); cam.lookAt(0, 0, 0);
+    const res = new THREE.Vector2(1, 1), tint = new THREE.Vector3(...TITLE_COL[i % 3].map(v => v / 255)), gain = { value: 0 };
+    const geo = new THREE.PlaneGeometry(1, 1, NX, 1); geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3), 3));
+    const base = geo.attributes.position.array.slice();
+    const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: null }, tint: { value: tint }, gain, res: { value: res } }, side: THREE.DoubleSide, transparent: true, depthTest: false, depthWrite: false, blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneFactor,
+      vertexShader: `uniform vec2 res; varying vec3 vUW; varying vec3 vCol; attribute vec3 color;
+        void main(){ vec4 p = projectionMatrix * modelViewMatrix * vec4(position,1.0); vec2 n = p.xy / p.w; n = floor(n * res * .5 + .5) / (res * .5); gl_Position = vec4(n * p.w, p.z, p.w); vUW = vec3(uv * p.w, p.w); vCol = color; }`,
+      fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float gain; varying vec3 vUW; varying vec3 vCol;
+        void main(){ vec2 uv = vUW.xy / vUW.z; vec4 t = texture2D(map, uv); vec3 c = min(vec3(1.0), t.rgb * t.a * tint * vCol * gain); gl_FragColor = vec4(c, max(c.r, max(c.g, c.b))); }` });   // addytywnie, alfa = jasność (premultiplied), tło strony prześwituje
+    scene.add(new THREE.Mesh(geo, mat));
+    const paint = () => { const c = document.createElement('canvas'); c.width = 128; c.height = 28; const x = c.getContext('2d'); x.textAlign = 'center'; x.textBaseline = 'middle';
+      let fs = 22; x.font = fs + 'px "Special Elite K"'; const mw = x.measureText(name).width; if (mw > 118) { fs = Math.floor(fs * 118 / mw); x.font = fs + 'px "Special Elite K"'; }
+      x.lineJoin = 'round'; x.fillStyle = '#fff'; x.fillText(name, 64, 15); x.strokeStyle = '#fff'; x.lineWidth = 1.2; x.strokeText(name, 64, 15);
+      const t = new THREE.CanvasTexture(c); t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; mat.uniforms.map.value = t; };
+    (document.fonts && document.fonts.load ? document.fonts.load('22px "Special Elite K"') : Promise.resolve()).then(paint, paint);
+    // rozdzielczość: ~1/3 rozmiaru na ekranie, kamera tak, by wstążka wypełniała szerokość
+    const size = () => { const w = Math.max(60, Math.round(cv.clientWidth / 3)), hh = Math.max(20, Math.round(cv.clientHeight / 3)); r.setSize(w, hh, false); res.set(w, hh); cam.aspect = w / hh;
+      cam.fov = 2 * Math.atan(PW * 1.12 / cam.aspect / 2 / 7) * 180 / Math.PI; cam.updateProjectionMatrix(); };
+    size(); const ro = new ResizeObserver(size); ro.observe(cv);
+    const shape = (t, am) => { const pos = geo.attributes.position, col = geo.attributes.color, tt = t / 1000, k = i;
+      const sp = [1.25, .95, .75][k], amp = [.8, 1.1, .9][k];                       // lękowa: nerwowa i szybka, wyluzowana: szeroka, poważna: ciężka
+      for (let v = 0; v < pos.count; v++) { const X = (base[v * 3] + 0) * PW, Y = base[v * 3 + 1] * PH;
+        const tw = Math.sin(X * 1.25 - tt * 1.5 * sp) * 1.15 * am * amp, yy = Math.sin(X * 1.45 - tt * 1.9 * sp) * .5 * am * amp, zz = Math.cos(X - tt * 1.3 * sp + 1) * am * amp + X * .22;
+        pos.setXYZ(v, X, yy + Y * Math.cos(tw), zz + Y * Math.sin(tw)); }
+      geo.computeVertexNormals(); const n = geo.attributes.normal;
+      for (let v = 0; v < pos.count; v++) { let nx = n.getX(v), ny = n.getY(v), nz = n.getZ(v); if (nz < 0) { nx = -nx; ny = -ny; nz = -nz; } const b = Math.min(1, .35 + Math.max(0, nx * L.x + ny * L.y + nz * L.z) * .75); col.setXYZ(v, b, b, b); }
+      pos.needsUpdate = true; col.needsUpdate = true; };
+    let life = 0, cleared = true;
+    loop(cv, 24, (t, d) => {
+      const on = ACTIVE === i; life = clamp(life + (on ? 1 : -1) * d / 900, 0, 1);
+      if (life <= 0.002 || !mat.uniforms.map.value) { if (!cleared) { r.clear(); cleared = true; } return; }
+      cleared = false; r.clear(); const cr = 1 + 1.6 * (1 - ss(life)), g = ss(life);
+      cam.position.x = Math.sin(t / 2600) * .35; cam.position.y = Math.sin(t / 3300) * .15; cam.lookAt(0, 0, 0);
+      for (const [dt, a] of [[140, .22], [70, .45], [0, 1]]) { shape(Math.max(0, t - dt), .62 * cr); gain.value = g * a * 1.15; r.render(scene, cam); }   // smuga: dwie poprzednie klatki, przygaszone
+    });
+    stops.push(() => { ro.disconnect(); r.dispose(); cv.remove(); h.classList.remove('kp-gl'); });
+  });
+  return () => stops.forEach(f => f());
 }
