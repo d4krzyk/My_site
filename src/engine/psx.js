@@ -505,7 +505,7 @@ function phoneCall(assets, pickCv, arrive, done, shown) {
 const TITLE_COL = [[200, 240, 255], [255, 200, 235], [255, 235, 190]];
 export function initPersonaTitles(parts) {
   if (RM) return () => {};
-  const PW = 6.4, PH = PW * 28 / 128 * 1.1, NX = 8, ss = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }, L = new THREE.Vector3(-.4, .5, 1).normalize();
+  const PW = 6.4, PH = PW * 28 / 128 * 1.1, NX = 6, tri = a => 2 / Math.PI * Math.asin(Math.sin(a)), Q = ms => Math.floor(ms / 90) * 90, ss = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); }, L = new THREE.Vector3(-.4, .5, 1).normalize();
   const stops = [];
   parts.forEach((el, i) => {
     const name = el.dataset.name, h = el.querySelector('h3'); if (!name || !h) return;
@@ -533,7 +533,8 @@ export function initPersonaTitles(parts) {
     const shape = (t, am) => { const pos = geo.attributes.position, col = geo.attributes.color, tt = t / 1000, k = i;
       const sp = [1.25, .95, .75][k], amp = [.8, 1.1, .9][k];                       // lękowa: nerwowa i szybka, wyluzowana: szeroka, poważna: ciężka
       for (let v = 0; v < pos.count; v++) { const X = (base[v * 3] + 0) * PW, Y = base[v * 3 + 1] * PH;
-        const tw = Math.sin(X * 1.25 - tt * 1.5 * sp) * 1.15 * am * amp, yy = Math.sin(X * 1.45 - tt * 1.9 * sp) * .5 * am * amp, zz = Math.cos(X - tt * 1.3 * sp + 1) * am * amp + X * .22;
+        // fala trójkątna (ostre załamania między wielokątami) zamiast sinusoidy
+        const tw = tri(X * 1.9 - tt * 1.5 * sp) * 1.5 * am * amp, yy = tri(X * 2.1 - tt * 1.9 * sp) * .62 * am * amp, zz = tri(X * 1.3 - tt * 1.3 * sp + 1.6) * 1.2 * am * amp + X * .3;
         pos.setXYZ(v, X, yy + Y * Math.cos(tw), zz + Y * Math.sin(tw)); }
       geo.computeVertexNormals(); const n = geo.attributes.normal;
       for (let v = 0; v < pos.count; v++) { let nx = n.getX(v), ny = n.getY(v), nz = n.getZ(v); if (nz < 0) { nx = -nx; ny = -ny; nz = -nz; } const b = Math.min(1, .35 + Math.max(0, nx * L.x + ny * L.y + nz * L.z) * .75); col.setXYZ(v, b, b, b); }
@@ -544,7 +545,7 @@ export function initPersonaTitles(parts) {
       if (life <= 0.002 || !mat.uniforms.map.value) { if (!cleared) { r.clear(); cleared = true; } return; }
       cleared = false; r.clear(); const cr = 1 + 1.6 * (1 - ss(life)), g = ss(life);
       cam.position.x = Math.sin(t / 2600) * .35; cam.position.y = Math.sin(t / 3300) * .15; cam.lookAt(0, 0, 0);
-      for (const [dt, a] of [[140, .22], [70, .45], [0, 1]]) { shape(Math.max(0, t - dt), .62 * cr); gain.value = g * a * 1.15; r.render(scene, cam); }   // smuga: dwie poprzednie klatki, przygaszone
+      for (const [dt, a] of [[450, .06], [360, .1], [270, .16], [180, .25], [90, .42], [0, 1]]) { shape(Q(Math.max(0, t - dt)), .62 * cr); gain.value = g * a * (a < 1 ? 1.4 : .95); r.render(scene, cam); }   // ruch skokowy (~11 kl./s) i wielokrotne echo: sześć kopii w czasie, coraz słabszych
     });
     stops.push(() => { ro.disconnect(); r.dispose(); cv.remove(); h.classList.remove('kp-gl'); });
   });
