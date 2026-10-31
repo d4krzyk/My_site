@@ -109,6 +109,7 @@ za nią ciemny pokój PSX: dywan okrągły, ściana w pasy, okno z roletami po p
 Modele w `public/krzyk/3d/` (`old_tv`, `vhs_player`, `vhs_tape`, `remote`). Z siatki magnetowidu wycięty jest wbudowany, leżący fragment kasety (`stripFront`), bo animowana kaseta jest osobna (inaczej były dwie).
 Sterowanie tylko klikiem w obiekty (bez przycisków): kaseta → wsuwa się do magnetowidu i rusza klip, magnetowid → wysuwa kasetę, pilot → zmienia klip, telewizor → kamera najeżdża i ekran wypełnia kadr (Esc albo kolejny klik cofa).
 Ekran i wyświetlacz VFD to płótna 2D przyklejone homografią do modelu. **Nie dodawać migających cząsteczek** (kurz, losowe kreski na ekranie): wyglądały źle i zostały usunięte; szum jest tylko na pustym ekranie.
+Telefon (≤700 px): wariant „dwa piętra” — scena pionowa 288×480 (`LAYOUTS.port`): telewizor z magnetowidem u góry, dywan z kasetą i pilotem pod nim, zoom dopasowany do szerokości; układ przełącza się też przy zmianie szerokości (`applyLayout`).
 Tabliczka „muzyka” (tekstura płyty wyboru, krzywo) w prawym górnym rogu. Później: plakietki z tytułami utworów, z których wysuwa się kaseta i rusza klip z YouTube.
 
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)

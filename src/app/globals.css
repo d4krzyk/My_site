@@ -458,3 +458,6 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .mu-plq b{position:absolute;left:0;right:0;top:50%;transform:translateY(-52%) rotate(-1.4deg);text-align:center;font:400 4.6cqw/1 "Special Elite K",monospace;color:#e3d6b4;text-shadow:0 0 6px #000;letter-spacing:.02em}
 .mu-plq u{position:absolute;left:8%;top:-5%;width:24%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-16deg)}
 .mu-plq s{position:absolute;right:6%;bottom:-6%;width:22%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-22deg)}
+
+/* telefon: wariant „dwa piętra”: pionowa scena, telewizor u góry, dywan z kasetą i pilotem pod nim */
+@media (max-width:700px){.mu-host{aspect-ratio:288/480;margin-top:6px}.mu-plq{width:40%;right:2.5%;top:2.2%}.mu-plq b{font-size:7.4cqw}}

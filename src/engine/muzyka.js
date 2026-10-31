@@ -5,7 +5,12 @@ import * as THREE from 'three';
 import { RM, loop } from './core';
 import { ps1, loadPSX } from './psx';
 
-const LW = 512, LH = 320;
+// dwa układy sceny: komputer (poziomo 16:10) i telefon (pionowo: telewizor u góry, dywan z kasetą i pilotem pod nim, wariant „dwa piętra”)
+const PHONE = () => matchMedia('(max-width:700px)').matches;
+const LAYOUTS = {
+  land: { w: 512, h: 320, pw: 960, ph: 600, fov: 46, cam: [.62, .5, 1.8], look: [.5, .3, 0], tape: [.5, .42, .6], rem: [.8, .66], remUp: [.72, .22, .92], remL: [.78, .38, .95] },
+  port: { w: 288, h: 480, pw: 540, ph: 900, fov: 50, cam: [.02, .5, 1.75], look: [.02, .12, 0], tape: [-.12, .66, .3], rem: [.15, .8], remUp: [.08, .26, .95], remL: [.08, .42, 1.0] },
+};
 const CLIPS = [['KLIP 01', 'NOCNA TAŚMA'], ['KLIP 02', 'PODZIEMIE'], ['KLIP 03', 'POZIOM -1']];
 const rng = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
 const ease = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
@@ -61,11 +66,12 @@ export function initMuzyka(host, A) {
   host.setAttribute('role', 'group'); host.setAttribute('aria-label', 'Pokój z telewizorem. Kliknij kasetę, magnetowid, pilot albo ekran.');
   const room = document.createElement('canvas'); room.className = 'mu-room';
   const ovTv = mkOv(192, 144), ovVfd = mkOv(160, 40);
-  const paper = document.createElement('canvas'); paper.className = 'mu-paper'; paper.width = 960; paper.height = 600; paper.setAttribute('aria-hidden', 'true');
+  const paper = document.createElement('canvas'); paper.className = 'mu-paper'; paper.width = LAYOUTS[PHONE() ? 'port' : 'land'].pw; paper.height = LAYOUTS[PHONE() ? 'port' : 'land'].ph; paper.setAttribute('aria-hidden', 'true');
   host.append(room, ovTv.el, ovVfd.el, paper);
-  const bg = new Image(); bg.onload = () => drawPaper(paper, bg); bg.src = A.bg;
+  const bg = new Image(); let bgOk = false; bg.onload = () => { bgOk = true; drawPaper(paper, bg); }; bg.src = A.bg;
 
-  const P = ps1(room, LW, LH, { clear: 0x020308, fog: [3.2, 9] }), scene = P.scene, cam = P.cam; cam.fov = 46; cam.near = .05; cam.far = 50; cam.updateProjectionMatrix();
+  let lay = LAYOUTS[PHONE() ? 'port' : 'land'];
+  const P = ps1(room, lay.w, lay.h, { clear: 0x020308, fog: [3.2, 9] }), scene = P.scene, cam = P.cam; cam.fov = lay.fov; cam.near = .05; cam.far = 50; cam.updateProjectionMatrix();
   const R = rng(5);
   const tex = (w, h, fn, rep) => { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = P.tex(c); if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); } return t; };
   // tekstury: dywan z plamami, okrągły dywan, tapeta w pasy z zaciekami, drewno, miasto, rolety, paski światła, plakat
@@ -119,20 +125,19 @@ export function initMuzyka(host, A) {
   const remL = new THREE.PointLight(0x9fb4ff, 1.5, 1.3, 1.4); remL.position.set(.78, .38, .95); scene.add(remL);
   const scrGlow = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.2), addBasic({ map: disc, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .25, color: 0x6f9fff })); scrGlow.position.set(0, .42, .45); scene.add(scrGlow);
 
-  const camBase = new THREE.Vector3(.62, .5, 1.8), lookBase = new THREE.Vector3(.5, .3, 0), camZ = new THREE.Vector3(0, .425, .229 + .82), lookZ = new THREE.Vector3(0, .425, .229);
-  cam.position.copy(camBase); cam.lookAt(lookBase);
+  const camBase = new THREE.Vector3(), lookBase = new THREE.Vector3(), camZ = new THREE.Vector3(), lookZ = new THREE.Vector3(0, .425, .229);
   const tvC = quad(-.271, .538, .271, .049, .229), vfC = quad(.07, .112, .21, .077, .233);
   const pin = (el, obj, corners) => { const cw = room.clientWidth, ch = room.clientHeight; if (!cw) return; obj.updateWorldMatrix(true, false); cam.updateMatrixWorld();
     const q = corners.map(v => { const p = v.clone().applyMatrix4(obj.matrixWorld).project(cam); return [(p.x + 1) / 2 * cw, (1 - p.y) / 2 * ch]; }); el.style.transform = quadT(el.offsetWidth, el.offsetHeight, q); el.style.visibility = 'visible'; };
 
   let alive = true;
-  const off = () => { alive = false; removeEventListener('keydown', onKey); room.removeEventListener('click', onClick); room.removeEventListener('pointermove', onMove); try { P.r.dispose(); } catch (e) {} };
+  const off = () => { alive = false; try { mq.removeEventListener('change', onMq); } catch (e) {} removeEventListener('keydown', onKey); room.removeEventListener('click', onClick); room.removeEventListener('pointermove', onMove); try { P.r.dispose(); } catch (e) {} };
   const onKey = e => { if (e.key === 'Escape' && zin) zin = false; };
   let zin = false;
   const tv = new THREE.Group(), vcr = new THREE.Group(), cas = new THREE.Group(), rem = new THREE.Group();
   let state = 'idle', st0 = 0, tNow = 0, clip = 0, r0 = -1, zoom = 0;
-  const restP = new THREE.Vector3(.5, FY + .017, .42), restRy = .6, lift = new THREE.Vector3(-.108, .2, .62), front = new THREE.Vector3(-.108, .076, .3), inside = new THREE.Vector3(-.108, .076, .02);
-  const remRest = new THREE.Vector3(.8, FY + .016, .66), remUp = new THREE.Vector3(.72, .22, .92), tvAim = new THREE.Vector3(0, .42, .2); let qRest = null;
+  let restRy = .6; const restP = new THREE.Vector3(), lift = new THREE.Vector3(-.108, .2, .62), front = new THREE.Vector3(-.108, .076, .3), inside = new THREE.Vector3(-.108, .076, .02);
+  const remRest = new THREE.Vector3(), remUp = new THREE.Vector3(), tvAim = new THREE.Vector3(0, .42, .2); let qRest = null;
   const placeTape = k => { const p = new THREE.Vector3(); let ry = 0;
     if (k < .4) { const u = ease(k / .4); p.lerpVectors(restP, lift, u); p.y += Math.sin(u * Math.PI) * .05; ry = restRy * (1 - u); }
     else if (k < .7) { p.lerpVectors(lift, front, ease((k - .4) / .3)); }
@@ -150,6 +155,17 @@ export function initMuzyka(host, A) {
   const onMove = e => { room.style.cursor = (zin ? 'zoom-out' : pick(e) ? 'pointer' : 'default'); };
   room.addEventListener('click', onClick); room.addEventListener('pointermove', onMove); addEventListener('keydown', onKey);
 
+  // układ zależny od ekranu: rozmiar płótna, kamera, położenie kasety i pilota, zoom ekranu dopasowany do szerokości, zin w odpowiednich proporcjach
+  const applyLayout = () => { lay = LAYOUTS[PHONE() ? 'port' : 'land'];
+    P.resize(lay.w, lay.h); cam.fov = lay.fov; cam.updateProjectionMatrix();
+    camBase.set(...lay.cam); lookBase.set(...lay.look); restP.set(lay.tape[0], FY + .017, lay.tape[1]); restRy = lay.tape[2];
+    remRest.set(lay.rem[0], FY + .016, lay.rem[1]); remUp.set(...lay.remUp); remL.position.set(...lay.remL);
+    const tn = Math.tan(lay.fov * Math.PI / 360), asp = lay.w / lay.h, d = Math.max(.82, .54 / (.8 * 2 * tn * asp), .4 / (.92 * tn));   // cały ekran 4:3 mieści się i na szerokość, i na wysokość
+    camZ.set(0, .425, .229 + d);
+    if (paper.width !== lay.pw || paper.height !== lay.ph) { paper.width = lay.pw; paper.height = lay.ph; if (bgOk) drawPaper(paper, bg); }
+    if (state === 'idle' && cas.children.length) placeTape(0); if (rem.children.length && r0 < 0) rem.position.copy(remRest); };
+  applyLayout(); cam.position.copy(camBase); cam.lookAt(lookBase);
+  const mq = matchMedia('(max-width:700px)'), onMq = () => applyLayout(); mq.addEventListener('change', onMq);
   const vfd = s => { const vx = ovVfd.x; vx.fillStyle = '#020a0c'; vx.fillRect(0, 0, 160, 40); if (s) { vx.font = '30px VT323, monospace'; vx.textBaseline = 'middle'; vx.textAlign = 'center'; vx.fillStyle = '#3ff0ff'; vx.shadowColor = '#3ff0ff'; vx.shadowBlur = 6; vx.fillText(s, 80, 21); vx.shadowBlur = 0; } };
   const eq = (sx, e) => { for (let i = 0; i < 16; i++) { const h = 6 + Math.abs(Math.sin(e / 260 + i * .9) * Math.sin(e / 510 + i * .4)) * 48, y = 118 - h; sx.fillStyle = i % 5 === 0 ? '#c4121d' : '#3ff0ff'; sx.fillRect(12 + i * 11, y, 8, h); sx.fillStyle = 'rgba(0,0,0,.35)'; for (let j = 0; j < h; j += 3) sx.fillRect(12 + i * 11, y + j, 8, 1); } };
   const sx = ovTv.x, img = sx.createImageData(192, 144);
