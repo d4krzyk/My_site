@@ -46,15 +46,14 @@ function driver(go, step = 1) {
 }
 
 export function initKlatki(sec, { mode = 'film' } = {}) {
-  // przystanki: góra, pole wyborów, podrozdziały, a w sekcji person każda persona osobno (jej część pod sceną z maskami)
-  const points = () => { const s = [0]; sec.querySelectorAll('.k-choose, .k-sub, .kp-part').forEach(el => { const r = el.getBoundingClientRect(), y = r.top + scrollY;
-      s.push(el.classList.contains('kp-part') ? y - innerHeight * .42 : el.classList.contains('k-sub') ? y - 34 : y); });
-    s.sort((a, b) => a - b); const base = s.filter((v, i) => !i || v - s[i - 1] > 40);
-    // gdy odstęp między przystankami jest większy niż okno (wysoki kolaż na szerokim ekranie), dokładamy równo rozłożone przystanki pośrednie,
-    // żeby jeden skok nie omijał części strony
-    const step = innerHeight * .9, out = [];
-    base.forEach((v, i) => { out.push(v); const nxt = base[i + 1]; if (nxt === undefined) return; const n = Math.ceil((nxt - v) / step) - 1; for (let k = 1; k <= n; k++) out.push(v + (nxt - v) * k / (n + 1)); });
-    return out; };
+  // przystanki: góra, pole wyborów, podrozdziały, a w sekcji person każda persona osobno (jej część pod sceną z maskami).
+  // Skok idzie zawsze od sekcji do sekcji (górna krawędź sekcji u góry okna), bez zatrzymywania się w połowie. Jedyny wyjątek: sekcja wyższa od okna o więcej niż 12%
+  // dostaje jeszcze jeden przystanek wyrównany do jej dolnej krawędzi, żeby jej koniec też było widać (np. pole wyborów z kartą kontaktu na niskim oknie);
+  // pierwsza sekcja (góra strony) i sekcja person (ma własne przystanki) są pomijane.
+  const points = () => { const vh = innerHeight, s = [0]; sec.querySelectorAll('.k-choose, .k-sub, .kp-part').forEach(el => { const r = el.getBoundingClientRect(), y = r.top + scrollY, part = el.classList.contains('kp-part');
+      s.push(part ? y - vh * .42 : el.classList.contains('k-sub') ? y - 34 : y);
+      if (!part && !el.classList.contains('k-persony') && r.height > vh * 1.12) s.push(y + r.height - vh + 16); });
+    s.sort((a, b) => a - b); return s.filter((v, i) => !i || v - s[i - 1] > 40); };
   const ov = overlay(); const { cv, x } = ov;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const film = async (y0, y1, idx, n) => {
@@ -80,13 +79,15 @@ export function initKlatki(sec, { mode = 'film' } = {}) {
       x.putImageData(img, 0, 0); await sleep(85); }
     x.clearRect(0, 0, W, H);
   };
-  const go = d => { const P = points(), y = scrollY; let cur = 0; P.forEach((p, i) => { if (p <= y + 12) cur = i; });
-    // w środku wysokiej sekcji: najpierw dojedź do jej końca, potem dalej
+  const go = d => { const P = points(), y = scrollY, maxY = document.documentElement.scrollHeight - innerHeight; let cur = 0; P.forEach((p, i) => { if (p <= y + 12) cur = i; });
+    const run = target => mode === 'block' ? block(y, target) : film(y, target, Math.max(0, P.findIndex(p => p >= target - 4)), P.length);
+    // za ostatnim przystankiem: jeden skok na sam dół (stopka), a gdy już tam jesteśmy, kolejny ruch w dół nic nie robi (wcześniej cofał stronę do ostatniego przystanku)
+    if (d > 0 && cur === P.length - 1) return y < maxY - 4 ? run(maxY) : undefined;
+    // w środku wysokiej sekcji ruch w górę wraca najpierw do jej przystanku, dopiero potem do poprzedniego
     let to = Math.max(0, Math.min(P.length - 1, cur + Math.sign(d)));
     if (d < 0 && y > P[cur] + 12) to = cur;
-    const target = to === P.length - 1 && d > 0 ? Math.min(P[to], document.documentElement.scrollHeight - innerHeight) : P[to];
-    if (Math.abs(target - y) < 4) { if (d > 0 && to === P.length - 1) return jump(document.documentElement.scrollHeight); return; }
-    return mode === 'block' ? block(y, target) : film(y, target, to, P.length);
+    const target = Math.min(P[to], maxY);
+    return Math.abs(target - y) < 4 ? undefined : run(target);
   };
   const off = driver(go);
   return () => { off(); ov.kill(); };
