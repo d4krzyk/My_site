@@ -37,6 +37,17 @@ blipy ślizgające się w górę jak w Undertale (koniec słowa wyżej), Stoir t
 Dźwięk jest domyślnie wyłączony; włącza go przycisk „głosy” pod nagłówkiem sekcji (przeglądarki wymagają kliknięcia). Przy ponownym wejściu na personę
 gra tylko jej imię. Przy ograniczeniu animacji nic z tego nie działa, a pełny tekst zostaje w DOM (ukryty span dla czytników ekranu).
 
+## Otwieranie projektów (Maszynologia)
+
+Kliknięcie nazwy projektu w Release info albo `open <projekt>` w terminalu odtwarza animację przejścia (`src/engine/projopen.js`), potem otwiera się
+repozytorium na GitHubie (nowa karta). Każdy projekt ma własną animację w swoim kolorze, w niskiej rozdzielczości 320×180 (piksel ×3, dither Bayera,
+bitmapowa czcionka): Visual Echoes (sonar, echa odszyfrowują bębny), WikiRooms (pokój po pokoju, na końcu drzwi), Remuz.io (korektor LED, potem
+analizator na cały ekran), MusicClubApp (winyl 3D nad szachownicą Amigi, napis wokół płyty rozświetla się jak kula disco), ShadowDetection (lampa okrąża
+siatkę, cienie, na końcu rozświetla przejście), GameInJava (automat, jackpot, spadające komórki). Na pionowym ekranie nakładka jest obrócona o 90° (jak HC90E).
+Jeśli przeglądarka zablokuje wyskakujące okno (animacja trwa kilka sekund), zostaje klikalny odnośnik „github ›”.
+**W przyszłości projekty dostaną własne podstrony z prezentacją** (zob. plan niżej): animacja ma wtedy prowadzić do podstrony zamiast do GitHuba, więc
+miejsce docelowe jest jedną funkcją (`finish` w `openProject`), a sama animacja zostaje bez zmian.
+
 ## Telefon → kontakt (przejście)
 
 Klik w telefon: model wylatuje z karty, kamera najeżdża na ekran modelu, aż LCD wypełni okno (na telefonie szerokość). Na ekraniku 84×48
@@ -59,6 +70,3 @@ animacji w systemie nagłówek jest zwykłym tekstem.
   razem z resztą animacji wejścia). Używać tylko zdjęć dostarczonych przez autora i bez innych osób; zdjęcie ma być częścią animowanego odkodowania strony.
 - **Maszynologia: podstrony projektów (po obronie magisterki).** Z czasem zrobić podstrony poszczególnych projektów autora z GitHuba, żeby lepiej pokazać,
   co robią (opis, zrzuty, linki). Na razie projekty są tylko jako klikalne linki do repozytoriów w Release info oraz pliki README w terminalu. Termin: po magisterce, bez pośpiechu.
-- **Maszynologia: przejście przy otwieraniu projektu.** Po wejściu w projekt (np. `open <projekt>` w terminalu lub kliknięcie) ma się pokazać
-  szyfr tekstowy 10 na 10 znaków, który odszyfrowuje się w kombinacji, wyświetlając kolor projektu. Przejście w stylu cyberpunkowej demosceny,
-  spójne z resztą podstrony Maszynologii.

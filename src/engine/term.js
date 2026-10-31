@@ -61,6 +61,7 @@ const FILES = {
   '/var/log/syslog': ['crond: odpalono dekoder sine-scrollera', 'sshd: gość zalogowany z przeglądarki', 'kernel: wykryto próbę rm -rf, odmówiono z krzykiem'],
 };
 const T0 = Date.now();
+const PROJ_KEY = { 'visual-echoes-2.0': 'VE', wikirooms: 'WR', 'remuz.io': 'RM', musicclubapp: 'MC', shadowdetection: 'SD', gameinjava: 'GJ' };   // animacje przejścia (engine/projopen)
 const DESC = {
   '/': 'korzeń systemu', '/bin': 'polecenia', '/etc': 'konfiguracja systemu', '/home': 'katalogi domowe', '/proc': 'procesor i jądro', '/tmp': 'pliki tymczasowe (pusto)',
   '/usr': 'programy i zasoby', '/usr/bin': 'programy', '/usr/share': 'zasoby', '/var': 'dane zmienne', '/var/log': 'logi systemowe',
@@ -238,7 +239,7 @@ export function initTerm(root, { go } = {}) {
       case 'kontakt': return print(read(HOME + '/kontakt.txt'));
       case 'o-mnie': case 'about': return print(read(HOME + '/o-mnie.txt'));
       case 'projekty': case 'projects': return print([...listing(HOME + '/projekty', ''), '', 'open <projekt> albo dotknij nazwy.']);
-      case 'open': case 'xdg-open': { const n = (a[0] || '').toLowerCase().replace(/\/$/, ''); const m = PROJ.find(p => p === n || p.startsWith(n)); if (!n || !m) return print([`open: nie znam projektu '${a[0] || ''}'. Dostępne: ${PROJ.join(', ')}`], 'err'); cwd = HOME + '/projekty/' + m; setPs(); return print([...read(cwd + '/README.md'), '', [seg('github.url', 'file', `cat ${cwd}/github.url`), seg('  → repozytorium na GitHubie', 'dim')]]); }
+      case 'open': case 'xdg-open': { const n = (a[0] || '').toLowerCase().replace(/\/$/, ''); const m = PROJ.find(p => p === n || p.startsWith(n)); if (!n || !m) return print([`open: nie znam projektu '${a[0] || ''}'. Dostępne: ${PROJ.join(', ')}`], 'err'); cwd = HOME + '/projekty/' + m; setPs(); const pk = PROJ_KEY[m], gh = (FILES[cwd + '/github.url'] || [])[0]; if (pk && gh) import('./projopen').then(x => x.openProject(pk, gh)); return print([...read(cwd + '/README.md'), '', [seg('github.url', 'file', `cat ${cwd}/github.url`), seg('  → repozytorium na GitHubie', 'dim')]]); }
       case 'whoami': { const ua = navigator.userAgent, os = /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Mac/.test(ua) ? 'macOS' : /Win/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'nieznany system';
         const br = /Edg\//.test(ua) ? 'Edge' : /Firefox/.test(ua) ? 'Firefox' : /Chrome/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : 'przeglądarka'; return print([ME, `gość odwiedzający stronę · ${br} na ${os}`], ''); }
       case 'id': return print([`uid=1001(${ME}) gid=1001(${ME}) grupy=1001(${ME}),100(goscie)`]);

@@ -1,6 +1,7 @@
 // strona Maszynologia: cracktro (listing asm, copper, sine-scroller z dekodowaniem) i plik NFO z ornamentami; przeniesione z planszy
 import { buildOrn, ornCanvas } from './nfoorn';
 import { pixelDecode } from './pixdecode';
+import { PROJECT_KEYS } from './projopen';
 import { pageReady } from './ready';
 import { RM, rnd, clamp, FONTS, loop, N, fbm, bth, oneBit, makeGlyph, drawGlyph } from './core';
 export function initMaszyn(root, opts) {
@@ -93,7 +94,7 @@ export function initMaszyn(root, opts) {
         const flush = () => {
           if (!run) return;
           const c = CLASS[k0];
-          if (LINKS[k0]) { html += `<a class="lk" href="${LINKS[k0]}" target="_blank" rel="noopener noreferrer">${run}</a>`; run = ''; return; }
+          if (LINKS[k0]) { html += `<a class="lk" data-k="${k0}" href="${LINKS[k0]}" target="_blank" rel="noopener noreferrer">${run}</a>`; run = ''; return; }
           html += c ? `<span class="${c}">${run}</span>` : run;
           run = '';
         };
@@ -173,7 +174,9 @@ export function initMaszyn(root, opts) {
     if ('ResizeObserver' in window) new ResizeObserver(update).observe(wrap);
     else addEventListener('resize', update, {passive: true});
     pre.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a.lk'); if (!a) return; e.preventDefault();
-      const url = a.href; a.classList.add('zap'); setTimeout(() => { a.classList.remove('zap'); window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
+      const url = a.href, key = PROJECT_KEYS[a.dataset.k]; a.classList.add('zap');
+      // projekty (A-F): animacja przejścia w kolorze projektu, po niej repozytorium; GitHub i LinkedIn autora otwierają się od razu
+      setTimeout(() => { a.classList.remove('zap'); if (key && !RM) import('./projopen').then(m => m.openProject(key, url)); else window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
     // kopiowanie: sam tekst CV, bez wcięcia pod ryciny
     pre.addEventListener('copy', e => {
       const sel = getSelection(); if (!sel || sel.isCollapsed || !pre.contains(sel.anchorNode) && !pre.contains(sel.focusNode)) return;
