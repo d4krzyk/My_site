@@ -131,6 +131,7 @@ button{-webkit-user-select:none;user-select:none}
 .lang-keys button:hover{color:#fff;border-color:var(--acc-d)}
 .lang-keys button[aria-pressed="true"]{color:#000;background:var(--acc);border-color:var(--acc-d);border-bottom-width:2px;transform:translateY(4px)}
 .lang-keys button:focus-visible{outline:2px dashed var(--acc);outline-offset:2px}
+.lang-keys.busy button{cursor:progress}.lang-keys.busy button[aria-disabled="true"]{opacity:.45}
 .cards-nav .deck{all:unset;pointer-events:auto;cursor:pointer;position:fixed;right:10px;top:8px;z-index:6;width:136px;height:84px}
 .cards-nav .deck canvas{width:100%;height:100%;display:block}
 .cards-nav .deck:focus-visible{outline:1px dashed var(--cyan);outline-offset:2px}
@@ -152,8 +153,7 @@ button{-webkit-user-select:none;user-select:none}
 @media (max-width:700px){
   .spread.stack .scard .sr{left:calc(100% + 12px);right:auto;top:50%;transform:translateY(-50%);text-align:left;font-size:13px}
   .cards-nav .deck{right:2px;top:2px}
-  .lang-keys{top:24px;right:146px;transition:transform .25s ease,opacity .25s ease}
-  .lang-keys.away{transform:translateY(-90px);opacity:0;pointer-events:none}
+  .lang-keys{top:24px;right:146px}   /* stałe położenie na każdej stronie telefonu (bez chowania przy przewijaniu), obok ikonki kart */
 }
 /* przełącznik języka w rozkładzie */
 /* szczelina: nowa strona wyłania się przez poziome rozcięcie */
@@ -242,7 +242,9 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .k-pick-phone canvas{width:clamp(140px,21vw,270px);flex:none;aspect-ratio:210/90;-webkit-mask:radial-gradient(closest-side,#000 75%,transparent 100%);mask:radial-gradient(closest-side,#000 75%,transparent 100%)}   /* leżący telefon: płótno niskie i szerokie */
 .k-pick-phone .k-pick-t{margin:0;white-space:nowrap}.k-pick-phone .k-pick-s{margin:0 0 0 auto;text-align:right}
 /* telefon: płyty jedna pod drugą (bez ściskania w rzędzie), pasek kontaktu na końcu */
-@media (max-width:700px){.k-choose{padding:6svh 0}.k-trio{grid-template-columns:1fr;gap:22px;width:min(78vw,340px)}.k-pick{padding:4% 6% 6%}.k-pick:nth-child(2){transform:rotate(.9deg)}.k-pick-phone{width:min(92%,380px);padding:2% 4%}.k-pick-phone canvas{width:48vw}.k-pick-phone .k-pick-s{display:block;white-space:nowrap}}
+/* kafelek kontaktu na telefonie: taki sam jak pozostałe (kwadrat z pionowym telefonem, podpis pod spodem), tej samej szerokości */
+@media (max-width:700px){.k-choose{padding:6svh 0}.k-trio{grid-template-columns:1fr;gap:22px;width:min(78vw,340px)}.k-pick{padding:4% 6% 6%}.k-pick:nth-child(2){transform:rotate(.9deg)}
+.k-pick-phone{width:min(78vw,340px);margin:22px auto 0;flex-direction:column;align-items:center;gap:0;padding:4% 6% 6%;transform:rotate(-.6deg)}.k-pick-phone canvas{width:100%;aspect-ratio:1}.k-pick-phone .k-pick-t{margin:4px 0 0}.k-pick-phone .k-pick-s{display:none}}
 
 /* podrozdziały: ciemna, gruba tektura z poszarpanym brzegiem i odsłoniętymi falami */
 .k-sub{position:relative;margin:68px 0;min-height:calc(100svh - 136px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;padding:30px clamp(18px,4vw,44px) 40px;background:var(--board) 0 0/640px auto repeat;color:#e3d6b4;
@@ -444,12 +446,15 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .k-fx.rooms-busy [data-room]{cursor:progress}
 .k-fx.rooms-busy [data-room]:not(.chosen){pointer-events:none;opacity:.35;filter:grayscale(.7);transition:opacity .25s,filter .25s}
 
-/* sekcja muzyki: pokój PSX w zinowej wyrwie (engine/muzyka) */
-.k-sub.k-muzyka{display:block}
-.mu-host{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;background:#020308;margin:8px 0 4px;container-type:inline-size}
-.mu-host canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+/* sekcja muzyki: pokój PSX w wyrwie wyciętej wprost w tle strony (engine/muzyka); bez tektury i bez własnego tła, dookoła widać prawdziwe tło */
+.k-sub.k-muzyka{display:block;background:none;box-shadow:none;transform:none;padding-left:0;padding-right:0;min-height:0}
+.k-sub.k-muzyka::before,.k-sub.k-muzyka::after{display:none}
+.k-muzyka .k-code{padding-left:clamp(18px,4vw,44px)}
+.mu-host{position:relative;width:100%;aspect-ratio:16/10;margin:8px 0 4px;container-type:inline-size}
+.mu-view{position:absolute;inset:0;background:#020308}
+.mu-view canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
 .mu-room{image-rendering:pixelated;z-index:1}
-.mu-paper{pointer-events:none;z-index:3}
+.mu-edge{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3}
 .mu-ov{position:absolute;left:0;top:0;transform-origin:0 0;visibility:hidden;pointer-events:none;z-index:2}
 .mu-ov canvas{position:static;width:100%;height:100%;image-rendering:pixelated}
 .mu-plq{position:absolute;right:3.2%;top:4.2%;width:19%;aspect-ratio:2.05/1;z-index:4;transform:rotate(3.2deg);filter:drop-shadow(0 3px 5px rgba(0,0,0,.65));pointer-events:none}
@@ -457,7 +462,6 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .mu-plq b{position:absolute;left:0;right:0;top:50%;transform:translateY(-52%) rotate(-1.4deg);text-align:center;font:400 4.6cqw/1 "Special Elite K",monospace;color:#e3d6b4;text-shadow:0 0 6px #000;letter-spacing:.02em}
 .mu-plq u{position:absolute;left:8%;top:-5%;width:24%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-16deg)}
 .mu-plq s{position:absolute;right:6%;bottom:-6%;width:22%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-22deg)}
-
 /* telefon: wariant „dwa piętra”: pionowa scena, telewizor u góry, dywan z kasetą i pilotem pod nim */
 @media (max-width:700px){.mu-host{aspect-ratio:288/480;margin-top:6px}.mu-plq{width:40%;right:2.5%;top:2.2%}.mu-plq b{font-size:7.4cqw}}
 
@@ -471,13 +475,17 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 @keyframes snpulse{50%{filter:drop-shadow(0 0 6px #3ff0ff)}}
 @media (max-width:700px){.snd-icon{left:8px;bottom:8px}.snd-icon canvas{width:44px;height:36px}.snd-icon .sn-l{font-size:13px}.snd-icon .sn-s{font-size:12px}}
 @media (prefers-reduced-motion:reduce){.snd-icon.unset canvas{animation:none}}
-/* wybór dźwięku w ramce bramy */
-.gsnd{position:relative;display:block;margin-top:12px;font-size:12px;color:var(--ink-dim);text-align:center}
-.gsw{display:block;margin-bottom:5px;color:var(--blood-hi,#c4121d);letter-spacing:.04em}
-.gs{all:unset;cursor:pointer;margin:0 6px;color:#9da2b8}
-.gs:hover{color:#fff}.gs[aria-pressed="true"]{color:#3ff0ff}.gs:focus-visible{outline:1px dashed #3ff0ff;outline-offset:2px}
 /* nazwa persony obok maski w rogu: falująca wstążka (PS1) z initPersonaTitles, pod nią tag */
 .kp-cn{position:absolute;z-index:2;width:clamp(190px,28vw,400px);aspect-ratio:3.6/1;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .35s steps(4)}
 .kp-cn.on{opacity:1}
+.kp-cn.below{transform:translateY(0);width:clamp(150px,46vw,260px)}
 .kp-cn .kp-title{position:absolute;left:0;top:0;width:100%;height:100%;margin:0}
 .kp-cn i{position:absolute;left:14%;top:96%;white-space:nowrap;font:normal 14px/1.2 var(--f-dos);color:#a89cb8;text-shadow:0 2px 0 #000}
+
+/* zapłon bramy przy ładowaniu: sztandary zapalają się cyjanem (skokowo, jeden po drugim), a ramka z napisem otwiera się od środka z cyjanowym rozbłyskiem */
+@keyframes tabIgnite{0%{opacity:0;filter:brightness(5) saturate(0) drop-shadow(0 0 0 #3ff0ff)}18%{opacity:1;filter:brightness(4) drop-shadow(0 0 10px #3ff0ff) drop-shadow(0 0 3px #fff)}40%{opacity:.35;filter:brightness(2.2) drop-shadow(0 0 8px #3ff0ff)}60%{opacity:1;filter:brightness(2) drop-shadow(0 0 12px #3ff0ff)}100%{opacity:1;filter:none}}
+@keyframes frameIgnite{0%{opacity:0;clip-path:inset(46% 49% 46% 49%);filter:brightness(4) drop-shadow(0 0 8px #3ff0ff)}25%{opacity:1;clip-path:inset(46% 0 46% 0);filter:brightness(3) drop-shadow(0 0 10px #3ff0ff)}70%{opacity:1;clip-path:inset(0 0 0 0);filter:brightness(1.8) drop-shadow(0 0 8px #3ff0ff)}100%{opacity:1;clip-path:inset(0 0 0 0);filter:none}}
+.gate canvas.tab{animation:tabIgnite 1.5s steps(12) .35s backwards}
+.gate canvas.tab.r{animation-delay:.75s}
+.gate .layer.entry .frame{animation:frameIgnite 1.3s steps(13) .1s backwards}
+@media (prefers-reduced-motion:reduce){.gate canvas.tab,.gate .layer.entry .frame{animation:none}}

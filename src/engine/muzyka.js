@@ -23,17 +23,12 @@ function tear() {
   edge(L, T, Rr, T, 9, 0, 1); edge(Rr, T, Rr, Bb, 6, -1, 0); edge(Rr, Bb, L, Bb, 9, 0, -1); edge(L, Bb, L, T, 6, 1, 0);
   return P;
 }
-// warstwa zinu: tło strony z tego miejsca, z wyciętą wyrwą; brzegi w stylu corporate grunge (suchy pędzel, czerwony tusz, raster)
-function drawPaper(c, img) {
+// ozdoby brzegu wyrwy (corporate grunge: raster z ksera, suche pociągnięcia czarnego pędzla, czerwony tusz) na przezroczystej warstwie nad sceną.
+// Sama wyrwa to wycięcie sceny (clip-path wg `tear()`), więc dookoła widać prawdziwe tło strony w tym miejscu, a nie własny boks z tłem.
+function drawEdge(c) {
   const W = c.width, H = c.height, x = c.getContext('2d'), r = rng(37);
   x.clearRect(0, 0, W, H);
-  const s = Math.max(W / img.width, H / img.height), iw = img.width * s, ih = img.height * s;
-  x.drawImage(img, (W - iw) / 2, (H - ih) * .42, iw, ih);
-  x.fillStyle = 'rgba(8,6,10,.3)'; x.fillRect(0, 0, W, H);
-  const id = x.getImageData(0, 0, W, H), d = id.data; for (let i = 0; i < d.length; i += 4) { const g = (r() - .5) * 30; d[i] += g; d[i + 1] += g; d[i + 2] += g; } x.putImageData(id, 0, 0);
-  for (let i = 0; i < 36; i++) { x.fillStyle = `rgba(0,0,0,${.1 + r() * .22})`; x.fillRect(0, r() * H, W, 1 + r() * 2); }   // poziome smugi ksera
   const pts = tear().map(([u, v]) => [u * W, v * H]);
-  x.save(); x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000'; x.beginPath(); pts.forEach((p, i) => (i ? x.lineTo(p[0], p[1]) : x.moveTo(p[0], p[1]))); x.closePath(); x.fill(); x.restore();
   // raster z ksera przy brzegu
   for (let k = 0; k < pts.length; k++) { const a = pts[k], b = pts[(k + 1) % pts.length]; for (let j = 0; j < 40; j++) { const f = r(); x.fillStyle = `rgba(0,0,0,${.3 + r() * .4})`; x.beginPath(); x.arc(a[0] + (b[0] - a[0]) * f + (r() - .5) * 30, a[1] + (b[1] - a[1]) * f + (r() - .5) * 30, .8 + r() * 1.8, 0, 7); x.fill(); } }
   // suche pociągnięcia czarnego pędzla wzdłuż brzegu, z przerwami włosia
@@ -64,11 +59,12 @@ function stripFront(root, zMin) { root.traverse(m => { if (!m.isMesh) return; co
 
 export function initMuzyka(host, A) {
   host.setAttribute('role', 'group'); host.setAttribute('aria-label', 'Pokój z telewizorem. Kliknij kasetę, magnetowid, pilot albo ekran.');
+  const view = document.createElement('div'); view.className = 'mu-view'; view.style.clipPath = 'polygon(' + tear().map(([u, v]) => (u * 100).toFixed(2) + '% ' + (v * 100).toFixed(2) + '%').join(',') + ')';   // wyrwa = wycięcie sceny
   const room = document.createElement('canvas'); room.className = 'mu-room';
   const ovTv = mkOv(192, 144), ovVfd = mkOv(160, 40);
-  const paper = document.createElement('canvas'); paper.className = 'mu-paper'; paper.width = LAYOUTS[PHONE() ? 'port' : 'land'].pw; paper.height = LAYOUTS[PHONE() ? 'port' : 'land'].ph; paper.setAttribute('aria-hidden', 'true');
-  host.append(room, ovTv.el, ovVfd.el, paper);
-  const bg = new Image(); let bgOk = false; bg.onload = () => { bgOk = true; drawPaper(paper, bg); }; bg.src = A.bg;
+  const paper = document.createElement('canvas'); paper.className = 'mu-edge'; paper.width = LAYOUTS[PHONE() ? 'port' : 'land'].pw; paper.height = LAYOUTS[PHONE() ? 'port' : 'land'].ph; paper.setAttribute('aria-hidden', 'true');
+  view.append(room, ovTv.el, ovVfd.el); host.append(view, paper);
+  drawEdge(paper);
 
   let lay = LAYOUTS[PHONE() ? 'port' : 'land'];
   const P = ps1(room, lay.w, lay.h, { clear: 0x020308, fog: [3.2, 9] }), scene = P.scene, cam = P.cam; cam.fov = lay.fov; cam.near = .05; cam.far = 50; cam.updateProjectionMatrix();
@@ -162,7 +158,7 @@ export function initMuzyka(host, A) {
     remRest.set(lay.rem[0], FY + .016, lay.rem[1]); remUp.set(...lay.remUp); remL.position.set(...lay.remL);
     const tn = Math.tan(lay.fov * Math.PI / 360), asp = lay.w / lay.h, d = Math.max(.82, .54 / (.8 * 2 * tn * asp), .4 / (.92 * tn));   // cały ekran 4:3 mieści się i na szerokość, i na wysokość
     camZ.set(0, .425, .229 + d);
-    if (paper.width !== lay.pw || paper.height !== lay.ph) { paper.width = lay.pw; paper.height = lay.ph; if (bgOk) drawPaper(paper, bg); }
+    if (paper.width !== lay.pw || paper.height !== lay.ph) { paper.width = lay.pw; paper.height = lay.ph; drawEdge(paper); }
     if (state === 'idle' && cas.children.length) placeTape(0); if (rem.children.length && r0 < 0) rem.position.copy(remRest); };
   applyLayout(); cam.position.copy(camBase); cam.lookAt(lookBase);
   const mq = matchMedia('(max-width:700px)'), onMq = () => applyLayout(); mq.addEventListener('change', onMq);
