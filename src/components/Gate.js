@@ -35,7 +35,7 @@ export default function Gate() {
             <h1 className="h3" id="gTitle" data-build="">Sztuka z chaosu</h1>
             <p id="gIntro" data-build="">Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.</p>
             <nav className="paths" aria-label="Działy">
-              <button type="button" className="path" data-i="0"><span className="pcard"><img alt="" src={asset('/cards/face-krzyk.png')} draggable="false" /></span><span className="ptxt"><span className="nm">Krzyk</span><span className="sub" id="gS1">muzyka · obraz · odsłony</span></span></button>
+              <button type="button" className="path" data-i="0"><span className="pcard"><img alt="" src={asset('/cards/face-krzyk.png')} draggable="false" /></span><span className="ptxt"><span className="nm">Krzyk <small>[ Art ]</small></span><span className="sub" id="gS1">muzyka · obraz · odsłony</span></span></button>
               <button type="button" className="path" data-i="1"><span className="pcard"><img alt="" src={asset('/cards/face-maszynologia.png')} draggable="false" /></span><span className="ptxt"><span className="nm"><span id="gMach">Maszynologia</span> <small>[ IT ]</small></span><span className="sub" id="gS2">projekty · doświadczenie · CV</span></span></button>
             </nav>
           </div>
