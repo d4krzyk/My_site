@@ -385,7 +385,6 @@ function gateOuter(pre){
     raf=requestAnimationFrame(step);
   };
   gate.addEventListener('descend',()=>shatter(gate.querySelector('#gFrame')));
-  gate.addEventListener('shatter',e=>shatter(e.detail,true));
 })();
 
 /* ---------- I: brama ---------- */
@@ -396,8 +395,8 @@ FONTS().then(()=>{
   fit();
   const tints={red:{hi:[150,18,30],lo:[70,8,16]}}; const tint='red';
   const T={
-    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',l1:'·÷·──── POZIOM -1 ────·÷·',l2:'·÷·──── POZIOM -2 ────·÷·',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
-    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',l1:'·÷·──── LEVEL -1 ────·÷·',l2:'·÷·──── LEVEL -2 ────·÷·',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology'}
+    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
+    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology'}
   };
   let lang=opts.lang;
   const frame=()=>{ const s=T[lang]; const w=40; const ctr=(str,ch=' ')=>{const n=[...str.replace(/\uFE0E/g,'')].length; const l=Math.floor((w-n)/2); return ch.repeat(Math.max(0,l))+str+ch.repeat(Math.max(0,w-n-l));};
@@ -407,14 +406,16 @@ FONTS().then(()=>{
       `<span class="gl gb"><span class="w">D. K.</span><span class="gx"></span><span class="yr">2026</span></span>`;
     gateOuter($('gFrame'));
     $('gEnter').onclick=()=>go(false); $('gCalm').onclick=()=>go(true);
-    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gL1').textContent=s.l1; $('gL2').textContent=s.l2; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; };
+    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; };
   // język zmienia wspólny przełącznik w rogu (LangKeys)
   const onLang=e=>{ if(!gate.isConnected){ removeEventListener('krzyk-lang',onLang); return; } lang=e.detail; frame(); }; addEventListener('krzyk-lang',onLang);
   frame();
-  // wybór drogi: przycisk pęka i spada jak okno bramy, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
+  // wybór drogi: wybrana karta się spala (ogień od dołu, piksele żarzą się i odlatują jako popiół), druga gaśnie w cieniu, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
   let picked=false;
-  gate.querySelectorAll('.path').forEach((b,i)=>b.addEventListener('click',()=>{ if(picked) return; picked=true; b.classList.add('zap');
-    gate.dispatchEvent(new CustomEvent('shatter',{detail:b})); setTimeout(()=>{ opts.onPath&&opts.onPath(i); },RM?0:700); }));
+  gate.querySelectorAll('.path').forEach((b,i)=>b.addEventListener('click',()=>{ if(picked||!gate.querySelector('.paths.ready')&&!RM) return; picked=true;
+    gate.querySelectorAll('.path').forEach(o=>{ if(o!==b) o.classList.add('dim'); }); gate.querySelector('.paths').classList.add('locked');
+    if(RM){ opts.onPath&&opts.onPath(i); return; }
+    import('./gatecards').then(({burnCard})=>burnCard(b,()=>{ opts.onPath&&opts.onPath(i); })); }));
   // kursor blokowy w przycisku
   loop(gate,2,(t)=>{ const cu=gate.querySelector('.enter .cur'); if(cu) cu.style.visibility=(Math.floor(t/500)%2)?'hidden':'visible'; });
   let falling=false, calm=false, f0=0, phase=0, done=false;
@@ -458,7 +459,7 @@ FONTS().then(()=>{
     for(let yy=0;yy<H;yy++) for(let xx=0;xx<W;xx++){ const kk=(yy*W+xx)*4; const v=src[kk]/255*(1-fade); const th=bth(xx,yy);
       if(v>th){ const c2=v>.55?tc.hi:tc.lo; o[kk]=c2[0]; o[kk+1]=c2[1]; o[kk+2]=c2[2]; } o[kk+3]=255; }
     x.putImageData(out,0,0);
-    if(falling && k>=1 && !done){ done=true; gate.classList.add('done'); build(); }
+    if(falling && k>=1 && !done){ done=true; gate.classList.add('done'); build(); import('./gatecards').then(({riseCards})=>riseCards(gate)); }
   });
 });
 }

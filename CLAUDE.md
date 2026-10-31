@@ -65,6 +65,16 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 - **Przewijanie sekcjami (wariant B):** `points()` w `klatki.js`: skok od sekcji do sekcji, górna krawędź sekcji u góry okna; tylko sekcja wyższa od okna o >12% dostaje dodatkowy
   przystanek u dołu; sekcja person ma przystanek dla każdej persony; za ostatnim przystankiem jeden skok na sam dół, potem ruch w dół nic nie robi.
 
+## Karty: wybór drogi w bramie i nawigacja kartami
+
+- **Wybór drogi w bramie** (`src/engine/gatecards.js`, markup w `Gate.js`): po zejściu dwie karty (awersy z `public/cards/`: II ze słońcem = Krzyk, IV z księżycem = Maszynologia), bez napisów „poziom -1/-2”.
+  Wyłaniają się z cienia (dither odpływa): na komputerze od spodu, na telefonie z boków, ustawione na ukos (lewa i prawa, przechylone), a tekst (nazwa, opis) leży obok karty prosto i czytelnie.
+  Po wyborze wybrana karta się spala (ogień od dołu, piksele żarzą się biało/żółto/czerwono, zwęglają i odlatują jako popiół), druga gaśnie w cieniu, potem kurtyna sigili (`veil.js`).
+  Kliknięcia są blokowane do końca wyłaniania i po wyborze; przy ograniczeniu animacji karty są od razu i wybór przenosi bez spalania.
+- **Nawigacja kartami:** napis przy bieżącej karcie to „tu jesteś” / „you are here”.
+- **Spalony róg karty IV (Maszynologia):** na rewersie (`back-2`, `mini-2`) jest po prawej, na awersie (`face-maszynologia`) po lewej, bo po obróceniu karty róg ma być po drugiej stronie.
+  Nad spalenie dochodzi żar (krawędź przypalenia pulsuje pomarańczowo) i drobne iskry unoszące się w górę (`emberCorner`): w bramie i na karcie w rozkładzie nawigacji.
+
 ## Brama (strona główna)
 
 Kręgi ze znaków w tle (`gate.js`, pętla 30 kl./s) obracają się bez przerwy, każdy z własną prędkością i kierunkiem (0,06–0,4 rad/s). Liczba znaków w kręgu rośnie przez podwajanie
