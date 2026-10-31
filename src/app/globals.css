@@ -209,10 +209,10 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .k-pick canvas{width:100%;aspect-ratio:1;image-rendering:pixelated;display:block;-webkit-mask:radial-gradient(closest-side,#000 70%,transparent 100%);mask:radial-gradient(closest-side,#000 70%,transparent 100%)}
 .k-pick-t{font-family:"Special Elite K",monospace;font-size:clamp(17px,2.6vw,30px);color:#e3d6b4;margin-top:4px;text-shadow:0 0 6px #000}
 .k-pick-s{font-size:clamp(9px,1.1vw,13px);color:#b08a5e;margin-top:4px;line-height:1.2}
-.k-pick-phone{width:min(460px,70%);margin:clamp(16px,3vw,34px) auto 0;flex-direction:row;gap:4%;padding:2.5% 6% 3%;transform:rotate(.7deg)}
-.k-pick-phone canvas{width:36%;aspect-ratio:144/120}
+.k-pick-phone{width:min(100%,44vw);margin:clamp(16px,3vw,34px) auto 0;flex-direction:row;align-items:center;gap:4%;padding:2.5% 6% 3%;transform:rotate(.7deg)}
+.k-pick-phone canvas{width:14vw;flex:none;aspect-ratio:3/4}   /* telefon jest wysoki: płótno pionowe, model wielkości zbliżonej do pozostałych kart */
 .k-pick-phone .k-pick-t{margin:0;white-space:nowrap}.k-pick-phone .k-pick-s{margin:0 0 0 auto;text-align:right}
-@media (max-width:700px){.k-pick-s{display:none}.k-pick{padding:5% 4% 8%}.k-pick-phone{width:84%}.k-pick-phone .k-pick-s{display:block}}
+@media (max-width:700px){.k-pick-s{display:none}.k-pick{padding:5% 4% 8%}.k-pick-phone{width:84%}.k-pick-phone canvas{width:24vw}.k-pick-phone .k-pick-s{display:block}}
 
 /* podrozdziały: ciemna, gruba tektura z poszarpanym brzegiem i odsłoniętymi falami */
 .k-sub{position:relative;margin:68px 0;min-height:calc(100svh - 136px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;padding:30px clamp(18px,4vw,44px) 40px;background:var(--board) 0 0/640px auto repeat;color:#e3d6b4;
