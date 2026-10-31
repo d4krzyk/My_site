@@ -1,6 +1,7 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { asset } from '@/lib/base';
+import { getLang, applyLangStatic } from '@/lib/lang';
 
 // warstwy nad tłem działu Krzyk: hasło kolażu, stempel KRZYK, wersy w tle; animacje z engine/krzykfx
 export function KrzykLayers() {
@@ -10,8 +11,8 @@ export function KrzykLayers() {
       <canvas className="k-asm" aria-hidden="true" />
       <div className="k-safe" aria-hidden="true" />
       <div className="k-motto">
-        <p data-t="" className="m1">sztuka z chaosu.</p>
-        <p data-t="" className="m2">ekspresja w tym, co nas otacza.</p>
+        <p data-t="" className="m1" data-en="art out of chaos.">sztuka z chaosu.</p>
+        <p data-t="" className="m2" data-en="expression in what surrounds us.">ekspresja w tym, co nas otacza.</p>
       </div>
       <img className="k-stamp" src={asset('/krzyk/stamp.webp')} alt="KRZYK" draggable="false" />
     </>
@@ -23,9 +24,12 @@ const TARGET = { walkman: 'k-muzyka', heads: 'k-persony', minidv: 'k-obraz', pho
 // uruchamia animacje i pole wyborów 3D; dzieci to znaczniki strony
 export default function KrzykFx({ children }) {
   const ref = useRef(null);
+  // język ustawiamy przed pierwszym rysowaniem (bez mignięcia polskiego tekstu), zanim animacje rozbiją napisy na litery
+  useLayoutEffect(() => { const sec = ref.current.closest('.krzyk'); if (getLang() === 'en') applyLangStatic(sec, 'en'); else applyLangStatic(sec, 'pl'); }, []);
   useEffect(() => {
     let off = [], alive = true;
     const sec = ref.current.closest('.krzyk');
+    import('@/engine/krzyklang').then(({ initKrzykLang }) => { if (alive) off.push(initKrzykLang(sec)); });
     import('@/engine/krzykfx').then(({ initKrzykFx }) => { if (alive) off.push(initKrzykFx(sec, { pieces: n => asset(`/krzyk/pieces/${n}`) })); });
     // przewijanie sekcjami: wariant B (skok blokowy); ?klatki=a — taśma filmowa
     import('@/engine/klatki').then(({ initKlatki }) => { if (alive) off.push(initKlatki(sec, { mode: new URLSearchParams(location.search).get('klatki') === 'a' ? 'film' : 'block' })); });

@@ -89,6 +89,19 @@ przyciąganie wierzchołków do pikseli, fala i skręt biegnące bez przerwy ora
 z ciemności jako pognieciona kreska i się prostuje, przy wyjściu zwija się i gaśnie. Zwykły `h3` zostaje w stronie (ukryty wizualnie), a przy ograniczeniu
 animacji w systemie nagłówek jest zwykłym tekstem.
 
+## Język PL/EN i animowana zmiana
+
+Przełącznik języka (`LangKeys`, zdarzenie `krzyk-lang`, `src/lib/lang.js`) zmienia tylko teksty informacyjne. **Nazwy własne zostają bez zmian:** persony (Anxtan, Nugis, Stoir), KRZYK, imię i nazwisko autora,
+nazwy projektów i instytucji, napisy w tle (wersy kolażu, listing cracktro, ekran Nokii w przejściu kontaktu). Nazwy działów w nawigacji kartami mają wersje (Brama/Gate, Maszynologia/Machinology).
+Zmiana jest animowana zgodnie z motywem miejsca, żeby nie było nagłego przeskoku:
+- **Krzyk (maszyna do pisania):** nagłówki i podpisy cofają się wstecz i piszą od nowa (`retype` w `krzykfx.js`, `src/engine/krzyklang.js`), akapity tak samo bez rozbijania na litery (`typeSwap` w `xlate.js`);
+  opis aktywnej persony czyta się od nowa jej głosem (`persvoice.js`). Teksty poza oknem podmieniają się od razu. Teksty dwujęzyczne w znacznikach: atrybut `data-en` (oryginał PL zostaje w `data-pl`), `data-en-aria` dla etykiet;
+  start strony ustawia język w `useLayoutEffect` (bez mignięcia polskiego tekstu).
+- **Maszynologia i brama (dekodowanie):** stary tekst rozsypuje się w bloki ▓▒░ i rozkodowuje w nowy (`decodeSwap`). NFO układa się od nowa z `BL_PL`/`BL_EN` w `maszyn.js` (długość wierszy jest inna, więc ryciny rosną znów pod nowy układ);
+  terminal ma dwujęzyczne pomoc, `man`, komunikaty i pliki (`FILES_EN`, `lg`/`tr` w `term.js`), ścieżki i polecenia zostają polskie jak w systemie plików (`projekty`, `doswiadczenie`).
+- Przy ograniczeniu animacji (`RM`) tekst podmienia się natychmiast.
+- Dodając nowy tekst informacyjny, dodaj od razu wersję angielską w tym samym miejscu (`data-en`, słownik albo drugi blok).
+
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
 
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).

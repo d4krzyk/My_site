@@ -396,7 +396,7 @@ FONTS().then(()=>{
   const tints={red:{hi:[150,18,30],lo:[70,8,16]}}; const tint='red';
   const T={
     pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
-    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology'}
+    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',s1:'music · image · unveilings',s2:'projects · experience · CV',mach:'Machinology'}
   };
   let lang=opts.lang;
   const frame=()=>{ const s=T[lang]; const w=40; const ctr=(str,ch=' ')=>{const n=[...str.replace(/\uFE0E/g,'')].length; const l=Math.floor((w-n)/2); return ch.repeat(Math.max(0,l))+str+ch.repeat(Math.max(0,w-n-l));};
@@ -408,7 +408,14 @@ FONTS().then(()=>{
     $('gEnter').onclick=()=>go(false); $('gCalm').onclick=()=>go(true);
     $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; };
   // język zmienia wspólny przełącznik w rogu (LangKeys)
-  const onLang=e=>{ if(!gate.isConnected){ removeEventListener('krzyk-lang',onLang); return; } lang=e.detail; frame(); }; addEventListener('krzyk-lang',onLang);
+  // zmiana języka: stary napis rozsypuje się w bloki i rozkodowuje w nowy (jak zejście w bramie); na końcu ramka przycisków dopasowuje się do nowej szerokości
+  let lt=0;
+  const onLang=e=>{ if(!gate.isConnected){ removeEventListener('krzyk-lang',onLang); return; } if(e.detail===lang) return; lang=e.detail;
+    const s=T[lang], calmHidden=!$('gCalm')||$('gCalm').hidden;
+    import('./xlate').then(({decodeSwap})=>{
+      const me=++lt; let n=0;
+      Promise.all([['gEnter',s.enter],['gCalm',s.calm],['gTitle',s.title],['gIntro',s.intro],['gS1',s.s1],['gS2',s.s2],['gMach',s.mach]].map(([id,t])=>$(id)?decodeSwap($(id),t,{delay:n++*60}):0))
+        .then(()=>{ if(me!==lt||!gate.isConnected) return; frame(); if($('gCalm')) $('gCalm').hidden=calmHidden; }); }); }; addEventListener('krzyk-lang',onLang);
   frame();
   // wybór drogi: wybrana karta się spala (ogień od dołu, piksele żarzą się i odlatują jako popiół), druga gaśnie w cieniu, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
   let picked=false;

@@ -407,7 +407,7 @@ const BAYC = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5], bthC = (x, 
 let hcBusy = false;
 function hc90e(assets, arrive, done) {
   if (hcBusy) return; hcBusy = true;
-  const ov = document.createElement('div'); ov.className = 'hc-ov'; ov.innerHTML = '<canvas></canvas><span class="hc-skip dos">[ Esc ] pomiń</span>'; document.body.appendChild(ov);
+  const ov = document.createElement('div'); ov.className = 'hc-ov'; ov.innerHTML = '<canvas></canvas><span class="hc-skip dos">[ Esc ] ' + (document.documentElement.lang === 'en' ? 'skip' : 'pomiń') + '</span>'; document.body.appendChild(ov);
   // pionowy ekran (telefon): cały widok obrócony o 90°, kamera trzymana pionowo, obraz na LCD w formacie 9:16
   const portrait = innerHeight > innerWidth;
   const cv = ov.querySelector('canvas'); const P = ps1(cv, portrait ? 216 : 384, portrait ? 384 : 216, { clear: 0x000000, alpha: 1 });
@@ -457,7 +457,7 @@ function hc90e(assets, arrive, done) {
 let phBusy = false;
 function phoneCall(assets, pickCv, arrive, done, shown) {
   if (phBusy) return; phBusy = true;
-  const ov = document.createElement('div'); ov.className = 'ph-ov'; ov.innerHTML = '<canvas></canvas><canvas></canvas><span class="hc-skip dos">[ Esc ] pomiń</span>'; document.body.appendChild(ov);
+  const ov = document.createElement('div'); ov.className = 'ph-ov'; ov.innerHTML = '<canvas></canvas><canvas></canvas><span class="hc-skip dos">[ Esc ] ' + (document.documentElement.lang === 'en' ? 'skip' : 'pomiń') + '</span>'; document.body.appendChild(ov);
   const [cv, c2] = ov.querySelectorAll('canvas'), W = innerWidth, H = innerHeight;
   const dv = W < 700 ? 2 : 3, P = ps1(cv, Math.ceil(W / dv), Math.ceil(H / dv), { alpha: 0 }); lights(P); P.cam.position.set(0, 0, 3); P.cam.lookAt(0, 0, 0);
   c2.width = W; c2.height = H; const x = c2.getContext('2d');
