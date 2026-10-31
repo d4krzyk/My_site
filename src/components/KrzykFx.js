@@ -29,6 +29,8 @@ export default function KrzykFx({ children }) {
   useEffect(() => {
     let off = [], alive = true;
     const sec = ref.current.closest('.krzyk');
+    const mu = sec.querySelector('#k-muzyka .mu-host');
+    if (mu) import('@/engine/muzyka').then(({ initMuzyka }) => { if (alive) off.push(initMuzyka(mu, { bg: asset('/krzyk/bg-mid.webp'), tv: asset('/krzyk/3d/old_tv.glb'), vcr: asset('/krzyk/3d/vhs_player.glb'), tape: asset('/krzyk/3d/vhs_tape.glb'), remote: asset('/krzyk/3d/remote.glb') })); });
     import('@/engine/krzyklang').then(({ initKrzykLang }) => { if (alive) off.push(initKrzykLang(sec)); });
     import('@/engine/krzykfx').then(({ initKrzykFx }) => { if (alive) off.push(initKrzykFx(sec, { pieces: n => asset(`/krzyk/pieces/${n}`) })); });
     // przewijanie sekcjami: wariant B (skok blokowy); ?klatki=a — taśma filmowa

@@ -102,12 +102,21 @@ Zmiana jest animowana zgodnie z motywem miejsca, żeby nie było nagłego przesk
 - Przy ograniczeniu animacji (`RM`) tekst podmienia się natychmiast.
 - Dodając nowy tekst informacyjny, dodaj od razu wersję angielską w tym samym miejscu (`data-en`, słownik albo drugi blok).
 
+## Muzyka (pokój z telewizorem)
+
+Sekcja `#k-muzyka` w Krzyku (`src/engine/muzyka.js`, markup w `krzyk/page.js`, style `.mu-*` w `globals.css`): kanciasta wyrwa w zinie (tło strony z tego miejsca, `bg-mid.webp`, brzegi: raster, suche pociągnięcia czarnego pędzla, czerwony tusz; bez taśm i bez białego brzegu),
+za nią ciemny pokój PSX: dywan okrągły, ściana w pasy, okno z roletami po prawej (światło miasta, paski na podłodze i ścianie), plakat, kable, telewizor po lewej z magnetowidem, jedna kaseta i pilot na dywanie.
+Modele w `public/krzyk/3d/` (`old_tv`, `vhs_player`, `vhs_tape`, `remote`). Z siatki magnetowidu wycięty jest wbudowany, leżący fragment kasety (`stripFront`), bo animowana kaseta jest osobna (inaczej były dwie).
+Sterowanie tylko klikiem w obiekty (bez przycisków): kaseta → wsuwa się do magnetowidu i rusza klip, magnetowid → wysuwa kasetę, pilot → zmienia klip, telewizor → kamera najeżdża i ekran wypełnia kadr (Esc albo kolejny klik cofa).
+Ekran i wyświetlacz VFD to płótna 2D przyklejone homografią do modelu. **Nie dodawać migających cząsteczek** (kurz, losowe kreski na ekranie): wyglądały źle i zostały usunięte; szum jest tylko na pustym ekranie.
+Tabliczka „muzyka” (tekstura płyty wyboru, krzywo) w prawym górnym rogu. Później: plakietki z tytułami utworów, z których wysuwa się kaseta i rusza klip z YouTube.
+
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
 
 - **Ustalone w wizualizacjach (artefakt „Wizualizacje dla Krzyku”), do wdrożenia:**
   - Persony (A2): maski stoją u góry; aktywna jedzie w lewy górny róg, obok imię, bez napisów; patrzy w środek strony i „duka” w rytmie pisanego tekstu (każda inaczej). Pozostałe zostają u góry przyciemnione. Przejście po kolei: najpierw poprzednia wraca do cienia, potem następna wychodzi do rogu.
   - Dźwięk: wybór „z dźwiękiem / bez” na ekranie ostrzeżenia w bramie; w lewym dolnym rogu każdej strony ikonka oscyloskopu (płaska linia = wył, fala krzyku = wł) z napisem „dźwięk” / „wł·wył” pod spodem; wykończenie do wyboru przez autora (monitor, klamry bramy, wycinek zinu). Głosy person grają, gdy dźwięk jest włączony (bez osobnego przycisku).
-  - Muzyka (A1): kanciasta wyrwa w zinie na prawie całą sekcję, zin tylko przy krawędziach, brzegi w stylu corporate grunge (suchy pędzel, czerwony tusz, raster, taśma). W środku ciemny pokój PSX z brudnymi teksturami: telewizor i magnetowid na dywanie, okno z roletami i światłem miasta, co jakiś czas latarka przez rolety, ciemne meble. Modele: `old_tv`, `vhs_player`, `vhs_tape`, `remote` (konwersje PSX z planszy, sekcja H). Później: plakietki z tytułami utworów, z których wysuwa się kaseta do magnetowidu i rusza klip z YouTube.
+  - (wdrożone) Muzyka (A1): zob. sekcja „Muzyka (pokój z telewizorem)” wyżej.
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
 - **Do sprawdzenia na prawdziwych urządzeniach (nie testowane, tylko emulacja w Chromium):** przewijanie sekcjami w Krzyku na gładziku (Mac); animacje na prawdziwym telefonie i tablecie; Safari (m.in. powrót z GitHuba przyciskiem „wstecz”).
 - **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).

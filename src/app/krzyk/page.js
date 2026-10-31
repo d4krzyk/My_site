@@ -59,7 +59,16 @@ export default function Krzyk() {
                 <span className="k-pick-s dos" data-en="call · write">zadzwoń · napisz</span>
               </button>
             </nav>
-            {SUBS.map(([id, code, h, txt, he, txte]) => id === 'k-persony' ? (
+            {SUBS.map(([id, code, h, txt, he, txte]) => id === 'k-muzyka' ? (
+              <section className="k-sub k-muzyka" id={id} key={id}>
+                <span className="k-code dos">{code}</span>
+                <h2 data-type="" data-seed={code.charCodeAt(1)} data-en={he}>{h}</h2>
+                {/* pokój z telewizorem w zinowej wyrwie (engine/muzyka): klik w kasetę, magnetowid, pilot albo ekran; tabliczka krzywo naklejona w rogu */}
+                <div className="mu-host">
+                  <div className="mu-plq" aria-hidden="true"><i style={{ backgroundImage: `url(${asset('/krzyk/plate-0.webp')})` }} /><u /><s /><b data-en="music">muzyka</b></div>
+                </div>
+              </section>
+            ) : id === 'k-persony' ? (
               <section className="k-sub k-persony" id={id} key={id}>
                 <span className="k-code dos">{code}</span>
                 <h2 data-type="" data-seed={code.charCodeAt(1)} data-en={he}>{h}</h2>
