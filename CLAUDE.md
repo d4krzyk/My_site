@@ -45,6 +45,8 @@ bitmapowa czcionka): Visual Echoes (sonar, echa odszyfrowują bębny), WikiRooms
 analizator na cały ekran), MusicClubApp (winyl 3D nad szachownicą Amigi, napis wokół płyty rozświetla się jak kula disco), ShadowDetection (lampa okrąża
 siatkę, cienie, na końcu rozświetla przejście), GameInJava (automat, jackpot, spadające komórki). Na pionowym ekranie (telefon) sceny mają osobny układ pionowy, nie obrót poziomego: płótno 180 px szerokości i wysokość z proporcji ekranu, większa siatka
 wyśrodkowana pionowo, efekty (sonar, analizator, lampa, wiry) sięgają całej wysokości, nazwa projektu w końcowej klatce złamana na wiersze.
+Przed animacją strona się zawala: od miejsca kliknięcia (albo od terminala) rozlewa się ciemność z ditherem, na jej froncie pasmo zakodowanych bloków w kolorze
+projektu, ekran gaśnie, a animacja wyłania się z ciemności progiem Bayera (`collapse` w `openProject`).
 Jeśli przeglądarka zablokuje wyskakujące okno (animacja trwa kilka sekund), zostaje klikalny odnośnik „github ›”.
 **W przyszłości projekty dostaną własne podstrony z prezentacją** (zob. plan niżej): animacja ma wtedy prowadzić do podstrony zamiast do GitHuba, więc
 miejsce docelowe jest jedną funkcją (`finish` w `openProject`), a sama animacja zostaje bez zmian.

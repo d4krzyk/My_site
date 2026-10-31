@@ -174,9 +174,9 @@ export function initMaszyn(root, opts) {
     if ('ResizeObserver' in window) new ResizeObserver(update).observe(wrap);
     else addEventListener('resize', update, {passive: true});
     pre.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a.lk'); if (!a) return; e.preventDefault();
-      const url = a.href, key = PROJECT_KEYS[a.dataset.k]; a.classList.add('zap');
+      const url = a.href, key = PROJECT_KEYS[a.dataset.k], at = { x: e.clientX, y: e.clientY }; a.classList.add('zap');
       // projekty (A-F): animacja przejścia w kolorze projektu, po niej repozytorium; GitHub i LinkedIn autora otwierają się od razu
-      setTimeout(() => { a.classList.remove('zap'); if (key && !RM) import('./projopen').then(m => m.openProject(key, url)); else window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
+      setTimeout(() => { a.classList.remove('zap'); if (key && !RM) import('./projopen').then(m => m.openProject(key, url, at)); else window.open(url, '_blank', 'noopener'); }, RM ? 0 : 260); });
     // kopiowanie: sam tekst CV, bez wcięcia pod ryciny
     pre.addEventListener('copy', e => {
       const sel = getSelection(); if (!sel || sel.isCollapsed || !pre.contains(sel.anchorNode) && !pre.contains(sel.focusNode)) return;

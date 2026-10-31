@@ -6,8 +6,9 @@
 // Na pionowym ekranie (telefon) sceny mają osobny układ pionowy (nie obrót poziomego): siatka większa, efekty na całą wysokość.
 // Po animacji otwiera się repozytorium na GitHubie (w przyszłości: podstrona projektu). Gdy przeglądarka zablokuje wyskakujące okno (animacja trwa kilka sekund),
 // na ekranie zostaje klikalny odnośnik.
-import { RM } from './core';
+import { RM, bth } from './core';
 
+const PROJ_COL = { VE: [63, 240, 255], WR: [124, 255, 107], RM: [255, 179, 71], MC: [255, 79, 216], SD: [180, 140, 255], GJ: [255, 210, 63] };
 export const PROJECT_KEYS = { A: 'VE', B: 'WR', C: 'RM', D: 'MC', E: 'SD', F: 'GJ' };
 const END = { VE: 3750, WR: 3750, RM: 3800, MC: 5850, SD: 5350, GJ: 3750 };
 // układ poziomy 320x180 albo pionowy (telefon): szerokość 180, wysokość z proporcji ekranu; sceny skalują się do W i H
@@ -140,22 +141,43 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
       const fl = seg(t, 3050, 3450); if (fl > 0) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (bay(x, y) < fl * 1.4 - y / H * .4) D[y * W + x] = ramp(.25 + .1 * ((y >> 3) % 2), x, y);
       if (t > 3350) page(seg(t, 3350, 3700)); },
   };
-  return t => { D.fill(GREY[0]); if (V !== 'MC' && V !== 'SD') term(t); P[V](t); lx.putImageData(img, 0, 0); cx.imageSmoothingEnabled = false; cx.drawImage(low, 0, 0, cv.width, cv.height); };
+  return (t, rv = 1) => { D.fill(GREY[0]); if (V !== 'MC' && V !== 'SD') term(t); P[V](t);
+    if (rv < 1) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (bay(x, y) > rv * 1.05) D[y * W + x] = GREY[0];    // wyłanianie z ciemności progiem Bayera
+    lx.putImageData(img, 0, 0); cx.imageSmoothingEnabled = false; cx.drawImage(low, 0, 0, cv.width, cv.height); };
 }
 
 let busy = false;
-export function openProject(key, url) {
+const DUR = 900;      // czas zawalenia strony w ciemność (ms)
+export function openProject(key, url, origin) {
   const open = () => { const w = window.open(url, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } return !!w; };
   if (RM || !END[key] || busy) { if (!busy) open(); return; }
   busy = true;
   const portrait = innerHeight > innerWidth, W = portrait ? 180 : 320, H = portrait ? Math.max(240, Math.min(420, Math.round(180 * innerHeight / innerWidth))) : 180;
-  const ov = document.createElement('div'); ov.className = 'pj-ov'; ov.innerHTML = `<canvas width="${W}" height="${H}"></canvas>`; document.body.appendChild(ov);
-  const cv = ov.firstChild, render = scene(key, cv, W, H, portrait); let t0 = 0, last = -1e9, done = false, raf = 0;
+  const ov = document.createElement('div'); ov.className = 'pj-ov'; ov.style.background = 'transparent'; ov.innerHTML = `<canvas width="${W}" height="${H}" style="visibility:hidden"></canvas>`; document.body.appendChild(ov);
+  const cv = ov.firstChild, render = scene(key, cv, W, H, portrait);
+  // zawalenie: od miejsca kliknięcia ciemność rozlewa się po stronie (dither), a na jej froncie pasmo zakodowanych bloków w kolorze projektu
+  const PX = 3, CWc = Math.ceil(innerWidth / PX), CHc = Math.ceil(innerHeight / PX), cc = document.createElement('canvas'); cc.width = CWc; cc.height = CHc;
+  cc.style.cssText = `position:absolute;left:0;top:0;width:${CWc * PX}px;height:${CHc * PX}px;image-rendering:pixelated`; ov.appendChild(cc);
+  const cx2 = cc.getContext('2d'), shade = cx2.createImageData(CWc, CHc), S = shade.data, col = PROJ_COL[key], ox = (origin && origin.x != null ? origin.x : innerWidth / 2) / PX, oy = (origin && origin.y != null ? origin.y : innerHeight / 2) / PX;
+  const Rmax = Math.max(Math.hypot(ox, oy), Math.hypot(CWc - ox, oy), Math.hypot(ox, CHc - oy), Math.hypot(CWc - ox, CHc - oy)), BW = 34, hh = (a, b, c) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  const collapse = t => { const k = Math.min(1, t / DUR), R = k * k * (3 - 2 * k) * (Rmax + BW + 6), fr = (t / 70) | 0;
+    for (let y = 0; y < CHc; y++) for (let x = 0; x < CWc; x++) { const i = (y * CWc + x) * 4, d = Math.hypot(x - ox, y - oy), dd = R - d;
+      if (dd <= 0) { S[i + 3] = 0; continue; }
+      if (dd >= BW) { S[i] = 5; S[i + 1] = 4; S[i + 2] = 8; S[i + 3] = 255; continue; }
+      const u = dd / BW;                                                             // 0 na froncie, 1 wewnątrz
+      if (u * 1.35 <= bth(x, y)) { S[i + 3] = 0; continue; }                         // front rozpuszcza stronę ditherem
+      const lv = Math.round((1 - u) * 3.4 * (.4 + hh(x / 5 | 0, y / 7 | 0, fr))), lit = lv > 0 && bth(x, y) < lv / 3.6, w = hh(x / 5 | 0, y / 7 | 0, 7) < .12;
+      if (lit) { S[i] = w ? 255 : col[0]; S[i + 1] = w ? 255 : col[1]; S[i + 2] = w ? 255 : col[2]; } else { S[i] = 5; S[i + 1] = 4; S[i + 2] = 8; }
+      S[i + 3] = 255; }
+    cx2.putImageData(shade, 0, 0); };
+  let phase = 'collapse', t0 = 0, last = -1e9, done = false, raf = 0;
   const close = () => { cancelAnimationFrame(raf); removeEventListener('keydown', onKey); ov.classList.add('out'); setTimeout(() => { ov.remove(); busy = false; }, 380); };
-  const finish = () => { if (done) return; done = true; cancelAnimationFrame(raf); render(END[key]);
-    if (open()) close();
-    else { ov.style.cursor = 'default'; const a = document.createElement('a'); a.className = 'pj-link dos'; a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'github ›'; a.addEventListener('click', () => setTimeout(close, 50)); ov.append(a); a.focus(); } };
+  const finish = () => { if (done) return; done = true; cancelAnimationFrame(raf); if (phase === 'scene') render(END[key]);
+    ov.style.background = '#000'; if (open()) close();
+    else { ov.style.cursor = 'default'; cv.style.visibility = ''; cc.remove(); const a = document.createElement('a'); a.className = 'pj-link dos'; a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'github ›'; a.addEventListener('click', () => setTimeout(close, 50)); ov.append(a); a.focus(); } };
   const onKey = e => { if (e.key === 'Escape') finish(); }; addEventListener('keydown', onKey); ov.addEventListener('click', e => { if (!e.target.closest('a')) finish(); });
-  const step = now => { raf = requestAnimationFrame(step); if (!t0) t0 = now; const t = now - t0; if (t - last < 30) return; last = t; if (t >= END[key]) { finish(); return; } render(t); };
+  const step = now => { raf = requestAnimationFrame(step); if (!t0) t0 = now; const t = now - t0; if (t - last < 30) return; last = t;
+    if (phase === 'collapse') { collapse(Math.min(t, DUR)); if (t > DUR + 180) { phase = 'scene'; t0 = now; last = -1e9; ov.style.background = '#000'; cc.remove(); cv.style.visibility = ''; render(0, 0); } return; }
+    if (t >= END[key]) { finish(); return; } render(t, Math.min(1, t / 700)); };
   raf = requestAnimationFrame(step);
 }
