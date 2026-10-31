@@ -29,11 +29,14 @@ ani w opisach commitów i PR-ów — szczegóły zna tylko autor.
 Na ekranie LCD kamery jest na razie zastępcze zdjęcie (`public/krzyk/lcd.webp`). Gdy powstanie sekcja ze zdjęciami,
 podmienić je na zdjęcie z tej sekcji. Na pionowych ekranach (telefon) animacja jest obrócona o 90°, a obraz na LCD ma format 9:16.
 
+## Telefon → kontakt (przejście)
+
+Klik w telefon: model wylatuje z karty, kamera najeżdża na ekran modelu, aż LCD wypełni okno (na telefonie szerokość). Na ekraniku 84×48
+(Nokia 3310, `src/engine/nokia.js`): „HALO? / CZY TO...?", fala krzyku jak na oscyloskopie wycina z siebie KRZYK, potem zielony szum zalewa stronę
+i odsłania sekcję kontaktu.
+
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
 
-- **Kontakt (telefon): animacja wejścia.** Najazd na telefon; telefon dzwoni, z jego przycisków bije światło. Wyskakuje pikselowy
-  dymek z liniami od telefonu, jak od kogoś, kto krzyczy do słuchawki, z napisem „HALO? CZY TO KRZYK?!”. Odpowiedzią są trzy kropki
-  („...”), które dodają grozy. Potem ditherowy przeskok do sekcji kontaktu (jak w przejściach walkman → muzyka i persony). Na telefonie ta sama animacja.
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
 - **Przewijanie sekcjami (Krzyk, wariant B – skok blokowy):** sprawdzić na gładziku (Mac); przystanki pośrednie przy wysokim kolażu są już dodane (nie testowane na gładziku).
 - **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).

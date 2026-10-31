@@ -393,3 +393,7 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 @media (prefers-reduced-motion:reduce){.sg-panel input[type=range]::-webkit-slider-thumb{animation:none}.sg-panel input[type=range]::-moz-range-thumb{animation:none}}
 @media (max-width:520px){.sg-row{flex-direction:column;gap:4px}.sg-panel{padding:40px 12px 14px}.sg-panel::before{font-size:13px}}
 @media (max-width:860px){.sg-grid{grid-template-columns:1fr}.sigen{padding-top:74px}.sg-head{padding-right:0}}
+/* telefon → kontakt: model 3D (PS1) i nad nim ostry ekranik LCD */
+.ph-ov{position:fixed;inset:0;z-index:50;cursor:pointer}
+.ph-ov canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated}
+@media (pointer:coarse){.ph-ov .hc-skip{display:none}}
