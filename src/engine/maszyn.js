@@ -212,6 +212,7 @@ export function initMaszyn(root, opts) {
       if (!root.isConnected) { removeEventListener('krzyk-lang', onLang); return; }
       if (e.detail === lang) return; lang = e.detail; BLOCKS = lang === 'en' ? BL_EN : BL_PL;
       layout(); buildO(); requestAnimationFrame(place);
+      import('./xlate').then(({ decodeSwap }) => root.querySelectorAll('[data-anim]').forEach((el, i) => decodeSwap(el, (lang === 'en' ? el.dataset.en : el.dataset.pl) || el.textContent, { delay: i * 80 })));   // nazwa działu (tytuł i prompt)
       if (dec) return;                                         // trwa pierwsze rozkodowanie: ono dokończy już po nowemu
       if (RM) { resetSv(); render(null); orn.grow(performance.now()); return; }
       const t0 = performance.now(); dec = { t0, now: t0 }; orn.grow(t0 + 250);

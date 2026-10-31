@@ -92,7 +92,7 @@ animacji w systemie nagłówek jest zwykłym tekstem.
 ## Język PL/EN i animowana zmiana
 
 Przełącznik języka (`LangKeys`, zdarzenie `krzyk-lang`, `src/lib/lang.js`) zmienia tylko teksty informacyjne. **Nazwy własne zostają bez zmian:** persony (Anxtan, Nugis, Stoir), KRZYK, imię i nazwisko autora,
-nazwy projektów i instytucji, napisy w tle (wersy kolażu, listing cracktro, ekran Nokii w przejściu kontaktu). Nazwy działów w nawigacji kartami mają wersje (Brama/Gate, Maszynologia/Machinology).
+nazwy projektów i instytucji, napisy w tle (wersy kolażu, listing cracktro, ekran Nokii w przejściu kontaktu). Nazwy działów mają wersje (Brama/Gate, Maszynologia/Machinology: też tytuł i prompt na stronie Maszynologii).
 Zmiana jest animowana zgodnie z motywem miejsca, żeby nie było nagłego przeskoku:
 - **Krzyk (maszyna do pisania):** nagłówki i podpisy cofają się wstecz i piszą od nowa (`retype` w `krzykfx.js`, `src/engine/krzyklang.js`), akapity tak samo bez rozbijania na litery (`typeSwap` w `xlate.js`);
   opis aktywnej persony czyta się od nowa jej głosem (`persvoice.js`). Teksty poza oknem podmieniają się od razu. Teksty dwujęzyczne w znacznikach: atrybut `data-en` (oryginał PL zostaje w `data-pl`), `data-en-aria` dla etykiet;
