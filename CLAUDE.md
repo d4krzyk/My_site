@@ -43,7 +43,8 @@ Kliknięcie nazwy projektu w Release info albo `open <projekt>` w terminalu odtw
 repozytorium na GitHubie (nowa karta). Każdy projekt ma własną animację w swoim kolorze, w niskiej rozdzielczości 320×180 (piksel ×3, dither Bayera,
 bitmapowa czcionka): Visual Echoes (sonar, echa odszyfrowują bębny), WikiRooms (pokój po pokoju, na końcu drzwi), Remuz.io (korektor LED, potem
 analizator na cały ekran), MusicClubApp (winyl 3D nad szachownicą Amigi, napis wokół płyty rozświetla się jak kula disco), ShadowDetection (lampa okrąża
-siatkę, cienie, na końcu rozświetla przejście), GameInJava (automat, jackpot, spadające komórki). Na pionowym ekranie nakładka jest obrócona o 90° (jak HC90E).
+siatkę, cienie, na końcu rozświetla przejście), GameInJava (automat, jackpot, spadające komórki). Na pionowym ekranie (telefon) sceny mają osobny układ pionowy, nie obrót poziomego: płótno 180 px szerokości i wysokość z proporcji ekranu, większa siatka
+wyśrodkowana pionowo, efekty (sonar, analizator, lampa, wiry) sięgają całej wysokości, nazwa projektu w końcowej klatce złamana na wiersze.
 Jeśli przeglądarka zablokuje wyskakujące okno (animacja trwa kilka sekund), zostaje klikalny odnośnik „github ›”.
 **W przyszłości projekty dostaną własne podstrony z prezentacją** (zob. plan niżej): animacja ma wtedy prowadzić do podstrony zamiast do GitHuba, więc
 miejsce docelowe jest jedną funkcją (`finish` w `openProject`), a sama animacja zostaje bez zmian.

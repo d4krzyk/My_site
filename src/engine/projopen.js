@@ -3,15 +3,15 @@
 //   VE Visual Echoes: sonar, echa odszyfrowują bębny · WR WikiRooms: pokój po pokoju, na końcu drzwi · RM Remuz.io: korektor LED, potem analizator na cały ekran
 //   MC MusicClubApp: winyl 3D (PS1) nad szachownicą Amigi, napis wokół płyty rozświetla się jak kula disco · SD ShadowDetection: lampa okrąża siatkę i rzuca cienie
 //   GJ GameInJava: automat, bębny stają po kolei, jackpot, komórki spadają
+// Na pionowym ekranie (telefon) sceny mają osobny układ pionowy (nie obrót poziomego): siatka większa, efekty na całą wysokość.
 // Po animacji otwiera się repozytorium na GitHubie (w przyszłości: podstrona projektu). Gdy przeglądarka zablokuje wyskakujące okno (animacja trwa kilka sekund),
 // na ekranie zostaje klikalny odnośnik.
 import { RM } from './core';
 
 export const PROJECT_KEYS = { A: 'VE', B: 'WR', C: 'RM', D: 'MC', E: 'SD', F: 'GJ' };
 const END = { VE: 3750, WR: 3750, RM: 3800, MC: 5850, SD: 5350, GJ: 3750 };
-const W = 320, H = 180;
-
-function scene(V, cv) {
+// układ poziomy 320x180 albo pionowy (telefon): szerokość 180, wysokość z proporcji ekranu; sceny skalują się do W i H
+function scene(V, cv, W, H, portrait) {
 const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], col: [63, 240, 255] }, WR: { cmd: 'OPEN WIKIROOMS', rows: ['WIKI', 'ROOMS'], offs: [1, 4], col: [124, 255, 107] },
     RM: { cmd: 'OPEN REMUZ.IO', rows: ['REMUZ.IO'], col: [255, 179, 71] }, MC: { cmd: 'OPEN MUSICCLUBAPP', rows: ['MUSIC', 'CLUB', 'APP'], col: [255, 79, 216] },
     SD: { cmd: 'OPEN SHADOWDETECTION', rows: ['SHADOW', 'DETECTION'], col: [180, 140, 255] }, GJ: { cmd: 'OPEN GAMEINJAVA', rows: ['GAME', 'IN', 'JAVA'], col: [255, 210, 63] } }[V];
@@ -34,7 +34,7 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
     for (let j = 0; j < s; j++) for (let i = 0; i < s; i++) { const X = x + q * s + i, Y = y + r * s + j; if (clip && (Y < clip[0] || Y >= clip[1])) continue; if (a < 1 && bay(X, Y) > a) continue; ps(X, Y, c); } };
   const text = (s, x, y, c, k = 1) => [...s].forEach((ch, i) => glyph(ch, x + i * 6 * k, y, c, k));
   // siatka 10x10: komórki 14x16, znaki 5x7 w skali 2
-  const N = 10, CW = 14, CH = 16, GX = (W - N * CW) / 2, GY = 18, CX = W / 2, CY = GY + N * CH / 2;
+  const N = 10, CW = portrait ? 16 : 14, CH = portrait ? 20 : 16, GX = (W - N * CW) / 2, GY = portrait ? Math.round((H - N * CH) / 2) + 8 : 18, CX = W / 2, CY = GY + N * CH / 2, SX = W / 320, SY = H / 180, RMAX = Math.hypot(W / 2, H / 2) * 1.05 + 10;
   const target = Array.from({ length: N }, (_, r) => Array.from({ length: N }, (_, q) => { const k = r - Math.floor((N - PR.rows.length) / 2), row = PR.rows[k];
     if (row !== undefined) { const off = PR.offs ? PR.offs[k] : Math.floor((N - row.length) / 2), ch = row[q - off]; if (ch && ch !== ' ') return { ch, name: true }; }
     const v = (Math.sin(q * .7 + r * .4) + Math.sin((q - r) * .5)) / 4 + .5; return { ch: null, v, name: false }; }));
@@ -51,19 +51,20 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
   const all = f => { for (let r = 0; r < N; r++) for (let q = 0; q < N; q++) f(r, q, target[r][q]); };
   const frame = a => { if (a <= 0) return; const c = ramp(.55 * a, 0, 0), c2 = ramp(.22 * a, 0, 0); for (let i = -4; i < N * CW + 4; i++) { ps(GX + i, GY - 4, c); ps(GX + i, GY + N * CH + 3, c); if (i % 2 === 0) { ps(GX + i, GY - 6, c2); ps(GX + i, GY + N * CH + 5, c2); } }
     for (let j = -4; j < N * CH + 4; j++) { ps(GX - 4, GY + j, c); ps(GX + N * CW + 3, GY + j, c); if (j % 2 === 0) { ps(GX - 6, GY + j, c2); ps(GX + N * CW + 5, GY + j, c2); } } };
-  const term = t => { text('GOSC@MASZYNOLOGIA:~/PROJEKTY$', 4, 3, pack(255, 58, 58)); const s = PR.cmd, n = Math.floor(seg(t, 0, 420) * s.length); text(s.slice(0, n), 184, 3, GREY[4]); if ((t / 250 | 0) % 2) fill(184 + n * 6, 3, 5, 7, GREY[4]); };
+  const term = t => { text('GOSC@MASZYNOLOGIA:~/PROJEKTY$', 4, 3, pack(255, 58, 58)); const s = PR.cmd, n = Math.floor(seg(t, 0, 420) * s.length), tx = portrait ? 4 : 184, ty = portrait ? 14 : 3; text(s.slice(0, n), tx, ty, GREY[4]); if ((t / 250 | 0) % 2) fill(tx + n * 6, ty, 5, 7, GREY[4]); };
   // strona projektu: rozpuszcza się progiem Bayera
   const page = a => { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (bay(x, y) < a * 1.05) D[y * W + x] = ramp(.1 + .05 * Math.sin(y / 3), x, y);
-    if (a > .5) { const nm = PR.rows.join(' '), k = nm.length > 13 ? 2 : 3; text(nm, (W - nm.length * 6 * k) / 2, 70, ramp(1.2, 0, 0), k); text('> GITHUB', (W - 8 * 6) / 2, 104, GREY[3]); } };
+    if (a > .5) { const lines = portrait ? PR.rows : [PR.rows.join(' ')], mx = Math.max(...lines.map(l => l.length)), k = portrait ? Math.max(1, Math.min(3, Math.floor((W - 8) / (mx * 6)))) : mx > 13 ? 2 : 3, lh = 8 * k + 5, y0 = Math.round(H / 2 - lines.length * lh / 2 - (portrait ? 8 : 0));
+      lines.forEach((l, i) => text(l, (W - l.length * 6 * k) / 2, y0 + i * lh, ramp(1.2, 0, 0), k)); text('> GITHUB', (W - 8 * 6) / 2, y0 + lines.length * lh + 8, GREY[3]); } };
   const P = {
     // sonar: pikselowe, ditherowane pierścienie echa; komórka zatrzymuje się, gdy przejdzie przez nią pierwsza fala
     VE(t) { const pings = [650, 1250, 1850], sp = .1;
-      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const d = Math.hypot(x - CX, (y - CY) * 1.1); let I = 0; for (const p of pings) { const R = (t - p) * sp; if (R > 0 && R < 190) I = Math.max(I, (1 - Math.abs(d - R) / 9) * (1 - R / 190)); }
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const d = Math.hypot(x - CX, (y - CY) * 1.1); let I = 0; for (const p of pings) { const R = (t - p) * sp; if (R > 0 && R < RMAX) I = Math.max(I, (1 - Math.abs(d - R) / 9) * (1 - R / RMAX)); }
         if (I > 0) D[y * W + x] = ramp(I * .55, x, y); }
       frame(seg(t, 400, 600)); all((r, q) => { if (t < 420) return; const [x, y] = cxy(r, q), d = Math.hypot(x + 5 - CX, (y + 7 - CY) * 1.1); let near = 0;
         for (const p of pings) near = Math.max(near, 1 - Math.abs((t - p) * sp - d) / 10); drum(r, q, t, 650 + d / sp, .018, near > 0 ? ramp(.4 + near * .9, x, y) : GREY[1]); });
       if (t > 2250 && t < 3000) { const e = seg(t, 2250, 3000); for (const s of [-1, 1]) for (let k = 1; k <= 3; k++) all((r, q, T) => { if (!T.name) return; const [x, y] = cxy(r, q); glyph(T.ch, x + s * k * e * 14, y - 1, ramp(.9 - k * .2, x, y), 2, null, (1 - e) * (1 - k * .22)); }); }
-      const ex = seg(t, 2900, 3500); if (ex > 0) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const d = Math.hypot(x - CX, (y - CY) * 1.1), R = ex * 260; if (d < R) D[y * W + x] = ramp(.1 + .35 * (Math.floor((R - d) / 8) % 2), x, y); }
+      const ex = seg(t, 2900, 3500); if (ex > 0) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const d = Math.hypot(x - CX, (y - CY) * 1.1), R = ex * RMAX * 1.4; if (d < R) D[y * W + x] = ramp(.1 + .35 * (Math.floor((R - d) / 8) % 2), x, y); }
       if (t > 3300) page(seg(t, 3300, 3700)); },
     // pokoje: ściany kreślone piksel po pikselu, podłoga w kratkę, na końcu drzwi i snop światła
     WR(t) { frame(seg(t, 400, 600)); const rooms = [[0, 3, 3, 4], [0, 0, 4, 3], [4, 0, 3, 3], [3, 3, 4, 4], [7, 0, 3, 5], [7, 5, 3, 2], [5, 7, 5, 3], [0, 7, 5, 3]];
@@ -76,7 +77,7 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
         for (let y = dy - 3; y < dy + dh; y++) for (let x = dx - 3; x < dx + dw + 3; x++) ps(x, y, ramp(.25, x, y));
         for (let y = dy; y < dy + dh; y++) for (let x = dx; x < dx + dw; x++) { const open = Math.abs(x - CX) < o * dw / 2; ps(x, y, open ? RAMP[7] : ramp(.45 + ((x - dx) % 6 === 0 ? -.15 : 0), x, y)); }
         for (let y = dy + dh; y < H; y++) { const sp = (y - dy - dh) * (.4 + o); for (let x = CX - o * dw / 2 - sp; x < CX + o * dw / 2 + sp; x++) { const f = 1 - (y - dy - dh) / 70; if (bay(x, y) < f * o) ps(x, y, ramp(1.1, x, y)); } } }
-      const z = seg(t, 3100, 3450); if (z > 0) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (Math.abs(x - CX) < z * 180 * (1 - bay(x, y) * .3) && Math.abs(y - CY) < z * 120) D[y * W + x] = ramp(1.2, x, y);
+      const z = seg(t, 3100, 3450); if (z > 0) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (Math.abs(x - CX) < z * W * .56 * (1 - bay(x, y) * .3) && Math.abs(y - CY) < z * H * .67) D[y * W + x] = ramp(1.2, x, y);
       if (t > 3350) page(seg(t, 3350, 3700)); },
     // korektor: kolumny LED skaczą w rytm i po kolei blokują się w nazwę; potem analizator rozchodzi się od siatki na cały ekran i rośnie do pełna
     RM(t) { frame(seg(t, 400, 600)); const sp = seg(t, 2500, 3500);
@@ -92,7 +93,7 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
     // napis biegnie wokół płyty, rozsypane litery zjeżdżają się na miejsce i rozświetlają po kolei jak kula disco; na końcu najazd
     MC(t) { const spin = 420, stop = 3300, sk = seg(t, spin, stop), th = Math.PI * 2 * 5 * (1 - (1 - sk) ** 2), live = 1 - ease(seg(t, 2400, stop));
       const tilt = .9 + Math.sin(t / 520) * .18 * live - .5 * ease(seg(t, 2600, 3600)), wob = Math.sin(t / 380) * .14 * live;
-      const zoom = 1 + Math.pow(seg(t, 4700, 5600), 2.2) * 9, R = 66 * zoom, HZ = 96;
+      const zoom = 1 + Math.pow(seg(t, 4700, 5600), 2.2) * 9, R = (portrait ? 78 : 66) * zoom, HZ = CY - 2;
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
         if (y < HZ) { const b = Math.floor((y + t / 60) / 8) % 5; D[y * W + x] = ramp(.04 + b * .025, x, y); continue; }
         const z = 50 / (y - HZ + .5), u = (x - CX) * z / 34, v = z * 1.45 + t / 900, fog = cl(1 - z / 14);
@@ -111,13 +112,13 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
         const groove = (Math.floor(rr * 46) % 2) * .05, spec = Math.max(0, Math.cos((Math.atan2(v, u) - .8) * 2)) ** 8 * .5;
         D[y * W + x] = spec > .08 ? ramp(spec * 1.2, x, y) : rr > .97 ? GREY[2] : pack(14 + groove * 300, 12 + groove * 200, 20 + groove * 300); }
       // kula disco: po rozświetleniu po tle krążą jasne plamki
-      const dl = seg(t, 3900, 4300); if (dl > 0) for (let k = 0; k < 26; k++) { const a = hsh(k, 1) * 6.28 + t / 1100 * (k % 2 ? 1 : -1), rr = 60 + hsh(k, 2) * 120, X = CX + Math.cos(a) * rr * 1.4, Y = CY + Math.sin(a) * rr * .6;
+      const dl = seg(t, 3900, 4300); if (dl > 0) for (let k = 0; k < 26; k++) { const a = hsh(k, 1) * 6.28 + t / 1100 * (k % 2 ? 1 : -1), rr = 60 + hsh(k, 2) * 120, X = CX + Math.cos(a) * rr * 1.4 * SX, Y = CY + Math.sin(a) * rr * .6 * SY;
         if (Math.hypot((X - CX) / R, (Y - CY) / R) < 1) continue; fill(X - 1, Y, 3, 1, ramp(1.2 * dl, 0, 0)); fill(X, Y - 1, 1, 3, ramp(1.2 * dl, 0, 0)); }
       if (t > 5400) page(seg(t, 5400, 5800)); term(t); },
     // cienie: lampa powoli okrąża siatkę zgodnie z ruchem wskazówek zegara; każdy znak rzuca długi pikselowy cień, a komórki, nad którymi
     // przejdzie światło, odszyfrowują się; po pełnym okrążeniu lampa schodzi na środek, rozświetla się i zalewa ekran (przejście)
     SD(t) { const orb = seg(t, 500, 3700), a = -Math.PI / 2 + orb * Math.PI * 2, mid = ease(seg(t, 3800, 4400)), fl = seg(t, 4400, 5000);
-      const Lx = CX + Math.cos(a) * 118 * (1 - mid), Ly = CY + Math.sin(a) * 92 * (1 - mid), occ = new Uint8Array(W * H); D.fill(0);
+      const Lx = CX + Math.cos(a) * W * .369 * (1 - mid), Ly = CY + Math.sin(a) * H * (portrait ? .44 : .511) * (1 - mid), occ = new Uint8Array(W * H); D.fill(0);
       all((r, q, T) => { if (t < 420) return; const [x, y] = cxy(r, q), ca = Math.atan2(y + 7 - CY, x + 5 - CX); let da = ((ca - (-Math.PI / 2)) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
         T.lk = T.lk || (t > 500 && (orb * 2 * Math.PI > da + .25 || orb >= 1) ? t : 0);
         if (T.lk) { if (T.name) glyph(T.ch, x, y - 1, 1, 2); else if (T.v > .62) fill(x + 2, y + 3, 6, 8, 1); } else glyph(SCR[Math.floor(hsh(r * 10 + q, t / 50 | 0) * SCR.length)], x, y - 1, 1, 2); });
@@ -134,7 +135,7 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
         const fall = t > 2950 ? Math.pow((t - 2950 - (9 - r) * 25 - hsh(r, q) * 80) / 1000, 2) * 300 : 0; if (fall > 0) { const [x, y] = cxy(r, q); if (y + fall < H) { const T2 = target[r][q]; if (T2.name) glyph(T2.ch, x, y - 1 + fall, ramp(1.1, x, y), 2); else fill(x, y + fall, 10, 12, ramp(.2 + T2.v * .3, x, y)); } return; }
         drum(r, q, t, stop, .06, GREY[3]); });
       if (t > 2450 && t < 2950) { const on = (t / 100 | 0) % 2; if (on) all((r, q, T) => { if (T.name) { const [x, y] = cxy(r, q); fill(x - 2, y - 1, CW, CH, RAMP[5]); glyph(T.ch, x, y - 1, GREY[0], 2); } });
-        for (let k = 0; k < 40; k++) { const a = hsh(k, 1) * 6.28, u = (t - 2450) / 1000, X = CX + Math.cos(a) * u * (60 + hsh(k, 2) * 140), Y = CY + Math.sin(a) * u * 80 + u * u * 160; fill(X - 1, Y - 1, 3, 3, RAMP[5]); ps(X, Y, RAMP[8]); } }
+        for (let k = 0; k < 40; k++) { const a = hsh(k, 1) * 6.28, u = (t - 2450) / 1000, X = CX + Math.cos(a) * u * (60 + hsh(k, 2) * 140) * SX, Y = CY + (Math.sin(a) * u * 80 + u * u * 160) * SY; fill(X - 1, Y - 1, 3, 3, RAMP[5]); ps(X, Y, RAMP[8]); } }
       const fl = seg(t, 3050, 3450); if (fl > 0) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (bay(x, y) < fl * 1.4 - y / H * .4) D[y * W + x] = ramp(.25 + .1 * ((y >> 3) % 2), x, y);
       if (t > 3350) page(seg(t, 3350, 3700)); },
   };
@@ -146,8 +147,9 @@ export function openProject(key, url) {
   const open = () => { const w = window.open(url, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } return !!w; };
   if (RM || !END[key] || busy) { if (!busy) open(); return; }
   busy = true;
-  const ov = document.createElement('div'); ov.className = 'pj-ov'; ov.innerHTML = '<canvas width="320" height="180"></canvas>'; document.body.appendChild(ov);
-  const cv = ov.firstChild, render = scene(key, cv); let t0 = 0, last = -1e9, done = false, raf = 0;
+  const portrait = innerHeight > innerWidth, W = portrait ? 180 : 320, H = portrait ? Math.max(240, Math.min(420, Math.round(180 * innerHeight / innerWidth))) : 180;
+  const ov = document.createElement('div'); ov.className = 'pj-ov'; ov.innerHTML = `<canvas width="${W}" height="${H}"></canvas>`; document.body.appendChild(ov);
+  const cv = ov.firstChild, render = scene(key, cv, W, H, portrait); let t0 = 0, last = -1e9, done = false, raf = 0;
   const close = () => { cancelAnimationFrame(raf); removeEventListener('keydown', onKey); ov.classList.add('out'); setTimeout(() => { ov.remove(); busy = false; }, 380); };
   const finish = () => { if (done) return; done = true; cancelAnimationFrame(raf); render(END[key]);
     if (open()) close();
