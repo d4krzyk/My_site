@@ -498,8 +498,13 @@ function phoneCall(assets, pickCv, arrive, done, shown) {
       if (z > 0) { const out = z > 1.25 ? (z - 1.25) / .7 : 0, f = Math.floor(t / 70);
         for (let yy = 0; yy < H; yy += cs) for (let xx = 0; xx < W; xx += cs) { const dd = Math.hypot(xx - cx0, (yy - cy0) * 1.3) / R, gx = xx / cs | 0, gy = yy / cs | 0;
           if (bay(gx, gy) > z * 1.5 - dd || bay(gx + 1, gy + 2) < out * 1.2) continue; const v = hash(gx, gy, f); x.fillStyle = v < .45 ? '#16201a' : v < .8 ? '#6f9a5e' : '#a8cc8c'; x.fillRect(xx, yy, cs - 1, cs - 1); }
+        // rozpuszczanie: ten sam wzór (próg Bayera na blokach) wycina wszystko, co jest na płótnie, czyli także obraz LCD wypełniony szumem i przyciemnienie wokół niego,
+        // więc sekcja kontaktu odsłania się stopniowo; wcześniej rzedły tylko dodatkowe bloki szumu, a LCD znikał w jednej klatce przy końcu
+        if (out > 0) { x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000';
+          for (let yy = 0; yy < H; yy += cs) for (let xx = 0; xx < W; xx += cs) if (bay((xx / cs | 0) + 1, (yy / cs | 0) + 2) < out * 1.2) x.fillRect(xx, yy, cs, cs);
+          x.globalCompositeOperation = 'source-over'; }
         if (z > 1.1 && !jumped) { jumped = true; cv.style.visibility = 'hidden'; arrive(); }
-        if (out >= 1) end(); } }
+        if (out >= .85) end(); } }
   });
 }
 
