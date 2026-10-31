@@ -40,14 +40,15 @@ gra tylko jej imię. Przy ograniczeniu animacji nic z tego nie działa, a pełny
 ## Otwieranie projektów (Maszynologia)
 
 Kliknięcie nazwy projektu w Release info albo `open <projekt>` w terminalu odtwarza animację przejścia (`src/engine/projopen.js`), potem otwiera się
-repozytorium na GitHubie (nowa karta). Każdy projekt ma własną animację w swoim kolorze, w niskiej rozdzielczości 320×180 (piksel ×3, dither Bayera,
+repozytorium na GitHubie (w tej samej karcie, bez przycisku; powrót przyciskiem „wstecz” usuwa nakładkę). Każdy projekt ma własną animację w swoim kolorze, w niskiej rozdzielczości 320×180 (piksel ×3, dither Bayera,
 bitmapowa czcionka): Visual Echoes (sonar, echa odszyfrowują bębny), WikiRooms (pokój po pokoju, na końcu drzwi), Remuz.io (korektor LED, potem
 analizator na cały ekran), MusicClubApp (winyl 3D nad szachownicą Amigi, napis wokół płyty rozświetla się jak kula disco), ShadowDetection (lampa okrąża
 siatkę, cienie, na końcu rozświetla przejście), GameInJava (automat, jackpot, spadające komórki). Na pionowym ekranie (telefon) sceny mają osobny układ pionowy, nie obrót poziomego: płótno 180 px szerokości i wysokość z proporcji ekranu, większa siatka
 wyśrodkowana pionowo, efekty (sonar, analizator, lampa, wiry) sięgają całej wysokości, nazwa projektu w końcowej klatce złamana na wiersze.
 Przed animacją strona się zawala: od miejsca kliknięcia (albo od terminala) rozlewa się ciemność z ditherem, na jej froncie pasmo zakodowanych bloków w kolorze
 projektu, ekran gaśnie, a animacja wyłania się z ciemności progiem Bayera (`collapse` w `openProject`).
-Jeśli przeglądarka zablokuje wyskakujące okno (animacja trwa kilka sekund), zostaje klikalny odnośnik „github ›”.
+Dopóki trwa animacja, kolejne kliknięcia projektów i komendy `open` są ignorowane, a nakładka przejmuje klawiaturę (Esc pomija animację i od razu przenosi na repozytorium).
+Linki w Release info: przerysowanie tekstu NFO (animacja przewijania) czeka na puszczenie przycisku myszy, inaczej kliknięcie przepadało.
 **W przyszłości projekty dostaną własne podstrony z prezentacją** (zob. plan niżej): animacja ma wtedy prowadzić do podstrony zamiast do GitHuba, więc
 miejsce docelowe jest jedną funkcją (`finish` w `openProject`), a sama animacja zostaje bez zmian.
 
@@ -55,7 +56,20 @@ miejsce docelowe jest jedną funkcją (`finish` w `openProject`), a sama animacj
 
 Klik w telefon: model wylatuje z karty, kamera najeżdża na ekran modelu, aż LCD wypełni okno (na telefonie szerokość). Na ekraniku 84×48
 (Nokia 3310, `src/engine/nokia.js`): „HALO? / CZY TO...?", fala krzyku jak na oscyloskopie wycina z siebie KRZYK, potem zielony szum zalewa stronę
-i odsłania sekcję kontaktu.
+i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i szum) rozpuszcza się stopniowo ditherem na blokach, a nie znika naraz.
+
+## Wybór sekcji i przewijanie (Krzyk)
+
+- **Blokada kart:** dopóki trwa animacja jednej opcji (walkman, maski, kaseta, telefon), pozostałe są nieaktywne i przygaszone (`rooms-busy` w `initRooms`, wspólna flaga dla wszystkich kart).
+- **Telefon na wyborze** ma płótno pionowe 3:4 skalowane z oknem (`.k-pick-phone`), kamera w karcie jest w `PHONE_CAM_Z` (używa jej też przejście kontaktu do dopasowania rozmiaru na starcie).
+- **Przewijanie sekcjami (wariant B):** `points()` w `klatki.js`: skok od sekcji do sekcji, górna krawędź sekcji u góry okna; tylko sekcja wyższa od okna o >12% dostaje dodatkowy
+  przystanek u dołu; sekcja person ma przystanek dla każdej persony; za ostatnim przystankiem jeden skok na sam dół, potem ruch w dół nic nie robi.
+
+## Brama (strona główna)
+
+Kręgi ze znaków w tle (`gate.js`, pętla 30 kl./s) obracają się bez przerwy, każdy z własną prędkością i kierunkiem (0,06–0,4 rad/s). Liczba znaków w kręgu rośnie przez podwajanie
+(8, 16, 32…), a nowe znaki wyłaniają się między istniejącymi, więc przy rozszerzaniu kręgu nic nie przeskakuje; rozmiar czcionki zmienia się płynnie przez skalę. Nie wracać do
+przeliczania liczby znaków co klatkę: każda jej zmiana rozstawiała cały krąg od nowa (zacięcia).
 
 ## Nazwy person (sekcja Krzyk → persony)
 
@@ -67,22 +81,7 @@ animacji w systemie nagłówek jest zwykłym tekstem.
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
 
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
-- **Przewijanie sekcjami (Krzyk, wariant B – skok blokowy) – DO NAPRAWY (zgłoszone przez autora 2026-10-31):** obecnie nie ma przewijania „sekcja po sekcji”; zamiast tego
-  strona przewija się dziwnie w połowie sekcji (przystanki pośrednie wypadają w środku sekcji). Ma skakać między sekcjami, a nie zatrzymywać się w połowie.
-  Dodatkowo sprawdzić na gładziku (Mac); przystanki pośrednie przy wysokim kolażu są dodane (nie testowane na gładziku).
-- **Brama (strona główna), początek strony – BŁĄD (zgłoszone przez autora 2026-10-31):** niektóre kręgi czasem się zacinają zamiast obracać się płynnie i ciągle, w różnym tempie.
-  Gdzie szukać: `src/engine/gate.js`, rysowanie kręgów ze znaków (zmienna `rings`, pętla z `rot`, okolice linii 424–440). Uwaga z odczytu kodu (nie diagnoza zacinania): rotacja to
-  `rot = (i % 2 ? 1 : -1) * t / 24000`, czyli kręgi różnią się tylko kierunkiem, a nie tempem, więc „różne tempo” dziś w ogóle nie istnieje. Przyczyna zacinania niepotwierdzona
-  (do sprawdzenia: stan zegara `t` i jego resetowanie, ograniczanie klatek, `loop()` z `core.js`, ukrywanie kręgów poza ekranem). Cel: każdy krąg obraca się bez przerwy i płynnie, każdy z własną prędkością.
-- **Krzyk, wybór sekcji: blokować pozostałe przyciski po wybraniu opcji (zgłoszone przez autora 2026-10-31).** Gdy trwa animacja przejścia (walkman → muzyka, maski → persony,
-  kaseta → obraz, telefon → kontakt), pozostałe przyciski wyboru mają być nieaktywne, bo kliknięcie drugiego uruchamia kolejną animację i animacje nakładają się na siebie.
-  Dziś blokuje się tylko ta sama karta (`st.busy` w `initRooms`, `psx.js`) oraz każde przejście osobno (`hcBusy`, `ppBusy`, `phBusy`), ale nie ma wspólnej blokady między kartami.
-  To samo dotyczy Maszynologii: podczas animacji otwierania projektu (`busy` w `projopen.js`) blokować pozostałe linki projektów i polecenia terminala.
-- **Krzyk, wybór sekcji: model telefonu jest za mały** w porównaniu z innymi modelami na polu wyborów (walkman, maski, kaseta). Powiększyć (do ustalenia z autorem).
-- **Kontakt (telefon → sekcja kontaktu): koniec animacji nie jest płynny.** Zielony szum na końcu ucina się dziwnie zamiast płynnie przejść w sekcję kontaktu. Wygładzić zakończenie.
-- **Maszynologia, otwieranie projektów: po animacji strona ma sama przenosić na GitHuba po paru sekundach, bez przycisku i bez klikania w link.** Obecnie, gdy przeglądarka
-  zablokuje nową kartę (animacja trwa kilka sekund, więc kliknięcie przestaje być „świeże”), pojawia się przycisk „github ›”, a autor oczekuje automatycznego przejścia.
-  Pomysł do rozważenia: przejście w tej samej karcie (`location.assign`) zamiast `window.open`, bo nawigacja w tej samej karcie nie jest blokowana.
+- **Do sprawdzenia na prawdziwych urządzeniach (nie testowane, tylko emulacja w Chromium):** przewijanie sekcjami w Krzyku na gładziku (Mac); animacje na prawdziwym telefonie i tablecie; Safari (m.in. powrót z GitHuba przyciskiem „wstecz”).
 - **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).
   Autor dośle zdjęcia; wtedy zaproponować warianty (np. próg + dither Bayera w czerni i krwi, z żarzącymi się oczami, rozpad w piksele przy odkodowaniu
   razem z resztą animacji wejścia). Używać tylko zdjęć dostarczonych przez autora i bez innych osób; zdjęcie ma być częścią animowanego odkodowania strony.
