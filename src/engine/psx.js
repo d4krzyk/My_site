@@ -213,8 +213,9 @@ export function initRooms(root, { assets, go }) {
         const o = fit(m, 1.1); P.scene.add(o); P.cam.position.set(0, 0, 1.75); P.cam.lookAt(0, 0, 0);
         let ring = 0;
         // klik: telefon dzwoni, wylatuje z karty, kamera najeżdża na ekranik; krzyk na LCD, zielony szum przenosi do kontaktu
-        click = () => { if (RM) return go(kind); st.busy = true; ring = 1; st.t0 = st.now;
-          setTimeout(() => { ring = 0; cv.style.visibility = 'hidden'; phoneCall(assets, cv, () => go(kind, true), () => { cv.style.visibility = ''; st.busy = false; }); }, 450); };
+        // nakładka startuje od razu; telefon w karcie chowa się dopiero po pierwszej narysowanej klatce nakładki (bez przerwy, w której go nie widać)
+        click = () => { if (RM) return go(kind); st.busy = true; ring = 0;
+          phoneCall(assets, cv, () => go(kind, true), () => { cv.style.visibility = ''; st.busy = false; }, () => { cv.style.visibility = 'hidden'; }); };
         tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0;
           o.rotation.set(.1 + Math.sin(t / 2000) * .06, Math.sin(t / 1500) * (st.hot ? .8 : .45) + r, -.06 + r * .5 + (st.hot ? Math.sin(t / 60) * .03 : 0));
           o.position.y = Math.sin(t / 1000) * .02; };
@@ -449,7 +450,7 @@ function hc90e(assets, arrive, done) {
 /* ---------- telefon → kontakt: telefon wylatuje z karty, kamera najeżdża na ekran modelu, aż LCD wypełni okno (na telefonie: szerokość);
    na ekranie „HALO? / CZY TO...?" i fala krzyku z wyciętym KRZYK; LCD rozsypuje się w zielony szum, który zalewa stronę i odsłania kontakt ---------- */
 let phBusy = false;
-function phoneCall(assets, pickCv, arrive, done) {
+function phoneCall(assets, pickCv, arrive, done, shown) {
   if (phBusy) return; phBusy = true;
   const ov = document.createElement('div'); ov.className = 'ph-ov'; ov.innerHTML = '<canvas></canvas><canvas></canvas><span class="hc-skip dos">[ Esc ] pomiń</span>'; document.body.appendChild(ov);
   const [cv, c2] = ov.querySelectorAll('canvas'), W = innerWidth, H = innerHeight;
@@ -459,7 +460,7 @@ function phoneCall(assets, pickCv, arrive, done) {
   const keys = new THREE.PointLight(0x9dff7a, 0, 1.2); P.scene.add(keys);
   const HW = 3 * Math.tan(17.5 * Math.PI / 180), r0 = pickCv.getBoundingClientRect();
   const s0 = r0.height / H * 3 / 1.75, p0 = new THREE.Vector3((r0.left + r0.width / 2 - W / 2) / (H / 2) * HW, -(r0.top + r0.height / 2 - H / 2) / (H / 2) * HW, 0);
-  let finished = false, jumped = false, t0 = null, o = null, scr = null;
+  let finished = false, jumped = false, shownCb = false, t0 = null, o = null, scr = null;
   const end = () => { if (finished) return; finished = true; if (!jumped) arrive(); ov.remove(); P.r.dispose(); removeEventListener('keydown', key); phBusy = false; done(); };
   const key = e => { if (e.key === 'Escape') end(); }; addEventListener('keydown', key); ov.addEventListener('click', end);
   const camT = new THREE.Vector3(), camN = new THREE.Vector3(), corner = new THREE.Vector3(), camA = new THREE.Vector3(0, 0, 3);
@@ -474,16 +475,16 @@ function phoneCall(assets, pickCv, arrive, done) {
     o = fit(m, 1.1); P.scene.add(o);
   }).catch(end);
   loop(cv, 30, t => { if (finished || !o) return; if (t0 === null) t0 = t; const e = t - t0, lt = e - 500;
-    const k1 = easeOut(clamp(e / 700, 0, 1)), ring = e < 900 ? Math.sin(e / 18) * .1 * (1 - e / 900) : 0;
+    const k1 = ease(clamp(e / 1000, 0, 1)), ring = e < 900 ? Math.sin(e / 18) * .1 * (1 - e / 900) : 0;
     o.position.lerpVectors(p0, new THREE.Vector3(0, 0, 0), k1); o.scale.setScalar(s0 + (1 - s0) * k1); o.rotation.set(.1 * (1 - k1), (1 - k1) * .45 + ring, ring * .5);
     keys.intensity = e < 1400 ? (.6 + .4 * Math.sin(e / 50)) * 1.2 : 0; keys.position.set(o.position.x, o.position.y - .25, .5);
     // kamera: z (0,0,3) na oś ekranu, w takiej odległości, żeby LCD zmieścił się w oknie (94%)
     o.updateMatrixWorld(true); scr.getWorldPosition(camT); camN.set(0, 0, 1).applyQuaternion(scr.getWorldQuaternion(new THREE.Quaternion()));
     const sw = 2.86 * scr.getWorldScale(corner).x, sh = 1.82 * corner.y, tn = Math.tan(17.5 * Math.PI / 180), d = Math.max(sh / (2 * tn * .94), sw / (2 * tn * (W / H) * .94));
-    const k2 = ease(clamp((e - 700) / 1700, 0, 1)); P.cam.position.lerpVectors(camA, camT.clone().addScaledVector(camN, d), k2); P.cam.lookAt(new THREE.Vector3().lerpVectors(new THREE.Vector3(), camT, k2));
+    const k2 = ease(clamp((e - 900) / 1700, 0, 1)); P.cam.position.lerpVectors(camA, camT.clone().addScaledVector(camN, d), k2); P.cam.lookAt(new THREE.Vector3().lerpVectors(new THREE.Vector3(), camT, k2));
     const st = drawLCD(tx, lt, 0, 0, 168, 96); T.needsUpdate = true;
     const sx = (Math.random() - .5) * st.shake * 6, sy = (Math.random() - .5) * st.shake * 6; cv.style.transform = c2.style.transform = `translate(${sx | 0}px,${sy | 0}px)`;
-    P.render(); x.clearRect(0, 0, W, H);
+    P.render(); if (!shownCb) { shownCb = true; shown(); } x.clearRect(0, 0, W, H);
     // od 2 s nad modelem ostry obraz LCD w pełnej rozdzielczości, dokładnie w rzucie ekranu
     const a2 = clamp((e - 2000) / 400, 0, 1); if (a2 > 0) { const [rx, ry, rx1, ry1] = rectOf(); x.fillStyle = `rgba(4,6,10,${.55 * a2})`; x.fillRect(0, 0, W, ry); x.fillRect(0, ry1, W, H - ry1); x.fillRect(0, ry, rx, ry1 - ry); x.fillRect(rx1, ry, W - rx1, ry1 - ry);   // obudowa przygasa, uwaga na ekranie
       x.globalAlpha = a2; drawLCD(x, lt, rx, ry, rx1 - rx, ry1 - ry); x.globalAlpha = 1;
