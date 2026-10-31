@@ -5,7 +5,7 @@
 //   2 Stoir:  niski, obrażony głos z akcentem: lekki spadek tonu i podniesienie na końcu słowa, piła przez filtr dolnoprzepustowy
 export const VOICE_MS = [24, 110, 76];            // odstęp między literami przy czytaniu (ms)
 export const VOICE_NAMES = ['Anxtan', 'Nugis', 'Stoir'];
-const VOICE_GAIN = [2.3, 2.0, 1];                 // wyrównanie głośności (niski Stoir sam z siebie jest najgłośniejszy)
+const VOICE_GAIN = [2.3, 2.7, 1];                 // wyrównanie głośności (niski Stoir sam z siebie jest najgłośniejszy)
 
 const rnd = (code, n, salt = 0) => { let h = (code * 374761393 + n * 668265263 + salt * 2147483647) | 0; h = (h ^ (h >>> 13)) * 1274126177 | 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 
