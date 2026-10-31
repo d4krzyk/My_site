@@ -61,7 +61,7 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 ## Wybór sekcji i przewijanie (Krzyk)
 
 - **Blokada kart:** dopóki trwa animacja jednej opcji (walkman, maski, kaseta, telefon), pozostałe są nieaktywne i przygaszone (`rooms-busy` w `initRooms`, wspólna flaga dla wszystkich kart).
-- **Telefon na wyborze** ma płótno pionowe 3:4 skalowane z oknem (`.k-pick-phone`), kamera w karcie jest w `PHONE_CAM_Z` (używa jej też przejście kontaktu do dopasowania rozmiaru na starcie).
+- **Układ wyboru (A0):** bez napisu „wybierz”; trzy płyty w rzędzie (muzyka, persony, obraz), mniejsze i nieco powyżej środka, pod nimi niski, szeroki pasek kontaktu z leżącym telefonem (płótno 210×90, `PHONE_CAM_Z`, `PHONE_TILT`); całość w jednym ekranie. Na telefonie płyty jedna pod drugą na pełną szerokość, pasek kontaktu na końcu. Przejście kontaktu startuje z leżącego telefonu w płycie i w locie podnosi go do pionu.
 - **Przewijanie sekcjami (wariant B):** `points()` w `klatki.js`: skok od sekcji do sekcji, górna krawędź sekcji u góry okna; tylko sekcja wyższa od okna o >12% dostaje dodatkowy
   przystanek u dołu; sekcja person ma przystanek dla każdej persony; za ostatnim przystankiem jeden skok na sam dół, potem ruch w dół nic nie robi.
 
@@ -104,6 +104,10 @@ Zmiana jest animowana zgodnie z motywem miejsca, żeby nie było nagłego przesk
 
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
 
+- **Ustalone w wizualizacjach (artefakt „Wizualizacje dla Krzyku”), do wdrożenia:**
+  - Persony (A2): maski stoją u góry; aktywna jedzie w lewy górny róg, obok imię, bez napisów; patrzy w środek strony i „duka” w rytmie pisanego tekstu (każda inaczej). Pozostałe zostają u góry przyciemnione. Przejście po kolei: najpierw poprzednia wraca do cienia, potem następna wychodzi do rogu.
+  - Dźwięk: wybór „z dźwiękiem / bez” na ekranie ostrzeżenia w bramie; w lewym dolnym rogu każdej strony ikonka oscyloskopu (płaska linia = wył, fala krzyku = wł) z napisem „dźwięk” / „wł·wył” pod spodem; wykończenie do wyboru przez autora (monitor, klamry bramy, wycinek zinu). Głosy person grają, gdy dźwięk jest włączony (bez osobnego przycisku).
+  - Muzyka (A1): kanciasta wyrwa w zinie na prawie całą sekcję, zin tylko przy krawędziach, brzegi w stylu corporate grunge (suchy pędzel, czerwony tusz, raster, taśma). W środku ciemny pokój PSX z brudnymi teksturami: telewizor i magnetowid na dywanie, okno z roletami i światłem miasta, co jakiś czas latarka przez rolety, ciemne meble. Modele: `old_tv`, `vhs_player`, `vhs_tape`, `remote` (konwersje PSX z planszy, sekcja H). Później: plakietki z tytułami utworów, z których wysuwa się kaseta do magnetowidu i rusza klip z YouTube.
 - **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
 - **Do sprawdzenia na prawdziwych urządzeniach (nie testowane, tylko emulacja w Chromium):** przewijanie sekcjami w Krzyku na gładziku (Mac); animacje na prawdziwym telefonie i tablecie; Safari (m.in. powrót z GitHuba przyciskiem „wstecz”).
 - **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).

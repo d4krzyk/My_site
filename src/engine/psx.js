@@ -126,14 +126,15 @@ export function makeMask(P, kind, seed) {
 }
 
 /* ---------- pole wyborów ---------- */
-const PHONE_CAM_Z = 2.05;   // odległość kamery od telefonu w karcie (też używana do dopasowania rozmiaru na starcie przejścia kontaktu)
+const PHONE_CAM_Z = 1.05;   // odległość kamery od leżącego telefonu w niskiej płycie kontaktu (też używana do dopasowania rozmiaru na starcie przejścia kontaktu)
+const PHONE_TILT = -.42;    // telefon w płycie leży na boku (obrót o 90°) i jest lekko odchylony do tyłu, jak położony na stole
 export function initRooms(root, { assets, go }) {
   const stop = [];
   const items = [...root.querySelectorAll('[data-room]')], room = { busy: false };
   const setRoomBusy = v => { room.busy = v; root.classList.toggle('rooms-busy', v); items.forEach(b => { if (v) b.setAttribute('aria-disabled', 'true'); else { b.removeAttribute('aria-disabled'); b.classList.remove('chosen'); } }); };
   items.forEach(btn => {
     const kind = btn.dataset.room, cv = btn.querySelector('canvas');
-    const tall = kind === 'phone', P = ps1(cv, tall ? 120 : 176, tall ? 160 : 176);     // telefon: płótno pionowe 3:4 (model jest wysoki i wąski)
+    const wide = kind === 'phone', P = ps1(cv, wide ? 210 : 176, wide ? 90 : 176);     // telefon: niska, szeroka płyta (model leży na boku)
     lights(P);
     // zajętość jest wspólna dla wszystkich kart: dopóki trwa animacja jednej, pozostałe są zablokowane i przygaszone (inaczej animacje nakładają się na siebie)
     const st = { hot: false, t0: 0, now: 0, get busy() { return room.busy; }, set busy(v) { setRoomBusy(v); } };
@@ -219,9 +220,10 @@ export function initRooms(root, { assets, go }) {
         // nakładka startuje od razu; telefon w karcie chowa się dopiero po pierwszej narysowanej klatce nakładki (bez przerwy, w której go nie widać)
         click = () => { if (RM) return go(kind); st.busy = true; ring = 0;
           phoneCall(assets, cv, () => go(kind, true), () => { cv.style.visibility = ''; st.busy = false; }, () => { cv.style.visibility = 'hidden'; }); };
-        tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0;
-          o.rotation.set(.1 + Math.sin(t / 2000) * .06, Math.sin(t / 1500) * (st.hot ? .8 : .45) + r, -.06 + r * .5 + (st.hot ? Math.sin(t / 60) * .03 : 0));
-          o.position.y = Math.sin(t / 1000) * .02; };
+        // leży na boku: ekran do widza, słuchawka w lewo; przy najechaniu drga jak wibrujący telefon
+        tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0, buzz = st.hot ? Math.sin(t / 40) * .035 : 0;
+          o.rotation.set(PHONE_TILT + Math.sin(t / 2000) * .04, Math.sin(t / 1700) * .16 + r, Math.PI / 2 + buzz + r * .5);
+          o.position.set(st.hot ? Math.sin(t / 33) * .006 : 0, Math.sin(t / 1000) * .012, 0); };
       }).catch(() => {});
     }
     loop(cv, RM ? 4 : 20, (t) => { st.now = t; tick(t); P.render(); });
@@ -481,7 +483,7 @@ function phoneCall(assets, pickCv, arrive, done, shown) {
   }).catch(end);
   loop(cv, 30, t => { if (finished || !o) return; if (t0 === null) t0 = t; const e = t - t0, lt = e - 500;
     const k1 = ease(clamp(e / 1000, 0, 1)), ring = e < 900 ? Math.sin(e / 18) * .1 * (1 - e / 900) : 0;
-    o.position.lerpVectors(p0, new THREE.Vector3(0, 0, 0), k1); o.scale.setScalar(s0 + (1 - s0) * k1); o.rotation.set(.1 * (1 - k1), (1 - k1) * .45 + ring, ring * .5);
+    o.position.lerpVectors(p0, new THREE.Vector3(0, 0, 0), k1); o.scale.setScalar(s0 + (1 - s0) * k1); o.rotation.set(PHONE_TILT * (1 - k1), ring, Math.PI / 2 * (1 - k1) + ring * .5);   // z leżącego na boku podnosi się do pionu
     keys.intensity = e < 1400 ? (.6 + .4 * Math.sin(e / 50)) * 1.2 : 0; keys.position.set(o.position.x, o.position.y - .25, .5);
     // kamera: z (0,0,3) na oś ekranu, w takiej odległości, żeby LCD zmieścił się w oknie (94%)
     o.updateMatrixWorld(true); scr.getWorldPosition(camT); camN.set(0, 0, 1).applyQuaternion(scr.getWorldQuaternion(new THREE.Quaternion()));

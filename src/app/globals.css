@@ -226,9 +226,10 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 }
 
 /* pole wyborów: modele 3D na kawałkach ciemnej tektury */
-.k-choose{min-height:100svh;box-sizing:border-box;padding:4svh 0 6svh;display:flex;flex-direction:column;justify-content:center;text-align:center}
+/* wybór: trzy płyty w rzędzie i niski pasek kontaktu (leżący telefon) mieszczą się w jednym ekranie; grupa siedzi nieco powyżej środka */
+.k-choose{min-height:100svh;box-sizing:border-box;padding:3svh 0 9svh;display:flex;flex-direction:column;justify-content:center;text-align:center}
 .k-choose-h{color:var(--blood-hi);margin:0 0 14px}
-.k-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,2.4vw,30px)}
+.k-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,2.4vw,30px);width:min(100%,980px,calc(165svh - 150px));margin:0 auto}
 .k-pick{all:unset;box-sizing:border-box;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;padding:6% 6% 9%;
   background:var(--plate) center/100% 100% no-repeat;filter:drop-shadow(5px 8px 0 rgba(0,0,0,.55));transition:transform .25s}
 .k-pick:nth-child(1){transform:rotate(-1.4deg)}.k-pick:nth-child(2){transform:rotate(.9deg) translateY(10px)}.k-pick:nth-child(3){transform:rotate(-.6deg)}
@@ -237,10 +238,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .k-pick canvas{width:100%;aspect-ratio:1;image-rendering:pixelated;display:block;-webkit-mask:radial-gradient(closest-side,#000 70%,transparent 100%);mask:radial-gradient(closest-side,#000 70%,transparent 100%)}
 .k-pick-t{font-family:"Special Elite K",monospace;font-size:clamp(17px,2.6vw,30px);color:#e3d6b4;margin-top:4px;text-shadow:0 0 6px #000}
 .k-pick-s{font-size:clamp(9px,1.1vw,13px);color:#b08a5e;margin-top:4px;line-height:1.2}
-.k-pick-phone{width:min(100%,44vw);margin:clamp(16px,3vw,34px) auto 0;flex-direction:row;align-items:center;gap:4%;padding:2.5% 6% 3%;transform:rotate(.7deg)}
-.k-pick-phone canvas{width:14vw;flex:none;aspect-ratio:3/4}   /* telefon jest wysoki: płótno pionowe, model wielkości zbliżonej do pozostałych kart */
+.k-pick-phone{width:min(76%,620px);margin:clamp(12px,2.6svh,30px) auto 0;flex-direction:row;align-items:center;gap:3%;padding:.8% 4% 1%;transform:rotate(.7deg)}
+.k-pick-phone canvas{width:clamp(140px,21vw,270px);flex:none;aspect-ratio:210/90;-webkit-mask:radial-gradient(closest-side,#000 75%,transparent 100%);mask:radial-gradient(closest-side,#000 75%,transparent 100%)}   /* leżący telefon: płótno niskie i szerokie */
 .k-pick-phone .k-pick-t{margin:0;white-space:nowrap}.k-pick-phone .k-pick-s{margin:0 0 0 auto;text-align:right}
-@media (max-width:700px){.k-pick-s{display:none}.k-pick{padding:5% 4% 8%}.k-pick-phone{width:84%}.k-pick-phone canvas{width:24vw}.k-pick-phone .k-pick-s{display:block}}
+/* telefon: płyty jedna pod drugą (bez ściskania w rzędzie), pasek kontaktu na końcu */
+@media (max-width:700px){.k-choose{padding:6svh 0}.k-trio{grid-template-columns:1fr;gap:22px;width:min(78vw,340px)}.k-pick{padding:4% 6% 6%}.k-pick:nth-child(2){transform:rotate(.9deg)}.k-pick-phone{width:min(92%,380px);padding:2% 4%}.k-pick-phone canvas{width:48vw}.k-pick-phone .k-pick-s{display:block;white-space:nowrap}}
 
 /* podrozdziały: ciemna, gruba tektura z poszarpanym brzegiem i odsłoniętymi falami */
 .k-sub{position:relative;margin:68px 0;min-height:calc(100svh - 136px);box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;padding:30px clamp(18px,4vw,44px) 40px;background:var(--board) 0 0/640px auto repeat;color:#e3d6b4;

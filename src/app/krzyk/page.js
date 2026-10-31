@@ -44,7 +44,6 @@ export default function Krzyk() {
           <KrzykFx>
             <h1 className="sr-only">Krzyk</h1>
             <nav className="k-choose" aria-label="Podrozdziały" data-en-aria="Subsections">
-              <p className="k-choose-h dos" data-type="" data-seed="3" data-en="·÷·── choose ──·÷·">·÷·── wybierz ──·÷·</p>
               <div className="k-trio">
                 {PICKS.map(([k, t, s, te, se], i) => (
                   <button type="button" className="k-pick" data-room={k} key={k} style={{ '--plate': u(`/krzyk/plate-${i}.webp`) }} aria-label={`${t}: ${s}`} data-en-aria={`${te}: ${se}`}>
