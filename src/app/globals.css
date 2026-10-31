@@ -434,9 +434,6 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .kp-gl{position:absolute!important;width:1px;height:1px;margin:-1px!important;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* czytanie opisu persony: litery odsłaniane po kolei (pełny tekst zostaje w DOM), przycisk włączający głosy */
 .kp-part .kc{visibility:hidden}.kp-part .kc.on{visibility:visible}
-.kp-snd{all:unset;cursor:pointer;display:inline-block;margin:0 0 8px;padding:3px 9px 2px;font-size:14px;color:#a9acbb;border:1px solid #3d4159;background:#0d0d12}
-.kp-snd:hover{color:#fff;border-color:#a8161f}.kp-snd[aria-pressed="true"]{color:#05030a;background:#c4121d;border-color:#c4121d}
-.kp-snd:focus-visible{outline:2px dashed #ff3a3a;outline-offset:2px}
 /* przejście przy otwieraniu projektu (engine/projopen): nakładka z płótnem 320x180 (poziomo) albo 180 x proporcje ekranu (pionowo, telefon) */
 .pj-ov{position:fixed;inset:0;z-index:60;background:#000;cursor:pointer;transition:opacity .38s}
 .pj-ov.out{opacity:0;pointer-events:none}
@@ -461,3 +458,24 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 
 /* telefon: wariant „dwa piętra”: pionowa scena, telewizor u góry, dywan z kasetą i pilotem pod nim */
 @media (max-width:700px){.mu-host{aspect-ratio:288/480;margin-top:6px}.mu-plq{width:40%;right:2.5%;top:2.2%}.mu-plq b{font-size:7.4cqw}}
+
+/* ikonka dźwięku w lewym dolnym rogu (components/SoundIcon): oscyloskop, pod nim „dźwięk" i „wł/wył" */
+.snd-icon{all:unset;cursor:pointer;position:fixed;left:12px;bottom:10px;z-index:55;display:grid;justify-items:center;gap:1px;font-family:var(--f-dos);line-height:1;color:#8f94a6;-webkit-tap-highlight-color:transparent}
+.snd-icon canvas{width:56px;height:45px;image-rendering:pixelated;display:block}
+.snd-icon .sn-l{font-size:15px}.snd-icon .sn-s{font-size:13px;color:#5d6272}
+.snd-icon[aria-pressed="true"]{color:#3ff0ff}.snd-icon[aria-pressed="true"] .sn-s{color:#9ff6ff}
+.snd-icon:hover .sn-l{color:#fff}.snd-icon:focus-visible{outline:2px dashed #3ff0ff;outline-offset:3px}
+.snd-icon.unset canvas{animation:snpulse 1.3s steps(2) 6}
+@keyframes snpulse{50%{filter:drop-shadow(0 0 6px #3ff0ff)}}
+@media (max-width:700px){.snd-icon{left:8px;bottom:8px}.snd-icon canvas{width:44px;height:36px}.snd-icon .sn-l{font-size:13px}.snd-icon .sn-s{font-size:12px}}
+@media (prefers-reduced-motion:reduce){.snd-icon.unset canvas{animation:none}}
+/* wybór dźwięku w ramce bramy */
+.gsnd{position:relative;display:block;margin-top:12px;font-size:12px;color:var(--ink-dim);text-align:center}
+.gsw{display:block;margin-bottom:5px;color:var(--blood-hi,#c4121d);letter-spacing:.04em}
+.gs{all:unset;cursor:pointer;margin:0 6px;color:#9da2b8}
+.gs:hover{color:#fff}.gs[aria-pressed="true"]{color:#3ff0ff}.gs:focus-visible{outline:1px dashed #3ff0ff;outline-offset:2px}
+/* nazwa persony obok maski w rogu */
+.kp-cn{position:absolute;z-index:2;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .35s steps(4);line-height:1;text-shadow:0 0 10px currentColor,0 2px 0 #000}
+.kp-cn.on{opacity:1}
+.kp-cn b{display:block;font:400 clamp(20px,3.6vw,42px)/1 "Special Elite K",monospace}
+.kp-cn i{display:block;font:normal 14px/1.2 var(--f-dos);color:#a89cb8;text-shadow:none;margin-top:4px}

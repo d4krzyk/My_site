@@ -330,8 +330,12 @@ function personaPortal(pickCv, xs, arrive, done) {
 
 /* ---------- sekcja person: trzy maski lewitują u góry; przy części danej persony ona wychyla się na wprost,
    a pozostałe cofają się w cień jak nieodblokowane postacie ---------- */
-let ACTIVE = -1;   // aktywna persona (z initPersonaStage), czytana przez nagłówki i głosy
+let ACTIVE = -1;   // aktywna persona (z initPersonaStage), czytana przez nagłówki
+let SEATED = -1;   // persona, której maska siedzi już w rogu (czytają ją głosy: opis zaczyna się pisać dopiero po wylądowaniu maski)
+const TALK = { k: -1, n: 0, t: 0 };   // „mówienie": persvoice zgłasza każdą wpisaną literę, maska w rogu rusza się w jej rytmie
 export const personaActive = () => ACTIVE;
+export const personaSeated = () => SEATED;
+export function setPersonaTalk(k, n) { TALK.k = k; TALK.n = n; TALK.t = performance.now(); }
 export function initPersonaStage(cv, parts) {
   // niska rozdzielczość w proporcjach płótna (minimum 120 px szerokości bez zmiany proporcji, inaczej maski się rozciągają)
   const dims = () => { const w = cv.clientWidth / 4 || 120, h = cv.clientHeight / 4 || 60, k = Math.max(1, 120 / w); return [Math.round(w * k), Math.max(30, Math.round(h * k))]; };
@@ -341,30 +345,52 @@ export function initPersonaStage(cv, parts) {
   let span = Math.min(1.25, 1.4 * W / Hh / 4.2);
   // płótno mierzone przed ułożeniem strony miało złe proporcje (rozciągnięte maski na telefonie): przeliczamy przy każdej zmianie rozmiaru
   const ro = new ResizeObserver(() => { const [w, h] = dims(); if (w === W && h === Hh) return; W = w; Hh = h; P.resize(W, Hh); span = Math.min(1.25, 1.4 * W / Hh / 4.2); }); ro.observe(cv);
-  const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 }));
-  let active = -1;
+  const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 })), pr = ms.map(() => 0);   // pr: 0 = maska w rzędzie u góry, 1 = w lewym górnym rogu
+  let active = -1, shown = -1, cnFor = -2;
+  // nazwa obok maski w rogu (zwykły tekst nad płótnem; wstążka z nazwą przy opisie zostaje jako nagłówek części)
+  const cn = document.createElement('div'); cn.className = 'kp-cn'; cn.setAttribute('aria-hidden', 'true'); cn.innerHTML = '<b></b><i></i>'; cv.parentElement.appendChild(cn);
+  const ease = x => x * x * (3 - 2 * x);
   // aktywna persona = część najbliższa linii pod sceną (62% wysokości okna), liczona z położenia w każdej klatce, więc nie zależy od kolejności
   // ani kierunku przewijania (zdarzenia przecięcia gubiły stan przy powrocie na górę); gdy żadna część nie jest blisko okna: -1 (wszystkie neutralne)
   const pick = () => { const line = innerHeight * .62; let best = -1, bd = 1e9;
     parts.forEach((el, i) => { const r = el.getBoundingClientRect(), d = Math.abs((r.top + r.bottom) / 2 - line); if (d < bd) { bd = d; best = i; } });
     return bd < innerHeight * .75 ? best : -1; };
-  loop(cv, RM ? 4 : 24, t => {
+  loop(cv, RM ? 4 : 24, (t, d) => {
     active = pick(); ACTIVE = active;
+    // kolejność: najpierw poprzednia maska wraca do cienia w rzędzie, dopiero potem następna wychodzi i ląduje w rogu
+    if (shown !== active) { if (shown < 0 || pr[shown] < .02) shown = active; }
+    SEATED = shown >= 0 && pr[shown] > .92 ? shown : -1;
+    const halfH = 2.6 * Math.tan(17.5 * Math.PI / 180), halfW = halfH * W / Hh,   // połowa widoku na głębokości maski w rogu (z ≈ .4)
+       fac = Math.min(1, Math.max(.55, W / Hh / 2.4)), cs = .36 * fac;
+    const cx = -halfW + cs * 1.05 + .14, cy = halfH - cs * 1.3 - .08, now = performance.now();
     ms.forEach((m, i) => {
-      const on = active === i, off = active >= 0 && !on, tg = { z: on ? .7 : off ? -1 : 0, s: on ? .48 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
+      const tgP = i === shown && active === shown ? 1 : 0; pr[i] += Math.sign(tgP - pr[i]) * Math.min(Math.abs(tgP - pr[i]), (d || 40) / 850);
+      const pe = ease(pr[i]), on = active === i, off = active >= 0 && !on, tg = { z: i === shown ? .4 : off ? -.6 : 0, s: i === shown ? .36 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
       for (const k in tg) c[k] += (tg[k] - c[k]) * .12;
-      let x = (i - 1) * span, y = c.y + Math.sin(t / 900 + i * 2) * .05, rx = 0, ry = 0, rz = 0;
+      let x = (i - 1) * span, y = c.y + Math.sin(t / 900 + i * 2) * .05, rx = 0, ry = 0, rz = 0, sc = c.s * Math.min(1, Math.max(.55, W / Hh / 2.4));
       if (i === 0) { x += (Math.random() - .5) * .01; ry = (Math.floor(t / 1300) % 3 - 1) * .3; rz = Math.sin(t / 333) * .03; }          // lękowa: drży, rozgląda się nerwowo
       if (i === 1) { y += Math.abs(Math.sin(t / 380)) * .06; rz = Math.sin(t / 520) * .2; ry = Math.sin(t / 1400) * .2; }                  // wyluzowana: podskakuje, kiwa się
       if (i === 2) { const st = Math.floor(t / 1500), pose = k => [[-.28, .06], [0, 0], [.24, -.05], [0, .03]][((k % 4) + 4) % 4], k3 = Math.min(1, (t % 1500) / 90);
         const p0 = pose(st - 1), p1 = pose(st); rx = -.18; ry = p0[0] + (p1[0] - p0[0]) * k3; rz = p0[1] + (p1[1] - p0[1]) * k3; }     // poważna: szarpnięcia manekina
       if (on) rx -= .12;                                                                                                                 // wychyla się ku widzowi
-      // wąski ekran: mniejsze maski, żeby się nie nakładały
-      m.position.set(x, y, c.z); m.scale.setScalar(c.s * Math.min(1, Math.max(.55, W / Hh / 2.4))); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
+      // lot do rogu: łukiem w górę, w rogu maska patrzy w środek strony
+      x += (cx - x) * pe; y += (cy - y) * pe + Math.sin(pe * Math.PI) * .18; ry += .55 * pe;
+      // dukanie w rytmie wpisywanych liter (tylko gdy maska już siedzi w rogu)
+      const talk = pe > .8 && TALK.k === i && now - TALK.t < 170 ? TALK.n : 0;
+      if (talk) {
+        if (i === 0) { x += talk % 2 ? .012 : -.012; rz += talk % 2 ? .05 : -.05; sc *= talk % 2 ? 1.06 : 1; if (talk % 7 === 0) ry += talk % 14 ? -.3 : .3; }   // nerwowe drżenie i strzelanie na boki
+        else if (i === 1) { y += talk % 2 ? .08 : 0; rz += talk % 4 < 2 ? -.14 : .14; }                                                                    // podskoki i kiwanie głową
+        else { ry += [0, .2, -.2, 0][(talk / 5 | 0) % 4]; sc *= talk % 3 ? 1.05 : 1; }                                                                      // sztywne szarpnięcia manekina
+      }
+      m.position.set(x, y, c.z); m.scale.setScalar(sc); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
     });
+    // nazwa obok maski: pojawia się, gdy maska wyląduje, gaśnie, gdy maska zaczyna wracać
+    if (SEATED !== cnFor) { cnFor = SEATED; if (SEATED >= 0) { const el = parts[SEATED], tag = el.querySelector('.kp-tag'); cn.querySelector('b').textContent = el.dataset.name || ''; cn.querySelector('i').textContent = tag ? tag.textContent : ''; cn.style.color = `rgb(${TITLE_COL[SEATED % 3].join(',')})`; } }
+    cn.classList.toggle('on', SEATED >= 0 && active === SEATED);
+    cn.style.left = ((cx + cs * 1.05 + .2 + halfW) / (2 * halfW) * 100) + '%'; cn.style.top = ((halfH - cy) / (2 * halfH) * 100) + '%';
     P.render();
   });
-  return () => { ro.disconnect(); };
+  return () => { ro.disconnect(); cn.remove(); };
 }
 
 /* ---------- walkman → muzyka: słuchawki wylatują z karty, obracają się wokół osi nauszników (pałąk idzie do tyłu, jakby
