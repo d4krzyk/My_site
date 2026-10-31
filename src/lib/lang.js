@@ -11,6 +11,6 @@ export function setLang(l) {
 }
 // teksty kart nawigacji
 export const CARD_TEXT = {
-  pl: { names: ['Brama', 'Krzyk', 'Maszynologia'], roads: ['w próg', 'ku słońcu', 'ku księżycowi'], here: '▸ tu stoisz', dialog: 'Rozdziały', switch: 'Język' },
-  en: { names: ['Gate', 'Krzyk', 'Machinology'], roads: ['to the threshold', 'toward the sun', 'toward the moon'], here: '▸ you stand here', dialog: 'Chapters', switch: 'Language' },
+  pl: { names: ['Brama', 'Krzyk', 'Maszynologia'], roads: ['w próg', 'ku słońcu', 'ku księżycowi'], here: '▸ tu jesteś', dialog: 'Rozdziały', switch: 'Język' },
+  en: { names: ['Gate', 'Krzyk', 'Machinology'], roads: ['to the threshold', 'toward the sun', 'toward the moon'], here: '▸ you are here', dialog: 'Chapters', switch: 'Language' },
 };

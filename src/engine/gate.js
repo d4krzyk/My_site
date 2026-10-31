@@ -385,7 +385,6 @@ function gateOuter(pre){
     raf=requestAnimationFrame(step);
   };
   gate.addEventListener('descend',()=>shatter(gate.querySelector('#gFrame')));
-  gate.addEventListener('shatter',e=>shatter(e.detail,true));
 })();
 
 /* ---------- I: brama ---------- */
@@ -396,8 +395,8 @@ FONTS().then(()=>{
   fit();
   const tints={red:{hi:[150,18,30],lo:[70,8,16]}}; const tint='red';
   const T={
-    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',l1:'·÷·──── POZIOM -1 ────·÷·',l2:'·÷·──── POZIOM -2 ────·÷·',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
-    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',l1:'·÷·──── LEVEL -1 ────·÷·',l2:'·÷·──── LEVEL -2 ────·÷·',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology'}
+    pl:{warn:'UWAGA: MIGAJĄCE OBRAZY · DŹWIĘK',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
+    en:{warn:'WARNING: FLASHING IMAGES · SOUND',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',s1:'music · image · faces',s2:'projects · experience · CV',mach:'Machinology'}
   };
   let lang=opts.lang;
   const frame=()=>{ const s=T[lang]; const w=40; const ctr=(str,ch=' ')=>{const n=[...str.replace(/\uFE0E/g,'')].length; const l=Math.floor((w-n)/2); return ch.repeat(Math.max(0,l))+str+ch.repeat(Math.max(0,w-n-l));};
@@ -407,45 +406,60 @@ FONTS().then(()=>{
       `<span class="gl gb"><span class="w">D. K.</span><span class="gx"></span><span class="yr">2026</span></span>`;
     gateOuter($('gFrame'));
     $('gEnter').onclick=()=>go(false); $('gCalm').onclick=()=>go(true);
-    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gL1').textContent=s.l1; $('gL2').textContent=s.l2; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; };
+    $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; };
   // język zmienia wspólny przełącznik w rogu (LangKeys)
   const onLang=e=>{ if(!gate.isConnected){ removeEventListener('krzyk-lang',onLang); return; } lang=e.detail; frame(); }; addEventListener('krzyk-lang',onLang);
   frame();
-  // wybór drogi: przycisk pęka i spada jak okno bramy, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
+  // wybór drogi: wybrana karta się spala (ogień od dołu, piksele żarzą się i odlatują jako popiół), druga gaśnie w cieniu, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
   let picked=false;
-  gate.querySelectorAll('.path').forEach((b,i)=>b.addEventListener('click',()=>{ if(picked) return; picked=true; b.classList.add('zap');
-    gate.dispatchEvent(new CustomEvent('shatter',{detail:b})); setTimeout(()=>{ opts.onPath&&opts.onPath(i); },RM?0:700); }));
+  gate.querySelectorAll('.path').forEach((b,i)=>b.addEventListener('click',()=>{ if(picked||!gate.querySelector('.paths.ready')&&!RM) return; picked=true;
+    gate.querySelectorAll('.path').forEach(o=>{ if(o!==b) o.classList.add('dim'); }); gate.querySelector('.paths').classList.add('locked');
+    if(RM){ opts.onPath&&opts.onPath(i); return; }
+    import('./gatecards').then(({burnCard})=>burnCard(b,()=>{ opts.onPath&&opts.onPath(i); })); }));
   // kursor blokowy w przycisku
   loop(gate,2,(t)=>{ const cu=gate.querySelector('.enter .cur'); if(cu) cu.style.visibility=(Math.floor(t/500)%2)?'hidden':'visible'; });
   let falling=false, calm=false, f0=0, phase=0, done=false;
   const go=(c0)=>{ calm=c0; falling=true; f0=-1; gate.classList.add('falling'); gate.dispatchEvent(new CustomEvent('descend',{detail:{calm:c0}})); };
   const build=()=>{ gate.querySelectorAll('[data-build]').forEach(el=>{ const full=el.textContent; const r=[...full].map(()=>Math.random()); let k=0;
     const iv=setInterval(()=>{ k+=.12; el.textContent=[...full].map((ch,i)=> ch===' '?' ': (k>r[i]+.5? ch : (k>r[i] ? '░▒▓'[Math.floor((k-r[i])*6)%3] : ' '))).join(''); if(k>1.6){ clearInterval(iv); el.textContent=full; } },40); }); };
-  const rings=['═╪═╪═╪','░▒▓▒░ ','·÷·÷· ','╬═╬═╬═','○∙●∙○∙','≡ ≡ ≡ ','╤╧╤╧╤╧','♦·♦·♦·','┼─┼─┼─','▓░▓░▓░'];
+  const rings=['═╪═╪═╪','░▒▓▒░ ','·÷·÷· ','╬═╬═╬═','○∙●∙○∙','≡ ≡ ≡ ','╤╧╤╧╤╧','♦·♦·♦·','┼─┼─┼─','▓░▓░▓░'], RC=rings.map(r=>[...r]);
+  /* Kręgi obracają się bez przerwy, każdy z własną prędkością i kierunkiem (0,06–0,4 rad/s) i z własnym kątem startu.
+     Liczba znaków w kręgu rośnie przez podwajanie (8, 16, 32…): znaki, które już są, zostają dokładnie na swoich miejscach, a nowe pojawiają się między nimi
+     i płynnie rosną z przezroczystości, więc przy rozszerzaniu kręgu nic nie przeskakuje (wcześniej każda zmiana liczby znaków rozstawiała cały krąg od nowa).
+     Znak ma stały wygląd od narodzin (zależy od poziomu podwojenia, w którym się pojawił). Rozmiar czcionki zmienia się płynnie przez skalę, nie skokami co piksel. */
+  const hr=i=>{ const v=Math.sin(i*12.9898+4.1)*43758.5453; return v-Math.floor(v); };
+  const SPD=Array.from({length:16},(_,i)=>(i%2?1:-1)*(.06+.34*hr(i))), PH0=Array.from({length:16},(_,i)=>hr(i+40)*Math.PI*2);
+  const ss=v=>{ v=clamp(v,0,1); return v*v*(3-2*v); };
   var off=document.createElement('canvas'); off.width=W; off.height=H; const ox=off.getContext('2d',{willReadFrequently:true});
   if(!GP){ let rt; addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(fit,120); },{passive:true}); }
-  loop(gate,20,(t,dt)=>{
+  loop(gate,30,(t,dt)=>{
     if(falling && f0<0) f0=t;
     const dur=calm?2600:4200; const k=falling ? clamp((t-f0)/dur,0,1) : 0;
     const ease=k*k*(3-2*k);
     phase += dt/1000*(.018 + (falling ? (calm?.05:.12)*ease : 0));
-    ox.fillStyle='#000'; ox.fillRect(0,0,W,H); ox.textAlign='center'; ox.textBaseline='middle';
+    ox.setTransform(1,0,0,1,0,0); ox.globalAlpha=1; ox.fillStyle='#000'; ox.fillRect(0,0,W,H); ox.textAlign='center'; ox.textBaseline='middle'; ox.font='16px "Krzyk DOS"';
     const cx=W/2, cy=H/2, maxR=Math.hypot(W,H)*.55;
     for(let i=0;i<16;i++){
-      const z=((i/16)+phase)%1; const R=6+Math.pow(z,2.2)*maxR; const fs=Math.max(4,Math.round(4+z*15));
-      const pat=rings[i%rings.length]; const n=Math.max(8,Math.floor(2*Math.PI*R/(fs*.7)));
+      const z=((i/16)+phase)%1; const R=6+Math.pow(z,2.2)*maxR; const fs=4+z*15, sc=fs/16;
+      const chars=RC[i%RC.length], rot=SPD[i]*t/1000+PH0[i];
+      const lv=Math.max(0,Math.log2(2*Math.PI*R/(fs*.7)/8)+.4), lk=Math.floor(lv), nk=8*(1<<lk), born=lk>0?ss((lv-lk)/.3):1;   // lk: poziom podwojenia, born: przezroczystość nowych znaków
       const bright=Math.min(1,z*1.3)*(1-Math.max(0,z-.85)/.15);
-      ox.font=`${fs}px "Krzyk DOS"`; ox.fillStyle=`rgba(255,255,255,${bright})`;
-      const rot=(i%2?1:-1)*t/24000;
-      for(let j=0;j<n;j++){ const a=j/n*Math.PI*2+rot; ox.save(); ox.translate(cx+Math.cos(a)*R, cy+Math.sin(a)*R*.92); ox.rotate(a+Math.PI/2); ox.fillText([...pat][j%[...pat].length],0,0); ox.restore(); }
+      ox.fillStyle=`rgba(255,255,255,${bright})`;
+      for(let j=0;j<nk;j++){
+        const a=j/nk*Math.PI*2+rot, px=cx+Math.cos(a)*R, py=cy+Math.sin(a)*R*.92; if(px<-20||px>W+20||py<-20||py>H+20) continue;   // poza płótnem nie rysujemy
+        const tz=j?Math.min(lk,31-Math.clz32(j&-j)):lk, jb=j>>tz, b=lk-tz;                                                         // tz: ile razy znak jest „starszy”; jb, b: poziom i numer narodzin
+        ox.globalAlpha=(tz===0&&lk>0)?born:1;
+        const ca=Math.cos(a+Math.PI/2)*sc, sa=Math.sin(a+Math.PI/2)*sc; ox.setTransform(ca,sa,-sa,ca,px,py); ox.fillText(chars[(jb*3+b*5)%chars.length],0,0);
+      }
     }
+    ox.setTransform(1,0,0,1,0,0); ox.globalAlpha=1;
     // gaśnięcie ditherem na końcu wejścia
     const fade = falling ? clamp((k-.7)/.3,0,1) : 0;
     const src=ox.getImageData(0,0,W,H).data, out=x.createImageData(W,H), o=out.data, tc=tints[tint];
     for(let yy=0;yy<H;yy++) for(let xx=0;xx<W;xx++){ const kk=(yy*W+xx)*4; const v=src[kk]/255*(1-fade); const th=bth(xx,yy);
       if(v>th){ const c2=v>.55?tc.hi:tc.lo; o[kk]=c2[0]; o[kk+1]=c2[1]; o[kk+2]=c2[2]; } o[kk+3]=255; }
     x.putImageData(out,0,0);
-    if(falling && k>=1 && !done){ done=true; gate.classList.add('done'); build(); }
+    if(falling && k>=1 && !done){ done=true; gate.classList.add('done'); build(); import('./gatecards').then(({riseCards})=>riseCards(gate)); }
   });
 });
 }

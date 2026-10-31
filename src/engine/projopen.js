@@ -4,8 +4,7 @@
 //   MC MusicClubApp: winyl 3D (PS1) nad szachownicą Amigi, napis wokół płyty rozświetla się jak kula disco · SD ShadowDetection: lampa okrąża siatkę i rzuca cienie
 //   GJ GameInJava: automat, bębny stają po kolei, jackpot, komórki spadają
 // Na pionowym ekranie (telefon) sceny mają osobny układ pionowy (nie obrót poziomego): siatka większa, efekty na całą wysokość.
-// Po animacji otwiera się repozytorium na GitHubie (w przyszłości: podstrona projektu). Gdy przeglądarka zablokuje wyskakujące okno (animacja trwa kilka sekund),
-// na ekranie zostaje klikalny odnośnik.
+// Po animacji strona sama przenosi na repozytorium na GitHubie, w tej samej karcie (w przyszłości: podstrona projektu).
 import { RM, bth } from './core';
 
 const PROJ_COL = { VE: [63, 240, 255], WR: [124, 255, 107], RM: [255, 179, 71], MC: [255, 79, 216], SD: [180, 140, 255], GJ: [255, 210, 63] };
@@ -147,6 +146,7 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
 }
 
 let busy = false;
+export const projectBusy = () => busy;
 const DUR = 900;      // czas zawalenia strony w ciemność (ms)
 export function openProject(key, url, origin) {
   const open = () => { const w = window.open(url, '_blank'); if (w) { try { w.opener = null; } catch (e) {} } return !!w; };
@@ -171,10 +171,16 @@ export function openProject(key, url, origin) {
       S[i + 3] = 255; }
     cx2.putImageData(shade, 0, 0); };
   let phase = 'collapse', t0 = 0, last = -1e9, done = false, raf = 0;
-  const close = () => { cancelAnimationFrame(raf); removeEventListener('keydown', onKey); ov.classList.add('out'); setTimeout(() => { ov.remove(); busy = false; }, 380); };
-  const finish = () => { if (done) return; done = true; cancelAnimationFrame(raf); if (phase === 'scene') render(END[key]);
-    ov.style.background = '#000'; if (open()) close();
-    else { ov.style.cursor = 'default'; cv.style.visibility = ''; cc.remove(); const a = document.createElement('a'); a.className = 'pj-link dos'; a.href = url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'github ›'; a.addEventListener('click', () => setTimeout(close, 50)); ov.append(a); a.focus(); } };
+  const close = () => { cancelAnimationFrame(raf); removeEventListener('keydown', onKey); removeEventListener('keydown', guard, true); removeEventListener('pageshow', back); ov.classList.add('out'); setTimeout(() => { ov.remove(); busy = false; }, 380); };
+  // po animacji strona sama przenosi na repozytorium, w tej samej karcie (nawigacja w tej samej karcie nie jest blokowana jak wyskakujące okno, więc nie trzeba przycisku);
+  // krótka pauza na ostatniej klatce, żeby nazwa projektu zdążyła się pokazać; gdyby przejście się nie udało, po 6 s nakładka znika
+  const finish = () => { if (done) return; done = true; cancelAnimationFrame(raf); if (phase === 'scene') render(END[key]); ov.style.background = '#000'; removeEventListener('keydown', onKey);
+    setTimeout(() => { location.assign(url); setTimeout(close, 6000); }, 220); };
+  // powrót z GitHuba przyciskiem „wstecz” (strona z pamięci przeglądarki): nakładka nie może zostać
+  const back = e => { if (e.persisted && done) close(); }; addEventListener('pageshow', back);
+  // na czas animacji nakładka przejmuje klawiaturę: nic nie trafia do terminala ani do strony pod spodem (poza Esc, który pomija animację)
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  const guard = e => { if (e.key !== 'Escape') { e.preventDefault(); e.stopPropagation(); } }; addEventListener('keydown', guard, true);
   const onKey = e => { if (e.key === 'Escape') finish(); }; addEventListener('keydown', onKey); ov.addEventListener('click', e => { if (!e.target.closest('a')) finish(); });
   const step = now => { raf = requestAnimationFrame(step); if (!t0) t0 = now; const t = now - t0; if (t - last < 30) return; last = t;
     if (phase === 'collapse') { collapse(Math.min(t, DUR)); if (t > DUR + 180) { phase = 'scene'; t0 = now; last = -1e9; ov.style.background = '#000'; cc.remove(); cv.style.visibility = ''; render(0, 0); } return; }

@@ -126,18 +126,21 @@ export function makeMask(P, kind, seed) {
 }
 
 /* ---------- pole wyborów ---------- */
+const PHONE_CAM_Z = 2.05;   // odległość kamery od telefonu w karcie (też używana do dopasowania rozmiaru na starcie przejścia kontaktu)
 export function initRooms(root, { assets, go }) {
   const stop = [];
-  const items = [...root.querySelectorAll('[data-room]')];
+  const items = [...root.querySelectorAll('[data-room]')], room = { busy: false };
+  const setRoomBusy = v => { room.busy = v; root.classList.toggle('rooms-busy', v); items.forEach(b => { if (v) b.setAttribute('aria-disabled', 'true'); else { b.removeAttribute('aria-disabled'); b.classList.remove('chosen'); } }); };
   items.forEach(btn => {
     const kind = btn.dataset.room, cv = btn.querySelector('canvas');
-    const wide = kind === 'phone', P = ps1(cv, wide ? 144 : 176, wide ? 120 : 176);
+    const tall = kind === 'phone', P = ps1(cv, tall ? 120 : 176, tall ? 160 : 176);     // telefon: płótno pionowe 3:4 (model jest wysoki i wąski)
     lights(P);
-    const st = { hot: false, busy: false, t0: 0, now: 0 };
+    // zajętość jest wspólna dla wszystkich kart: dopóki trwa animacja jednej, pozostałe są zablokowane i przygaszone (inaczej animacje nakładają się na siebie)
+    const st = { hot: false, t0: 0, now: 0, get busy() { return room.busy; }, set busy(v) { setRoomBusy(v); } };
     btn.addEventListener('pointerenter', () => { st.hot = true; }); btn.addEventListener('pointerleave', () => { st.hot = false; });
     btn.addEventListener('focus', () => { st.hot = true; }); btn.addEventListener('blur', () => { st.hot = false; });
     let tick = () => {}, click = () => go(kind);
-    btn.addEventListener('click', () => { if (st.busy) return; click(); });
+    btn.addEventListener('click', () => { if (room.busy) return; btn.classList.add('chosen'); click(); if (!room.busy) btn.classList.remove('chosen'); });
 
     if (kind === 'walkman') {
       loadPSX(P, assets.walkman).then(m => { const o = fit(m, 1.1); o.rotation.set(-.15, .5, .1); P.scene.add(o);
@@ -210,7 +213,7 @@ export function initRooms(root, { assets, go }) {
       loadPSX(P, assets.phone).then(m => {
         // w pliku ekran patrzy w +Y, a telefon leży wzdłuż X górą (słuchawka, antena) ku −X: najpierw ekran do kamery, potem góra do góry
         m.rotation.set(Math.PI / 2, 0, -Math.PI / 2, 'ZYX');
-        const o = fit(m, 1.1); P.scene.add(o); P.cam.position.set(0, 0, 1.75); P.cam.lookAt(0, 0, 0);
+        const o = fit(m, 1.1); P.scene.add(o); P.cam.position.set(0, 0, PHONE_CAM_Z); P.cam.lookAt(0, 0, 0);
         let ring = 0;
         // klik: telefon dzwoni, wylatuje z karty, kamera najeżdża na ekranik; krzyk na LCD, zielony szum przenosi do kontaktu
         // nakładka startuje od razu; telefon w karcie chowa się dopiero po pierwszej narysowanej klatce nakładki (bez przerwy, w której go nie widać)
@@ -461,7 +464,7 @@ function phoneCall(assets, pickCv, arrive, done, shown) {
   const tc = document.createElement('canvas'); tc.width = 168; tc.height = 96; const tx = tc.getContext('2d'), T = P.tex(tc);
   const keys = new THREE.PointLight(0x9dff7a, 0, 1.2); P.scene.add(keys);
   const HW = 3 * Math.tan(17.5 * Math.PI / 180), r0 = pickCv.getBoundingClientRect();
-  const s0 = r0.height / H * 3 / 1.75, p0 = new THREE.Vector3((r0.left + r0.width / 2 - W / 2) / (H / 2) * HW, -(r0.top + r0.height / 2 - H / 2) / (H / 2) * HW, 0);
+  const s0 = r0.height / H * 3 / PHONE_CAM_Z, p0 = new THREE.Vector3((r0.left + r0.width / 2 - W / 2) / (H / 2) * HW, -(r0.top + r0.height / 2 - H / 2) / (H / 2) * HW, 0);
   let finished = false, jumped = false, shownCb = false, t0 = null, o = null, scr = null;
   const end = () => { if (finished) return; finished = true; if (!jumped) arrive(); ov.remove(); P.r.dispose(); removeEventListener('keydown', key); phBusy = false; done(); };
   const key = e => { if (e.key === 'Escape') end(); }; addEventListener('keydown', key); ov.addEventListener('click', end);
@@ -495,8 +498,13 @@ function phoneCall(assets, pickCv, arrive, done, shown) {
       if (z > 0) { const out = z > 1.25 ? (z - 1.25) / .7 : 0, f = Math.floor(t / 70);
         for (let yy = 0; yy < H; yy += cs) for (let xx = 0; xx < W; xx += cs) { const dd = Math.hypot(xx - cx0, (yy - cy0) * 1.3) / R, gx = xx / cs | 0, gy = yy / cs | 0;
           if (bay(gx, gy) > z * 1.5 - dd || bay(gx + 1, gy + 2) < out * 1.2) continue; const v = hash(gx, gy, f); x.fillStyle = v < .45 ? '#16201a' : v < .8 ? '#6f9a5e' : '#a8cc8c'; x.fillRect(xx, yy, cs - 1, cs - 1); }
+        // rozpuszczanie: ten sam wzór (próg Bayera na blokach) wycina wszystko, co jest na płótnie, czyli także obraz LCD wypełniony szumem i przyciemnienie wokół niego,
+        // więc sekcja kontaktu odsłania się stopniowo; wcześniej rzedły tylko dodatkowe bloki szumu, a LCD znikał w jednej klatce przy końcu
+        if (out > 0) { x.globalCompositeOperation = 'destination-out'; x.fillStyle = '#000';
+          for (let yy = 0; yy < H; yy += cs) for (let xx = 0; xx < W; xx += cs) if (bay((xx / cs | 0) + 1, (yy / cs | 0) + 2) < out * 1.2) x.fillRect(xx, yy, cs, cs);
+          x.globalCompositeOperation = 'source-over'; }
         if (z > 1.1 && !jumped) { jumped = true; cv.style.visibility = 'hidden'; arrive(); }
-        if (out >= 1) end(); } }
+        if (out >= .85) end(); } }
   });
 }
 

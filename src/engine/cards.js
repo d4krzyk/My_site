@@ -115,6 +115,8 @@ function slitTo(stage, title, sub, back){
   const syncLang=()=>{ L=opts.text[opts.lang()]; NAMES=L.names; ROADS=L.roads; sp.setAttribute('aria-label',L.dialog); btn.setAttribute('aria-label',L.dialog); label(); };
   const onLang=()=>{ if(!st.isConnected){ removeEventListener('krzyk-lang',onLang); return; } syncLang(); }; addEventListener('krzyk-lang',onLang);
   st.appendChild(sp);
+  // żar i iskierki nad spalonym rogiem trzeciej karty (Maszynologia), widoczne tylko gdy karta leży awersem do góry
+  import('./gatecards').then(({emberCorner})=>emberCorner(cards[2],opts.faces[2],()=>!sp.hidden&&cards[2].classList.contains('face')&&cards[2].style.opacity!=='0'));
   const sleep=ms=>new Promise(r=>setTimeout(r,RM?0:ms)); const FR=1000/12;
   // pozycje w łuku (środek sceny), start w rogu przy ikonce
   // desktop: łuk; telefon: pionowy, lekko przesunięty stos (karty po lewej, podpisy z prawej)
