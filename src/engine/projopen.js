@@ -118,12 +118,13 @@ const PR = { VE: { cmd: 'OPEN VISUAL-ECHOES', rows: ['VISUAL', 'ECHOES 2.0'], co
     // cienie: lampa powoli okrąża siatkę zgodnie z ruchem wskazówek zegara; każdy znak rzuca długi pikselowy cień, a komórki, nad którymi
     // przejdzie światło, odszyfrowują się; po pełnym okrążeniu lampa schodzi na środek, rozświetla się i zalewa ekran (przejście)
     SD(t) { const orb = seg(t, 500, 3700), a = -Math.PI / 2 + orb * Math.PI * 2, mid = ease(seg(t, 3800, 4400)), fl = seg(t, 4400, 5000);
-      const Lx = CX + Math.cos(a) * W * .369 * (1 - mid), Ly = CY + Math.sin(a) * H * (portrait ? .44 : .511) * (1 - mid), occ = new Uint8Array(W * H); D.fill(0);
+      const rxo = portrait ? W * .62 : W * .4, ryo = portrait ? H * .6 : H * .66,   // orbita poza ramką siatki (u góry i u dołu nawet poza ekranem); do środka lampa schodzi dopiero na końcu
+        Lx = CX + Math.cos(a) * rxo * (1 - mid), Ly = CY + Math.sin(a) * ryo * (1 - mid), occ = new Uint8Array(W * H); D.fill(0);
       all((r, q, T) => { if (t < 420) return; const [x, y] = cxy(r, q), ca = Math.atan2(y + 7 - CY, x + 5 - CX); let da = ((ca - (-Math.PI / 2)) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
         T.lk = T.lk || (t > 500 && (orb * 2 * Math.PI > da + .25 || orb >= 1) ? t : 0);
         if (T.lk) { if (T.name) glyph(T.ch, x, y - 1, 1, 2); else if (T.v > .62) fill(x + 2, y + 3, 6, 8, 1); } else glyph(SCR[Math.floor(hsh(r * 10 + q, t / 50 | 0) * SCR.length)], x, y - 1, 1, 2); });
       for (let i = 0; i < W * H; i++) occ[i] = D[i] ? 1 : 0;
-      const I0 = 1 + mid * .4 + fl * 2, RAD = 200 + fl * 300;
+      const I0 = 1 + mid * .4 + fl * 2, RAD = Math.max(200, Math.hypot(W, H) * .55) + fl * 300;
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, dx = Lx - x, dy = Ly - y, d = Math.hypot(dx, dy) || 1; let I = I0 * Math.max(0, 1 - d / RAD);
         if (!occ[i] && I > 0 && fl < .6) { const n = Math.min(90, d | 0); for (let s = 3; s < n; s += 2) { const X = x + dx * s / d | 0, Y = y + dy * s / d | 0; if (occ[Y * W + X]) { I *= .16 + fl; break; } } }
         D[i] = occ[i] ? ramp(.45 + I * 1.1, x, y) : ramp(I * .55, x, y); }
