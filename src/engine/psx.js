@@ -347,8 +347,8 @@ export function initPersonaStage(cv, parts) {
   const ro = new ResizeObserver(() => { const [w, h] = dims(); if (w === W && h === Hh) return; W = w; Hh = h; P.resize(W, Hh); span = Math.min(1.25, 1.4 * W / Hh / 4.2); }); ro.observe(cv);
   const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 })), pr = ms.map(() => 0);   // pr: 0 = maska w rzędzie u góry, 1 = w lewym górnym rogu
   let active = -1, shown = -1, cnFor = -2;
-  // nazwa obok maski w rogu (zwykły tekst nad płótnem; wstążka z nazwą przy opisie zostaje jako nagłówek części)
-  const cn = document.createElement('div'); cn.className = 'kp-cn'; cn.setAttribute('aria-hidden', 'true'); cn.innerHTML = '<b></b><i></i>'; cv.parentElement.appendChild(cn);
+  // nazwa obok maski w rogu: kontener dla falującej wstążki (initPersonaTitles dokłada do niego płótna) i tagu persony
+  const cn = document.createElement('div'); cn.className = 'kp-cn'; cn.setAttribute('aria-hidden', 'true'); cn.innerHTML = '<i></i>'; cv.parentElement.appendChild(cn);
   const ease = x => x * x * (3 - 2 * x);
   // aktywna persona = część najbliższa linii pod sceną (62% wysokości okna), liczona z położenia w każdej klatce, więc nie zależy od kolejności
   // ani kierunku przewijania (zdarzenia przecięcia gubiły stan przy powrocie na górę); gdy żadna część nie jest blisko okna: -1 (wszystkie neutralne)
@@ -385,9 +385,9 @@ export function initPersonaStage(cv, parts) {
       m.position.set(x, y, c.z); m.scale.setScalar(sc); m.rotation.set(rx, ry, rz); m.children[0].material.color.setScalar(c.c);
     });
     // nazwa obok maski: pojawia się, gdy maska wyląduje, gaśnie, gdy maska zaczyna wracać
-    if (SEATED !== cnFor) { cnFor = SEATED; if (SEATED >= 0) { const el = parts[SEATED], tag = el.querySelector('.kp-tag'); cn.querySelector('b').textContent = el.dataset.name || ''; cn.querySelector('i').textContent = tag ? tag.textContent : ''; cn.style.color = `rgb(${TITLE_COL[SEATED % 3].join(',')})`; } }
+    if (SEATED !== cnFor) { cnFor = SEATED; if (SEATED >= 0) { const el = parts[SEATED], tag = el.querySelector('.kp-tag'); cn.querySelector('i').textContent = tag ? tag.textContent : ''; } }
     cn.classList.toggle('on', SEATED >= 0 && active === SEATED);
-    cn.style.left = ((cx + cs * 1.05 + .2 + halfW) / (2 * halfW) * 100) + '%'; cn.style.top = ((halfH - cy) / (2 * halfH) * 100) + '%';
+    cn.style.left = ((cx + cs * 1.05 - .08 + halfW) / (2 * halfW) * 100) + '%'; cn.style.top = ((halfH - cy) / (2 * halfH) * 100) + '%';
     P.render();
   });
   return () => { ro.disconnect(); cn.remove(); };
@@ -546,7 +546,7 @@ export function initPersonaTitles(parts) {
   const stops = [];
   parts.forEach((el, i) => {
     const name = el.dataset.name, h = el.querySelector('h3'); if (!name || !h) return;
-    const cv = document.createElement('canvas'); cv.className = 'kp-title'; cv.setAttribute('aria-hidden', 'true'); el.insertBefore(cv, h); h.classList.add('kp-gl');
+    const cv = document.createElement('canvas'); cv.className = 'kp-title'; cv.setAttribute('aria-hidden', 'true'); const corner = el.closest('section').querySelector('.kp-cn'); if (corner) corner.appendChild(cv); else el.insertBefore(cv, h); h.classList.add('kp-gl');   // wstążka stoi w rogu obok maski
     const r = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true }); r.setPixelRatio(1); r.setClearColor(0x000000, 0); r.autoClear = false;
     const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 3, .1, 50); cam.position.set(0, 0, 7); cam.lookAt(0, 0, 0);
     const res = new THREE.Vector2(1, 1), tint = new THREE.Vector3(...TITLE_COL[i % 3].map(v => v / 255)), gain = { value: 0 };
@@ -578,7 +578,7 @@ export function initPersonaTitles(parts) {
       pos.needsUpdate = true; col.needsUpdate = true; };
     let life = 0, cleared = true;
     loop(cv, 24, (t, d) => {
-      const on = ACTIVE === i; life = clamp(life + (on ? 1 : -1) * d / 900, 0, 1);
+      const on = SEATED === i; life = clamp(life + (on ? 1 : -1) * d / 900, 0, 1);   // pojawia się, gdy maska wyląduje w rogu
       if (life <= 0.002 || !mat.uniforms.map.value) { if (!cleared) { r.clear(); cleared = true; } return; }
       cleared = false; r.clear(); const cr = 1 + 1.6 * (1 - ss(life)), g = ss(life);
       cam.position.x = Math.sin(t / 2600) * .35; cam.position.y = Math.sin(t / 3300) * .15; cam.lookAt(0, 0, 0);

@@ -114,7 +114,8 @@ Tabliczka „muzyka” (tekstura płyty wyboru, krzywo) w prawym górnym rogu. P
 
 ## Persony w rogu i dźwięk
 
-- **Maski (`initPersonaStage` w `psx.js`):** trzy maski stoją u góry w rzędzie. Aktywna persona wyjeżdża łukiem w lewy górny róg sceny (sticky), maska patrzy w środek strony, obok niej stoi nazwa (HTML `.kp-cn`, imię i tag), a pozostałe maski zostają u góry przyciemnione.
+- **Maski (`initPersonaStage` w `psx.js`):** trzy maski stoją u góry w rzędzie. Aktywna persona wyjeżdża łukiem w lewy górny róg sceny (sticky), maska patrzy w środek strony, obok niej stoi nazwa jako falująca wstążka PS1 (`initPersonaTitles` dokłada jej płótno do kontenera `.kp-cn`, pojawia się po wylądowaniu maski; pod nią tag), a pozostałe maski zostają u góry przyciemnione.
+  Płótno z maskami (`.kp-stage-in`) ma szerokość okna i leży na pierwszym planie, więc maski mogą wychodzić poza brązową planszę (jej tło `.kp-stage::before` zostaje szerokości planszy; plansza ma być jeszcze przerobiona).
   Przejście jest po kolei: najpierw poprzednia maska wraca do rzędu (cień), dopiero potem następna wychodzi do rogu. Opis zaczyna się pisać po wylądowaniu maski (`personaSeated` zamiast `personaActive` w `persvoice`).
   Dukanie: `persvoice` zgłasza każdą wpisaną literę (`setPersonaTalk`), maska w rogu rusza się w jej rytmie, każda inaczej (Anxtan drży i strzela na boki, Nugis podskakuje i kiwa głową, Stoir szarpie się jak manekin); działa też bez dźwięku.
 - **Dźwięk (`src/lib/sound.js`):** stan w `localStorage` (`krzyk-sound`: `on`/`off`, domyślnie brak wyboru = wyłączony), zdarzenie `krzyk-sound`, wspólny `AudioContext` (`audio()`); po odświeżeniu strony wznawiany pierwszym gestem.

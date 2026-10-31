@@ -256,9 +256,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
 .k-sub .k-wip{margin-top:14px;color:var(--blood-hi)}
 /* sekcja person: scena z maskami przyklejona u góry, pod nią trzy części (po jednej na personę) */
 .k-sub.k-persony{display:block}
-.kp-stage{position:sticky;top:0;z-index:1;height:38svh;margin:6px calc(-1 * clamp(18px,4vw,44px)) 0;
-  background:radial-gradient(60% 70% at 50% 45%,rgba(0,0,0,.4),transparent 70%),var(--board) 0 0/640px auto repeat;
-  -webkit-mask:linear-gradient(#000 82%,transparent);mask:linear-gradient(#000 82%,transparent)}   /* tekst poprzedniej części chowa się pod sceną */
+.kp-stage{position:sticky;top:0;z-index:1;height:38svh;margin:6px calc(-1 * clamp(18px,4vw,44px)) 0}
+/* tło sceny zostaje szerokości planszy (tekst poprzedniej części chowa się pod nim); maski na osobnym płótnie na całą szerokość okna, na pierwszym planie, mogą wychodzić poza planszę */
+.kp-stage::before{content:"";position:absolute;inset:0;z-index:0;background:radial-gradient(60% 70% at 50% 45%,rgba(0,0,0,.4),transparent 70%),var(--board) 0 0/640px auto repeat;
+  -webkit-mask:linear-gradient(#000 82%,transparent);mask:linear-gradient(#000 82%,transparent)}
+.kp-stage-in{position:absolute;left:50%;top:0;width:100vw;height:100%;transform:translateX(-50%);z-index:1;pointer-events:none}
 .kp-stage canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
 .kp-part{min-height:58svh;display:flex;flex-direction:column;justify-content:center;max-width:46ch}
 .kp-part[data-p="1"]{margin:0 auto;text-align:center}.kp-part[data-p="2"]{margin-left:auto;text-align:right}
@@ -474,8 +476,8 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .gsw{display:block;margin-bottom:5px;color:var(--blood-hi,#c4121d);letter-spacing:.04em}
 .gs{all:unset;cursor:pointer;margin:0 6px;color:#9da2b8}
 .gs:hover{color:#fff}.gs[aria-pressed="true"]{color:#3ff0ff}.gs:focus-visible{outline:1px dashed #3ff0ff;outline-offset:2px}
-/* nazwa persony obok maski w rogu */
-.kp-cn{position:absolute;z-index:2;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .35s steps(4);line-height:1;text-shadow:0 0 10px currentColor,0 2px 0 #000}
+/* nazwa persony obok maski w rogu: falująca wstążka (PS1) z initPersonaTitles, pod nią tag */
+.kp-cn{position:absolute;z-index:2;width:clamp(190px,28vw,400px);aspect-ratio:3.6/1;transform:translateY(-50%);pointer-events:none;opacity:0;transition:opacity .35s steps(4)}
 .kp-cn.on{opacity:1}
-.kp-cn b{display:block;font:400 clamp(20px,3.6vw,42px)/1 "Special Elite K",monospace}
-.kp-cn i{display:block;font:normal 14px/1.2 var(--f-dos);color:#a89cb8;text-shadow:none;margin-top:4px}
+.kp-cn .kp-title{position:absolute;left:0;top:0;width:100%;height:100%;margin:0}
+.kp-cn i{position:absolute;left:14%;top:96%;white-space:nowrap;font:normal 14px/1.2 var(--f-dos);color:#a89cb8;text-shadow:0 2px 0 #000}
