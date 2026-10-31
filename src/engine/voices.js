@@ -3,7 +3,7 @@
 //   0 Anxtan: bardzo szybkie, szeleszczące dukanie jak odwrócona nagrana mowa (narastanie i ucięcie), losowe formanty i jąkanie
 //   1 Nugis:  wolne, figlarne blipy, każdy ślizga się w górę; koniec słowa jeszcze wyżej
 //   2 Stoir:  niski, obrażony głos z akcentem: lekki spadek tonu i podniesienie na końcu słowa, piła przez filtr dolnoprzepustowy
-export const VOICE_MS = [24, 74, 76];            // odstęp między literami przy czytaniu (ms)
+export const VOICE_MS = [24, 110, 76];            // odstęp między literami przy czytaniu (ms)
 export const VOICE_NAMES = ['Anxtan', 'Nugis', 'Stoir'];
 const VOICE_GAIN = [2.3, 2.0, 1];                 // wyrównanie głośności (niski Stoir sam z siebie jest najgłośniejszy)
 
@@ -25,7 +25,7 @@ export function blip(ctx, out, k, ch, n, last, t) {
   if (k === 1) {
     // wyluzowany ślizg: blip zaczyna się niżej i długo „zawija się” w górę, kolejne blipy zachodzą na siebie jak leniwie przeciągana samogłoska;
     // ciepłe, lekko rozstrojone dwie fale (sinus i trójkąt), miękki filtr; koniec słowa ślizga się wyraźnie wyżej
-    const d = last ? .26 : .17, drift = Math.sin(n * .33) * 26, f0 = 215 + (code % 6) * 26 + r * 14 + drift, fs = f0 * .74, f1 = f0 * (last ? 2.25 : 1.62);
+    const d = last ? .32 : .21, drift = Math.sin(n * .33) * 26, f0 = 215 + (code % 6) * 26 + r * 14 + drift, fs = f0 * .74, f1 = f0 * (last ? 2.25 : 1.62);
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2300; lp.Q.value = .7; lp.connect(env);
     env.gain.setValueAtTime(0.0001, t); env.gain.linearRampToValueAtTime(.55, t + d * .22); env.gain.setValueAtTime(.5, t + d * .55); env.gain.exponentialRampToValueAtTime(0.0001, t + d);
     const mk = (type, det, g) => { const o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(fs, t); o.frequency.exponentialRampToValueAtTime(f0, t + d * .22); o.frequency.exponentialRampToValueAtTime(f1, t + d * .95); o.detune.value = det;
