@@ -48,7 +48,8 @@ button{-webkit-user-select:none;user-select:none}
 .path .pcard{position:relative;display:block;width:calc(44px*var(--ps));height:calc(66px*var(--ps));transform:rotate(var(--rot,0deg));transform-origin:50% 100%}
 .path[data-i="0"]{--rot:-2.2deg}.path[data-i="1"]{--rot:2.2deg}
 .path .pcard img{display:block;width:100%;height:100%;image-rendering:pixelated}
-.path .ptxt{display:grid;gap:5px;justify-items:center;text-align:center}
+.path .ptxt{display:grid;gap:5px;justify-items:center;text-align:center;min-width:0}
+.path .nm{white-space:nowrap}.path .sub{text-wrap:balance}
 .path .nm{font-family:var(--f-goth);font-size:34px;line-height:1;color:var(--silver);-webkit-font-smoothing:none;padding:2px 8px}
 .path .nm small{font-family:var(--f-dos);font-size:16px;color:var(--cyan)}
 .path .sub{color:var(--ink-dim);font-size:11px}
@@ -66,7 +67,7 @@ button{-webkit-user-select:none;user-select:none}
 .path:focus-visible{outline:none}
 /* po wyborze: druga karta gaśnie w cieniu, podpis wybranej żarzy się i znika razem z kartą */
 .path.dim{transition:opacity .9s steps(7),filter .9s steps(7);opacity:0;filter:brightness(.15)}
-@keyframes ptxtburn{0%{opacity:1;filter:none}30%{opacity:1;filter:sepia(1) saturate(6) hue-rotate(-20deg) brightness(1.3)}70%{opacity:.5;filter:sepia(1) saturate(6) hue-rotate(-30deg) brightness(.8)}100%{opacity:0;filter:brightness(0);transform:translateY(-8px)}}
+@keyframes ptxtburn{0%{opacity:1;filter:none}30%{opacity:1;filter:brightness(1.6) drop-shadow(0 0 6px #3ff0ff)}70%{opacity:.5;filter:brightness(1.2) drop-shadow(0 0 8px #3ff0ff)}100%{opacity:0;filter:brightness(0);transform:translateY(-8px)}}
 .path.burning .ptxt{animation:ptxtburn 1.1s steps(9) forwards}
 @media (prefers-reduced-motion:reduce){.paths .path .pcard,.paths .path .ptxt{transition:none!important}.path.dim{transition:none}.path.burning .ptxt{animation:none;opacity:0}}
 .tint{position:absolute;top:12px;left:14px;z-index:5;display:flex;gap:6px;color:var(--ink-dim)}
@@ -96,7 +97,7 @@ button{-webkit-user-select:none;user-select:none}
 .gate canvas.tab.l{top:12.5%}.gate canvas.tab.r{top:87.5%}
 .gate .layer{padding:34cqw 12px}
 .gate .layer.entry{padding-left:6px;padding-right:6px}.gate .frame{padding:30px 20px 14px}
-.intro h1{font-size:32px}.intro p{margin:6px auto 10px;font-size:11px}.path .nm{font-size:28px}.path .nm small{font-size:13px}
+.intro h1{font-size:32px}.intro p{margin:6px auto 10px;font-size:11px}.path .nm{font-size:28px}.path .nm small{font-size:13px;display:block;margin-top:2px}.path .sub{white-space:nowrap;font-size:11px}
 /* telefon: karty ustawione na ukos (po lewej i po prawej, lekko przechylone), tekst obok karty prosto i czytelnie; wyłaniają się z boków */
 .gate{--ps:2}
 .paths{flex-direction:column;align-items:stretch;gap:10px;margin-top:4px}

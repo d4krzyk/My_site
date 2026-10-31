@@ -69,11 +69,12 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 
 - **Wybór drogi w bramie** (`src/engine/gatecards.js`, markup w `Gate.js`): po zejściu dwie karty (awersy z `public/cards/`: II ze słońcem = Krzyk, IV z księżycem = Maszynologia), bez napisów „poziom -1/-2”.
   Wyłaniają się z cienia (dither odpływa): na komputerze od spodu, na telefonie z boków, ustawione na ukos (lewa i prawa, przechylone), a tekst (nazwa, opis) leży obok karty prosto i czytelnie.
-  Po wyborze wybrana karta się spala (ogień od dołu, piksele żarzą się biało/żółto/czerwono, zwęglają i odlatują jako popiół), druga gaśnie w cieniu, potem kurtyna sigili (`veil.js`).
+  Po wyborze wybrana karta się spala (magiczny płomień od dołu, piksele żarzą się biało/cyjanowo/turkusowo, zwęglają się na granat i odlatują jako cyjanowy pył; z frontu unoszą się runy-zaklęcia; paleta `PAL` w `gatecards.js`), druga gaśnie w cieniu, potem kurtyna sigili (`veil.js`).
   Kliknięcia są blokowane do końca wyłaniania i po wyborze; przy ograniczeniu animacji karty są od razu i wybór przenosi bez spalania.
 - **Nawigacja kartami:** napis przy bieżącej karcie to „tu jesteś” / „you are here”.
 - **Spalony róg karty IV (Maszynologia):** na rewersie (`back-2`, `mini-2`) jest po prawej, na awersie (`face-maszynologia`) po lewej, bo po obróceniu karty róg ma być po drugiej stronie.
-  Nad spalenie dochodzi żar (krawędź przypalenia pulsuje pomarańczowo) i drobne iskry unoszące się w górę (`emberCorner`): w bramie i na karcie w rozkładzie nawigacji.
+  Nad spalenie dochodzi magiczny żar (krawędź przypalenia pulsuje cyjanem i bielą, cyjanowe płomyki, iskry, a w płomieniach powoli ulatniają się runy) (`emberCorner`): w bramie i na karcie w rozkładzie nawigacji.
+  Napisy przy kartach w bramie nie łamią się na kilka linii (`white-space:nowrap`; na telefonie `[ IT ]` schodzi pod nazwę).
 
 ## Brama (strona główna)
 
