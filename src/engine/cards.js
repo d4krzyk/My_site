@@ -5,19 +5,21 @@ function slitTo(stage, title, sub, back){
   const nw=document.createElement('div'); nw.className='pgnew';
   nw.innerHTML=`<div class="pgt">${title}</div><div class="pgs dos">${sub}</div>`;
   stage.appendChild(nw);
-  const c=document.createElement('canvas'); c.className='slitfx'; c.width=240; c.height=135; stage.appendChild(c); const x=c.getContext('2d');
-  const id=x.createImageData(240,135), d=id.data;
+  // piksele kwadratowe: siatka liczona z rozmiaru okna (PX px ekranu na piksel), a nie stałe 240×135 rozciągnięte na okno (na telefonie dawało to wysokie prostokąty)
+  const PX=matchMedia('(max-width:700px)').matches?3:5, W=Math.ceil(innerWidth/PX), H=Math.ceil(innerHeight/PX);
+  const c=document.createElement('canvas'); c.className='slitfx'; c.width=W; c.height=H; c.style.width=W*PX+'px'; c.style.height=H*PX+'px'; stage.appendChild(c); const x=c.getContext('2d');
+  const id=x.createImageData(W,H), d=id.data;
   const D=RM?500:1150; let t0=performance.now();
   const ease=k=>k*k*(3-2*k);
   (function f(now){ const k=Math.min(1,(now-t0)/D);
     const kl=ease(Math.min(1,k/.28)), ko=ease(clamp((k-.22)/.78,0,1));          // najpierw linia rozcina ekran, potem szczelina się rozwiera
     const half=ko*52;                                                            // połowa wysokości otwarcia w %
     nw.style.clipPath=`inset(${50-half}% 0 ${50-half}% 0)`;
-    const cy=67.5, gap=ko*67.5, wl=kl*120;
-    for(let yy=0;yy<135;yy++) for(let xx=0;xx<240;xx++){ const i=(yy*240+xx)*4;
-      const dx=Math.abs(xx-120); let v=0;
+    const cy=H/2, gap=ko*H/2, wl=kl*W/2, cx=W/2;
+    for(let yy=0;yy<H;yy++) for(let xx=0;xx<W;xx++){ const i=(yy*W+xx)*4;
+      const dx=Math.abs(xx-cx); let v=0;
       if(dx<wl){ const de=Math.min(Math.abs(yy-(cy-gap)),Math.abs(yy-(cy+gap))); const inGap=Math.abs(yy-cy)<gap;
-        v=Math.exp(-de/(3+ko*4))*(1-dx/(wl+1)*.6)*(inGap&&de>2? .55:1) * (1-ko*.85); }
+        v=Math.exp(-de*5/PX/(3+ko*4))*(1-dx/(wl+1)*.6)*(inGap&&de>2? .55:1) * (1-ko*.85); }
       const th=bth(xx,yy);
       if(v>th+.35){ d[i]=200;d[i+1]=255;d[i+2]=255;d[i+3]=255; }
       else if(v>th){ const red=(yy<cy-gap-1||yy>cy+gap+1)&&((xx+yy)&1); d[i]=red?196:63; d[i+1]=red?18:240; d[i+2]=red?29:255; d[i+3]=255; }
@@ -124,7 +126,7 @@ function slitTo(stage, title, sub, back){
   const phone=()=>matchMedia('(max-width:700px)').matches;
   let ARC=ARC_D;
   const place=(b,x,y,r,s,sx=1)=>{ b.style.transform=`translate(-50%,-50%) translate(${x}px,${y}px) rotate(${r}deg) scale(${s*sx},${s})`; };
-  function drawDim(k){ const w=dim.width=Math.ceil(st.clientWidth/3), h=dim.height=Math.ceil(st.clientHeight/3), c=dim.getContext('2d'), d=c.createImageData(w,h);
+  function drawDim(k){ const w=dim.width=Math.ceil(st.clientWidth/3), h=dim.height=Math.ceil(st.clientHeight/3), c=dim.getContext('2d'), d=c.createImageData(w,h); dim.style.width=w*3+'px'; dim.style.height=h*3+'px';   // piksel dokładnie 3×3 px (bez rozciągania do prostokąta)
     for(let y=0;y<h;y++) for(let x=0;x<w;x++){ if(bth(x,y)<k){ d.data[(y*w+x)*4+3]=235; } } c.putImageData(d,0,0); }
   function label(fx){ cards.forEach((b,i)=>{ const sn=b.querySelector('.sn'), sr=b.querySelector('.sr'), tn=NAMES[i], tr=i===here?L.here:ROADS[i];
     if(fx&&!RM&&!sp.hidden) import('./xlate').then(({decodeSwap})=>{ decodeSwap(sn,tn,{delay:i*70}); decodeSwap(sr,tr,{delay:i*70+120}); }); else { sn.textContent=tn; sr.textContent=tr; }

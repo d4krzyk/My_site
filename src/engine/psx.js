@@ -4,15 +4,15 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RM, loop, clamp, makeGlyph, drawGlyph } from './core';
 import { drawLCD, bay, hash, T_NOISE } from './nokia';
-import { watchGL } from './glbudget';
+import { sharedRenderer } from './glbudget';
 
 const ease = k => k * k * (3 - 2 * k), easeOut = k => 1 - Math.pow(1 - k, 3);
 const TAU = Math.PI * 2;
 
 /* ---------- wspólny potok PS1 (jak na planszy) ---------- */
 export function ps1(canvas, lowW, lowH, { clear = 0x000000, alpha = 0, fog = null } = {}) {
-  const r = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
-  r.setPixelRatio(1); r.setSize(lowW, lowH, false); r.setClearColor(clear, alpha); watchGL(canvas, r);   // kontekst zwalniany poza ekranem (zob. glbudget)
+  const r = sharedRenderer(canvas);   // wspólny kontekst WebGL dla całej strony (zob. glbudget)
+  r.setSize(lowW, lowH, false); r.setClearColor(clear, alpha);
   const scene = new THREE.Scene(); if (fog) scene.fog = new THREE.Fog(clear, fog[0], fog[1]);
   const cam = new THREE.PerspectiveCamera(35, lowW / lowH, .05, 60);
   const snap = new THREE.Vector2(lowW / 2.5, lowH / 2.5);
@@ -555,7 +555,7 @@ export function initPersonaTitles(parts) {
   parts.forEach((el, i) => {
     const name = el.dataset.name, h = el.querySelector('h3'); if (!name || !h) return;
     const cv = document.createElement('canvas'); cv.className = 'kp-title'; cv.setAttribute('aria-hidden', 'true'); const corner = el.closest('section').querySelector('.kp-cn'); if (corner) corner.appendChild(cv); else el.insertBefore(cv, h); h.classList.add('kp-gl');   // wstążka stoi w rogu obok maski
-    const r = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true }); r.setPixelRatio(1); r.setClearColor(0x000000, 0); r.autoClear = false; watchGL(cv, r);
+    const r = sharedRenderer(cv); r.setClearColor(0x000000, 0); r.autoClear = false;
     const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 3, .1, 50); cam.position.set(0, 0, 7); cam.lookAt(0, 0, 0);
     const res = new THREE.Vector2(1, 1), tint = new THREE.Vector3(...TITLE_COL[i % 3].map(v => v / 255)), gain = { value: 0 };
     const geo = new THREE.PlaneGeometry(1, 1, NX, 1); geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3), 3));
@@ -566,13 +566,13 @@ export function initPersonaTitles(parts) {
       fragmentShader: `uniform sampler2D map; uniform vec3 tint; uniform float gain; varying vec3 vUW; varying vec3 vCol;
         void main(){ vec2 uv = vUW.xy / vUW.z; vec4 t = texture2D(map, uv); vec3 c = min(vec3(1.0), t.rgb * t.a * tint * vCol * gain); gl_FragColor = vec4(c, max(c.r, max(c.g, c.b))); }` });   // addytywnie, alfa = jasność (premultiplied), tło strony prześwituje
     scene.add(new THREE.Mesh(geo, mat));
-    const paint = () => { const c = document.createElement('canvas'); c.width = 128; c.height = 28; const x = c.getContext('2d'); x.textAlign = 'center'; x.textBaseline = 'middle';
-      let fs = 22; x.font = fs + 'px "Special Elite K"'; const mw = x.measureText(name).width; if (mw > 118) { fs = Math.floor(fs * 118 / mw); x.font = fs + 'px "Special Elite K"'; }
-      x.lineJoin = 'round'; x.fillStyle = '#fff'; x.fillText(name, 64, 15); x.strokeStyle = '#fff'; x.lineWidth = 1.2; x.strokeText(name, 64, 15);
+    const paint = () => { const c = document.createElement('canvas'); c.width = 192; c.height = 42; const x = c.getContext('2d'); x.textAlign = 'center'; x.textBaseline = 'middle';
+      let fs = 34; x.font = fs + 'px "Special Elite K"'; const mw = x.measureText(name).width; if (mw > 178) { fs = Math.floor(fs * 178 / mw); x.font = fs + 'px "Special Elite K"'; }   // tekstura 192×42: czytelniejsze litery niż 128×28
+      x.lineJoin = 'round'; x.fillStyle = '#fff'; x.fillText(name, 96, 22); x.strokeStyle = '#fff'; x.lineWidth = 1.8; x.strokeText(name, 96, 22);
       const t = new THREE.CanvasTexture(c); t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; mat.uniforms.map.value = t; };
-    (document.fonts && document.fonts.load ? document.fonts.load('22px "Special Elite K"') : Promise.resolve()).then(paint, paint);
+    (document.fonts && document.fonts.load ? document.fonts.load('34px "Special Elite K"') : Promise.resolve()).then(paint, paint);
     // rozdzielczość: ~1/3 rozmiaru na ekranie, kamera tak, by wstążka wypełniała szerokość
-    const size = () => { const w = Math.max(60, Math.round(cv.clientWidth / 3)), hh = Math.max(20, Math.round(cv.clientHeight / 3)); r.setSize(w, hh, false); res.set(w, hh); cam.aspect = w / hh;
+    const size = () => { const w = Math.max(60, Math.round(cv.clientWidth / 2.3)), hh = Math.max(20, Math.round(cv.clientHeight / 2.3)); r.setSize(w, hh, false);   /* piksel ~2,3 px ekranu (wcześniej 3: litery zlewały się) */ res.set(w, hh); cam.aspect = w / hh;
       cam.fov = 2 * Math.atan(PW * 1.12 / cam.aspect / 2 / 7) * 180 / Math.PI; cam.updateProjectionMatrix(); };
     size(); const ro = new ResizeObserver(size); ro.observe(cv);
     const shape = (t, am) => { const pos = geo.attributes.position, col = geo.attributes.color, tt = t / 1000, k = i;

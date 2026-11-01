@@ -45,7 +45,10 @@ function tornTab(img, canvas, host, seed, art, side){
     const s=canvas.offsetWidth/w*GW/g.width, cx0=((r.left+r.right)/2-g.left)/g.width*GW, cy0=((r.top+r.bottom)/2-g.top)/g.height*GH;
     return {cx0,cy0,s,pt:(xx,yy,m)=>[m.cx0+(yy-h/2)*m.s, m.cy0-(xx-w/2)*m.s]}; };
   let burn=null;
-  host.addEventListener('descend',e=>{ burn={t0:-1, dur:e.detail.calm?1150:1750, calm:e.detail.calm, map:toAsh()}; });
+  // zapłon przy wczytaniu: sztandar nie rozjaśnia się, tylko powstaje z płomienia na krawędziach (odwrócone spalenie): ogień rozpala się przy brzegu,
+  // a jego czoło sunie w głąb pola BV, zostawiając za sobą materiał; przed czołem nic jeszcze nie istnieje
+  let ign=RM?null:{t0:-1, dur:1900, delay:side?800:350};
+  host.addEventListener('descend',e=>{ ign=null; burn={t0:-1, dur:e.detail.calm?1150:1750, calm:e.detail.calm, map:toAsh()}; });
   host.addEventListener('reset',()=>{ burn=null; gone.fill(0); canvas.style.visibility='visible'; });
   const draw=(t)=>{
     if(burn && burn.t0<0) burn.t0=t;
@@ -60,11 +63,18 @@ function tornTab(img, canvas, host, seed, art, side){
       glT[xx]=(RM?.8:.7+.5*(.5+.5*N(xx*.11+seed*3,t/260)))*(.85+p); glB[xx]=(RM?.8:.7+.5*(.5+.5*N(xx*.11+seed*3+4,t/260+1)))*(.85+p);
     }
     const BAND=.055, CHAR=.05; let spawn=0;
+    let Q=2; if(ign){ if(ign.t0<0) ign.t0=t+ign.delay; Q=t<ign.t0?-1:(t-ign.t0)/ign.dur*1.4; if(Q>1.5) ign=null; }
     const M=burn&&burn.map;
     for(let xx=0;xx<w;xx++){
       const tp=tpA[xx], bp=bpA[xx];
       for(let yy=0;yy<h;yy++){ const i=yy*w+xx, k=i*4;
         if(base[k+3]===0){ d[k+3]=0; continue; }
+        if(ign){ const v=BV[i];
+          if(v>Q+BAND){ d[k+3]=0; continue; }
+          if(v>Q){ const g=1-(v-Q)/BAND, th=bth(xx,yy), lv=Math.floor(clamp(g*3.2+th-.6,0,3));
+            if(lv>=1 && !RM && Math.random()<.0015 && sparks.length<260) sparks.push({x:xx+.5,y:yy+.5,vx:(Math.random()-.5)*1.4,vy:-(.5+Math.random()*1.8),life:6+Math.floor(Math.random()*8),age:0});
+            put(k, lv>=3?CORE: lv===2?CY: lv===1?(Math.random()<.15?EMB:DEEP) : [base[k]*.2,base[k+1]*.22,base[k+2]*.26]); continue; }
+          if(v>Q-CHAR){ const f=.3+.7*((Q-v)/CHAR); put(k,[base[k]*f,base[k+1]*f*1.02,base[k+2]*f*1.1]); continue; } }
         if(burn){ const v=BV[i];
           if(v<P){ if(!gone[i]){ gone[i]=1;
               // popiół i iskry z przepalonego miejsca

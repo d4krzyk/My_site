@@ -15,9 +15,9 @@ const ownScroll = (el, dy) => { for (let n = el; n && n !== document.body; n = n
 
 function overlay() {
   const cv = document.createElement('canvas'); cv.className = 'klatki'; cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:120;pointer-events:none;image-rendering:pixelated';
+  cv.style.cssText = 'position:fixed;left:0;top:0;z-index:120;pointer-events:none;image-rendering:pixelated';
   document.body.appendChild(cv); const x = cv.getContext('2d');
-  const size = () => { cv.width = Math.ceil(innerWidth / 3); cv.height = Math.ceil(innerHeight / 3); x.imageSmoothingEnabled = false; };
+  const size = () => { cv.width = Math.ceil(innerWidth / 3); cv.height = Math.ceil(innerHeight / 3); cv.style.width = cv.width * 3 + 'px'; cv.style.height = cv.height * 3 + 'px'; x.imageSmoothingEnabled = false; };   // piksel dokładnie 3×3 px (100vh na telefonie to nie innerHeight)
   size(); addEventListener('resize', size);
   return { cv, x, kill: () => { removeEventListener('resize', size); cv.remove(); } };
 }
