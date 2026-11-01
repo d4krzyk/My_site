@@ -122,7 +122,7 @@ button{-webkit-user-select:none;user-select:none}
 /* ===== nawigacja kartami (podstrony): warstwa nad stroną, ikonka w prawym górnym rogu ===== */
 .cards-nav{position:fixed;inset:0;z-index:50;pointer-events:none}
 /* przełącznik języka: pikselowe klawisze obok kart, wciśnięty = aktywny, w kolorze działu */
-.lang-keys{--acc:#dfe2e8;--acc-d:#6e717d;position:fixed;top:12px;right:14px;z-index:55;display:grid;grid-template-columns:1fr 1fr;width:78px;height:30px;padding:3px;box-sizing:border-box;font-family:var(--f-dos);font-size:16px;line-height:1;
+.lang-keys{--acc:#dfe2e8;--acc-d:#6e717d;position:fixed;top:12px;right:12px;z-index:55;display:grid;grid-template-columns:1fr 1fr;width:78px;height:30px;padding:3px;box-sizing:border-box;font-family:var(--f-dos);font-size:16px;line-height:1;
   background:#0b0c12;border:2px solid var(--acc-d);-webkit-font-smoothing:none;
   clip-path:polygon(3px 0,calc(100% - 3px) 0,100% 3px,100% calc(100% - 3px),calc(100% - 3px) 100%,3px 100%,0 calc(100% - 3px),0 3px)}
 .lang-keys.krzyk{--acc:#3ff0ff;--acc-d:#0e7c8a}
@@ -134,7 +134,7 @@ button{-webkit-user-select:none;user-select:none}
 .lang-keys button[aria-pressed="true"]{color:#000}
 .lang-keys button:focus-visible{outline:2px dashed var(--acc);outline-offset:1px}
 .lang-keys.busy button{cursor:progress}.lang-keys.busy button[aria-disabled="true"]{opacity:.5}
-.cards-nav .deck{all:unset;pointer-events:auto;cursor:pointer;position:fixed;right:10px;top:46px;z-index:6;width:136px;height:84px}
+.cards-nav .deck{all:unset;pointer-events:auto;cursor:pointer;position:fixed;right:6px;top:46px;z-index:6;width:136px;height:84px}   /* to samo miejsce na komputerze i telefonie, pod przełącznikiem języka */
 .cards-nav .deck canvas{width:100%;height:100%;display:block}
 .cards-nav .deck:focus-visible{outline:1px dashed var(--cyan);outline-offset:2px}
 /* rozkład: wygaszenie ditherem i karty z awersami */
@@ -154,8 +154,6 @@ button{-webkit-user-select:none;user-select:none}
 .scard:not(.cur):hover .sr,.scard:not(.cur):focus-visible .sr{color:var(--silver)}
 @media (max-width:700px){
   .spread.stack .scard .sr{left:calc(100% + 12px);right:auto;top:50%;transform:translateY(-50%);text-align:left;font-size:13px}
-  .cards-nav .deck{right:2px;top:42px}
-  .lang-keys{top:10px;right:10px}   /* stałe położenie na każdej stronie telefonu (bez chowania przy przewijaniu), obok ikonki kart */
 }
 /* przełącznik języka w rozkładzie */
 /* szczelina: nowa strona wyłania się przez poziome rozcięcie */
