@@ -350,7 +350,7 @@ export function initPersonaStage(cv, parts) {
   let span = Math.min(1.25, 1.4 * W / Hh / 4.2);
   // płótno mierzone przed ułożeniem strony miało złe proporcje (rozciągnięte maski na telefonie): przeliczamy przy każdej zmianie rozmiaru
   const ro = new ResizeObserver(() => { const [w, h] = dims(); if (w === W && h === Hh) return; W = w; Hh = h; P.resize(W, Hh); span = Math.min(1.25, 1.4 * W / Hh / 4.2); }); ro.observe(cv);
-  const cur = ms.map(() => ({ z: 0, s: .4, c: .75, y: 0 })), pr = ms.map(() => 0);   // pr: 0 = maska w rzędzie u góry, 1 = w lewym górnym rogu
+  const cur = ms.map((_, i) => ({ z: 0, s: .4, c: .75, y: 0, x: 0, sx: 1 })), pr = ms.map(() => 0);   // pr: 0 = maska w rzędzie u góry, 1 = w lewym górnym rogu
   let active = -1, shown = -1, cnFor = -2;
   // nazwa obok maski w rogu: kontener dla falującej wstążki (initPersonaTitles dokłada do niego płótna) i tagu persony
   const cn = document.createElement('div'); cn.className = 'kp-cn'; cn.setAttribute('aria-hidden', 'true'); cn.innerHTML = ''; cv.parentElement.appendChild(cn);
@@ -369,10 +369,14 @@ export function initPersonaStage(cv, parts) {
        fac = Math.min(1, Math.max(.55, W / Hh / 2.4)), cs = .36 * fac;
     const cx = -halfW + cs * 1.05 + .14, cy = halfH - cs * 1.3 - .08, now = performance.now();
     ms.forEach((m, i) => {
+      // komputer: gdy któraś persona siedzi w rogu, dwie przyciemnione maski stają małe po prawej stronie tego samego rzędu (nie pod nazwą); telefon: zostają pośrodku, nazwa może je zasłaniać
+      const desk = W / Hh >= 1.7, others = [0, 1, 2].filter(q => q !== (active >= 0 ? active : shown)), slot = Math.max(0, others.indexOf(i));
+      const off = active >= 0 && active !== i, on = active === i;
+      const tg = { z: i === shown ? .4 : off ? -.6 : 0, s: i === shown ? .36 : off ? (desk ? .26 : .33) : .4, c: on ? 1 : off ? .14 : .75, y: off ? (desk ? cy : .14) : 0, x: off && desk ? halfW * (.5 + .22 * slot) : (i - 1) * span }, c = cur[i];
       const tgP = i === shown && active === shown ? 1 : 0; pr[i] += Math.sign(tgP - pr[i]) * Math.min(Math.abs(tgP - pr[i]), (d || 40) / 560);
-      const pe = ease(pr[i]), on = active === i, off = active >= 0 && !on, tg = { z: i === shown ? .4 : off ? -.6 : 0, s: i === shown ? .36 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
+      const pe = ease(pr[i]);
       for (const k in tg) c[k] += (tg[k] - c[k]) * .12;
-      let x = (i - 1) * span, y = c.y + Math.sin(t / 900 + i * 2) * .05, rx = 0, ry = 0, rz = 0, sc = c.s * Math.min(1, Math.max(.55, W / Hh / 2.4));
+      let x = c.x, y = c.y + Math.sin(t / 900 + i * 2) * .05, rx = 0, ry = 0, rz = 0, sc = c.s * Math.min(1, Math.max(.55, W / Hh / 2.4));
       if (i === 0) { x += (Math.random() - .5) * .01; ry = (Math.floor(t / 1300) % 3 - 1) * .3; rz = Math.sin(t / 333) * .03; }          // lękowa: drży, rozgląda się nerwowo
       if (i === 1) { y += Math.abs(Math.sin(t / 380)) * .06; rz = Math.sin(t / 520) * .2; ry = Math.sin(t / 1400) * .2; }                  // wyluzowana: podskakuje, kiwa się
       if (i === 2) { const st = Math.floor(t / 1500), pose = k => [[-.28, .06], [0, 0], [.24, -.05], [0, .03]][((k % 4) + 4) % 4], k3 = Math.min(1, (t % 1500) / 90);
@@ -392,10 +396,10 @@ export function initPersonaStage(cv, parts) {
     // nazwa obok maski: pojawia się, gdy maska wyląduje, gaśnie, gdy maska zaczyna wracać
     if (SEATED !== cnFor) { cnFor = SEATED; if (SEATED >= 0) { const el = parts[SEATED], tag = el.querySelector('.kp-tag'); } }
     cn.classList.toggle('on', SEATED >= 0 && active === SEATED);
-    // komputer: nazwa obok maski; wąski ekran (telefon): pod maską, żeby nie wchodzić pod przełącznik języka i ikonkę kart
-    const nar = W / Hh < 1.7; cn.classList.toggle('below', nar);
-    cn.style.left = (nar ? (cx - cs * .95 + halfW) / (2 * halfW) * 100 : (cx + cs * 1.05 - .08 + halfW) / (2 * halfW) * 100) + '%';
-    cn.style.top = (nar ? (halfH - cy + cs * 1.55) / (2 * halfH) * 100 : (halfH - cy) / (2 * halfH) * 100) + '%';
+    // nazwa zawsze obok maski, w tym samym rzędzie (komputer i telefon); na telefonie węższa, żeby nie wchodzić pod przełącznik języka i ikonkę kart
+    cn.classList.toggle('narrow', W / Hh < 1.7);
+    cn.style.left = (cx + cs * 1.05 - .08 + halfW) / (2 * halfW) * 100 + '%';
+    cn.style.top = (halfH - cy) / (2 * halfH) * 100 + '%';
     P.render();
   });
   return () => { ro.disconnect(); cn.remove(); };

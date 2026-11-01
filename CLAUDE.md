@@ -100,7 +100,7 @@ przeliczania liczby znaków co klatkę: każda jej zmiana rozstawiała cały kr�
 ## Nazwy person (sekcja Krzyk → persony)
 
 Nazwa aktywnej persony (tekstura 192×42, piksel wstążki ≈ 2,3 px ekranu, żeby litery były czytelne; na telefonie wstążka szeroka na ok. 2/3 ekranu) to niskorozdzielcza, miękka tekstura na wstążce z 8 wielokątów (`initPersonaTitles` w `src/engine/psx.js`): mapowanie afiniczne,
-przyciąganie wierzchołków do pikseli, fala i skręt biegnące bez przerwy oraz smuga ruchu (echo), wzór z dema PS1 z Euskal 2001; **stylu wstążki nie zmieniać**. Wstążka stoi w rogu obok maski (zob. „Persony w rogu i dźwięk”). Przy wejściu słowo wynurza się
+przyciąganie wierzchołków do pikseli, fala i skręt biegnące bez przerwy oraz smuga ruchu (echo), wzór z dema PS1 z Euskal 2001; **stylu wstążki nie zmieniać**. Wstążka stoi w tym samym rzędzie co maska w rogu, zawsze po jej prawej stronie (komputer i telefon; na telefonie węższa, zasłanianie przyciemnionych masek jest dopuszczalne) (zob. „Persony w rogu i dźwięk”). Przy wejściu słowo wynurza się
 z ciemności jako pognieciona kreska i się prostuje, przy wyjściu zwija się i gaśnie. Zwykły `h3` zostaje w stronie (ukryty wizualnie), a przy ograniczeniu
 animacji w systemie nagłówek jest zwykłym tekstem.
 
@@ -129,9 +129,16 @@ Ekran i wyświetlacz VFD to płótna 2D przyklejone homografią do modelu. **Nie
 Telefon (≤700 px): wariant „dwa piętra” — scena pionowa 288×480 (`LAYOUTS.port`): telewizor z magnetowidem u góry, dywan z kasetą i pilotem pod nim, zoom dopasowany do szerokości; układ przełącza się też przy zmianie szerokości (`applyLayout`).
 Nad sceną stoi tabliczka „muzyka” (`.k-plq`, tekstura płyty wyboru, krzywo naklejona, w muzyce w lewym górnym rogu wyrwy (zachodzi na nią ujemnym marginesem, żeby nie zabierała miejsca), w personach tuż nad maskami; takiej samej tabliczki „persony” używa sekcja person, znaczniki A1 i A2 usunięte). Później: plakietki z tytułami utworów, z których wysuwa się kaseta i rusza klip z YouTube.
 
+## Telewizor odtwarza utwory z YouTube (kanał @zchaosu)
+
+Lista filmów kanału „CHAOTYCZNE WYRAZY EKSPRESJI” (`public/krzyk/clips.json`, id kanału `UCgylhn-JysNUsZeHJWQdb2g`, od najnowszych) powstaje w `scripts/clips.mjs`, uruchamianym przed budową (`prebuild` w `package.json`): pobiera kanał RSS bez klucza API i łączy go z zapisaną listą (RSS daje tylko 15 najnowszych, starsze zostają z pliku); brak sieci nie psuje budowy. Workflow Pages buduje stronę też codziennie (cron), więc nowe filmy trafiają do telewizora same; plik `clips.json` warto co jakiś czas zatwierdzić w repozytorium.
+Odtwarzanie (`muzyka.js`): kliknięcie kasety wsuwa ją i dopiero wtedy ładuje się IFrame API YouTube (przed kliknięciem strona nie łączy się z youtube.com). Film 480×360 leży pod płótnem ekranu w tej samej nakładce, przyklejonej do modelu; płótno rysuje na nim prążki, ciemniejsze rogi i napisy OSD (PLAY, tytuł, `KLIP nn`), a wyświetlacz VFD pokazuje czas. Pilot albo koniec filmu włącza następny utwór, wysunięcie kasety pauzuje.
+**Dźwięk filmu podlega ikonce oscyloskopu:** przy wyłączonym dźwięku film startuje wyciszony i ekran przez kilka sekund podpowiada, żeby włączyć dźwięk w rogu. Gdy film się nie ładuje (brak sieci, wyłączone osadzanie), ekran zostaje z korektorem i napisem „BŁĄD TAŚMY” albo „ŁADOWANIE…”.
+Nie sprawdzone na prawdziwym urządzeniu: realne odtwarzanie (w środowisku testowym strumienie wideo są zablokowane, test używał atrapy API) i czy iOS Safari pokazuje film w elemencie z transformacją 3D (gdy nie, zostaje wariant: w pokoju miniatura z korektorem, a film dopiero po powiększeniu telewizora).
+
 ## Persony w rogu i dźwięk
 
-- **Maski (`initPersonaStage` w `psx.js`):** trzy maski stoją u góry w rzędzie. Aktywna persona wyjeżdża łukiem w lewy górny róg sceny (sticky), maska patrzy w środek strony, obok niej stoi nazwa jako falująca wstążka PS1 (`initPersonaTitles` dokłada jej płótno do kontenera `.kp-cn`, pojawia się po wylądowaniu maski; tag persony zostaje tylko w opisie), a pozostałe maski zostają u góry przyciemnione.
+- **Maski (`initPersonaStage` w `psx.js`):** trzy maski stoją u góry w rzędzie. Aktywna persona wyjeżdża łukiem w lewy górny róg sceny (sticky), maska patrzy w środek strony, obok niej stoi nazwa jako falująca wstążka PS1 (`initPersonaTitles` dokłada jej płótno do kontenera `.kp-cn`, pojawia się po wylądowaniu maski; tag persony zostaje tylko w opisie), a pozostałe maski są przyciemnione: na komputerze stają małe po prawej stronie tego samego rzędu (nie nachodzą na nazwę), na telefonie zostają pośrodku.
   Płótno z maskami (`.kp-stage-in`) ma szerokość okna, kamera stoi daleko z wąskim kątem (`CAMD`, `FOV`), żeby maski przy krawędziach się nie wyginały, i leży na pierwszym planie, więc maski mogą wychodzić poza brązową planszę (jej tło `.kp-stage::before` zostaje szerokości planszy; plansza ma być jeszcze przerobiona).
   Przejście jest po kolei: najpierw poprzednia maska wraca do rzędu (cień), dopiero potem następna wychodzi do rogu. Opis zaczyna się pisać po wylądowaniu maski (`personaSeated` zamiast `personaActive` w `persvoice`).
   Dukanie: `persvoice` zgłasza każdą wpisaną literę (`setPersonaTalk`), maska w rogu rusza się w jej rytmie, każda inaczej (Anxtan drży i strzela na boki, Nugis podskakuje i kiwa głową, Stoir szarpie się jak manekin); działa też bez dźwięku.

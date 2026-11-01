@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { RM, loop } from './core';
 import { ps1, loadPSX } from './psx';
+import { soundOn } from '../lib/sound';
 
 // dwa układy sceny: komputer (poziomo 16:10) i telefon (pionowo: telewizor u góry, dywan z kasetą i pilotem pod nim, wariant „dwa piętra”)
 const PHONE = () => matchMedia('(max-width:700px)').matches;
@@ -11,7 +12,9 @@ const LAYOUTS = {
   land: { w: 512, h: 320, pw: 960, ph: 600, fov: 46, cam: [.62, .5, 1.8], look: [.5, .3, 0], tape: [.5, .42, .6], rem: [.8, .66], remUp: [.72, .22, .92], remL: [.78, .38, .95] },
   port: { w: 288, h: 480, pw: 540, ph: 900, fov: 50, cam: [.02, .5, 1.75], look: [.02, .12, 0], tape: [-.12, .66, .3], rem: [.15, .8], remUp: [.08, .26, .95], remL: [.08, .42, 1.0] },
 };
-const CLIPS = [['KLIP 01', 'NOCNA TAŚMA'], ['KLIP 02', 'PODZIEMIE'], ['KLIP 03', 'POZIOM -1']];
+// lista filmów z kanału YouTube (public/krzyk/clips.json, tworzy ją scripts/clips.mjs przy budowie), od najnowszych: [etykieta, tytuł, id filmu, czas w s]
+let CLIPS = [];
+const fmt = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 const rng = s => () => (s = (s * 16807) % 2147483647) / 2147483647;
 const ease = x => (x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x));
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -62,6 +65,8 @@ export function initMuzyka(host, A) {
   const view = document.createElement('div'); view.className = 'mu-view'; view.style.clipPath = 'polygon(' + tear().map(([u, v]) => (u * 100).toFixed(2) + '% ' + (v * 100).toFixed(2) + '%').join(',') + ')';   // wyrwa = wycięcie sceny
   const room = document.createElement('canvas'); room.className = 'mu-room';
   const ovTv = mkOv(192, 144), ovVfd = mkOv(160, 40);
+  // film z YouTube leży pod płótnem ekranu (które rysuje na nim prążki i napisy), w tej samej nakładce przyklejonej do modelu; ładuje się dopiero po kliknięciu kasety
+  const ytWrap = document.createElement('div'); ytWrap.className = 'mu-yt'; ovTv.el.insertBefore(ytWrap, ovTv.c);
   const paper = document.createElement('canvas'); paper.className = 'mu-edge'; paper.width = LAYOUTS[PHONE() ? 'port' : 'land'].pw; paper.height = LAYOUTS[PHONE() ? 'port' : 'land'].ph; paper.setAttribute('aria-hidden', 'true');
   view.append(room, ovTv.el, ovVfd.el); host.append(view, paper);
   drawEdge(paper);
@@ -126,8 +131,24 @@ export function initMuzyka(host, A) {
   const pin = (el, obj, corners) => { const cw = room.clientWidth, ch = room.clientHeight; if (!cw) return; obj.updateWorldMatrix(true, false); cam.updateMatrixWorld();
     const q = corners.map(v => { const p = v.clone().applyMatrix4(obj.matrixWorld).project(cam); return [(p.x + 1) / 2 * cw, (1 - p.y) / 2 * ch]; }); el.style.transform = quadT(el.offsetWidth, el.offsetHeight, q); el.style.visibility = 'visible'; };
 
+  // ---- odtwarzacz YouTube (IFrame API ładowane przy pierwszym wsunięciu kasety, youtube.com bez ciasteczek śledzących nie jest odpytywany wcześniej)
+  let yt = null, ytP = null, ytState = -1, ytErr = false, ytAt = 0, shown = false;
+  const clipN = () => Math.max(1, CLIPS.length);
+  const loadYT = () => ytP || (ytP = new Promise(res => { if (window.YT && window.YT.Player) return res(window.YT); const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => { if (prev) prev(); res(window.YT); }; const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; sc.onerror = () => res(null); document.head.appendChild(sc); }));
+  const applyMute = () => { if (!yt || !yt.mute) return; try { soundOn() ? yt.unMute() : yt.mute(); } catch (e) {} };
+  const playClip = async i => { const c = CLIPS[i]; if (!c || !c[2]) return; ytErr = false; ytState = -1; ytAt = performance.now();
+    const YT = await loadYT(); if (!YT || !alive) { ytErr = true; return; }
+    if (!yt) { const holder = document.createElement('div'); ytWrap.appendChild(holder);
+      yt = new YT.Player(holder, { width: 480, height: 360, videoId: c[2], playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, playsinline: 1, cc_load_policy: 0, origin: location.origin },
+        events: { onReady: e => { applyMute(); try { e.target.playVideo(); } catch (er) {} }, onStateChange: e => { ytState = e.data; if (e.data === 0) next(); }, onError: () => { ytErr = true; } } }); }
+    else { try { yt.loadVideoById(c[2]); applyMute(); } catch (e) { ytErr = true; } } };
+  const stopClip = () => { try { if (yt && yt.pauseVideo) yt.pauseVideo(); } catch (e) {} ytState = -1; };
+  const onSnd = () => applyMute(); addEventListener('krzyk-sound', onSnd);
+  fetch(A.clips).then(r => r.json()).then(d => { CLIPS = (d.clips || []).map((c, i) => ['KLIP ' + String(i + 1).padStart(2, '0'), c.title.replace(/^krzyk\s*[-–]\s*/i, '').toUpperCase(), c.id, c.d]); }).catch(() => {});
+
   let alive = true;
-  const off = () => { alive = false; try { mq.removeEventListener('change', onMq); } catch (e) {} removeEventListener('keydown', onKey); room.removeEventListener('click', onClick); room.removeEventListener('pointermove', onMove); try { P.r.dispose(); } catch (e) {} };
+  const off = () => { alive = false; removeEventListener('krzyk-sound', onSnd); try { if (yt && yt.destroy) yt.destroy(); } catch (e) {} try { mq.removeEventListener('change', onMq); } catch (e) {} removeEventListener('keydown', onKey); room.removeEventListener('click', onClick); room.removeEventListener('pointermove', onMove); try { P.r.dispose(); } catch (e) {} };
   const onKey = e => { if (e.key === 'Escape' && zin) zin = false; };
   let zin = false;
   const tv = new THREE.Group(), vcr = new THREE.Group(), cas = new THREE.Group(), rem = new THREE.Group();
@@ -140,9 +161,9 @@ export function initMuzyka(host, A) {
     else { p.lerpVectors(front, inside, ease((k - .7) / .3)); }
     cas.position.copy(p); cas.rotation.set(0, ry, 0); };
   const resetCas = () => { cas.visible = true; placeTape(0); };
-  const insert = () => { if (state !== 'idle') return; if (RM) { state = 'play'; cas.visible = false; st0 = tNow; return; } state = 'in'; st0 = tNow; };
-  const eject = () => { if (state === 'idle' || state === 'out') return; if (state === 'in') { resetCas(); state = 'idle'; return; } if (RM) { state = 'idle'; resetCas(); return; } state = 'out'; st0 = tNow; cas.visible = true; placeTape(1); };
-  const next = () => { if (r0 >= 0) return; if (RM) { if (state === 'play') clip = (clip + 1) % CLIPS.length; return; } r0 = tNow; };
+  const insert = () => { if (state !== 'idle') return; playClip(clip); if (RM) { state = 'play'; cas.visible = false; st0 = tNow; return; } state = 'in'; st0 = tNow; };
+  const eject = () => { if (state === 'idle' || state === 'out') return; stopClip(); if (state === 'in') { resetCas(); state = 'idle'; return; } if (RM) { state = 'idle'; resetCas(); return; } state = 'out'; st0 = tNow; cas.visible = true; placeTape(1); };
+  const next = () => { if (r0 >= 0) return; if (RM) { if (state === 'play') { clip = (clip + 1) % clipN(); playClip(clip); } return; } r0 = tNow; };
   const ray = new THREE.Raycaster(), mv = new THREE.Vector2();
   const pick = e => { const rc = room.getBoundingClientRect(); mv.set(((e.clientX - rc.left) / rc.width) * 2 - 1, -((e.clientY - rc.top) / rc.height) * 2 + 1); ray.setFromCamera(mv, cam);
     const hit = o => ray.intersectObject(o, true).length > 0;
@@ -195,19 +216,26 @@ export function initMuzyka(host, A) {
       else if (state === 'boot') { const kb = e / 700; sx.fillStyle = '#000'; sx.fillRect(0, 0, 192, 144); sx.fillStyle = '#fff';
         if (kb < .45) { const w = 192 * (kb / .45); sx.fillRect(96 - w / 2, 71, w, 2); } else { const h = 144 * ((kb - .45) / .55); sx.fillRect(0, 72 - h / 2, 192, h); } scr = 1.3; vfd('CH ' + (clip + 1)); }
       else {
-        const g2 = sx.createLinearGradient(0, 0, 192, 144); g2.addColorStop(0, '#16203a'); g2.addColorStop(1, '#05060c'); sx.fillStyle = g2; sx.fillRect(0, 0, 192, 144); eq(sx, e);
-        // jedno spokojne pasmo śledzenia i stałe linie rastra (bez losowych kresek)
-        const by = 144 - ((e / 18) % 190); sx.fillStyle = 'rgba(255,255,255,.2)'; sx.fillRect(0, by, 192, 3);
+        const c0 = CLIPS[clip] || ['KLIP', '', null], vid = !ytErr && ytState === 1 && !!c0[2], title = c0[1].length > 22 ? c0[1].slice(0, 21) + '…' : c0[1];
+        if (vid !== shown) { shown = vid; ytWrap.style.visibility = vid ? 'visible' : 'hidden'; }
+        if (vid) { sx.clearRect(0, 0, 192, 144); }                                                   // film widać spod płótna: tu tylko prążki, napisy OSD i ciemniejsze rogi
+        else { const g2 = sx.createLinearGradient(0, 0, 192, 144); g2.addColorStop(0, '#16203a'); g2.addColorStop(1, '#05060c'); sx.fillStyle = g2; sx.fillRect(0, 0, 192, 144); eq(sx, e);
+          const by = 144 - ((e / 18) % 190); sx.fillStyle = 'rgba(255,255,255,.2)'; sx.fillRect(0, by, 192, 3); }
         sx.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < 144; y += 3) sx.fillRect(0, y, 192, 1);
-        sx.font = '16px VT323, monospace'; sx.textAlign = 'left'; sx.textBaseline = 'top'; sx.fillStyle = '#fff'; sx.fillText('PLAY ▶   SP', 8, 6); sx.fillStyle = Math.floor(e / 600) % 2 ? '#ff2a3a' : '#6a1018'; sx.fillText('●', 166, 6);
-        sx.fillStyle = '#fff'; sx.fillText(CLIPS[clip][0] + ' · ' + CLIPS[clip][1], 8, 124);
-        const s = Math.floor(e / 1000); vfd('►0:' + String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0')); scr = .9 + Math.abs(Math.sin(e / 400)) * .3; }
+        const vg = sx.createRadialGradient(96, 72, 50, 96, 72, 120); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)'); sx.fillStyle = vg; sx.fillRect(0, 0, 192, 144);
+        sx.font = '16px VT323, monospace'; sx.textAlign = 'left'; sx.textBaseline = 'top'; sx.shadowColor = '#000'; sx.shadowBlur = 3; sx.fillStyle = '#fff'; sx.fillText('PLAY ▶   SP', 8, 6); sx.fillStyle = Math.floor(e / 600) % 2 ? '#ff2a3a' : '#6a1018'; sx.fillText('●', 166, 6);
+        sx.fillStyle = '#fff'; sx.fillText(c0[0] + (title ? ' · ' + title : ''), 8, 124);
+        if (ytErr) { sx.fillStyle = '#ff6a6a'; sx.fillText('BŁĄD TAŚMY', 8, 60); }
+        else if (!vid && c0[2] && ytState !== 1 && performance.now() - ytAt > 800) { sx.fillStyle = '#9fd0ff'; sx.fillText('ŁADOWANIE…', 8, 60); }
+        else if (vid && !soundOn() && e < 6000) { sx.fillStyle = '#ffe58a'; sx.fillText('WYCISZONE', 8, 90); sx.fillText('DŹWIĘK: IKONKA W ROGU', 8, 105); }
+        sx.shadowBlur = 0;
+        const ct = vid && yt && yt.getCurrentTime ? yt.getCurrentTime() : e / 1000; vfd('►' + fmt(ct)); scr = vid ? 1.1 : .9 + Math.abs(Math.sin(e / 400)) * .3; }
       glowL.intensity = scr; scrGlow.material.opacity = .12 + scr * .14;
       fS.material.opacity = .1 + Math.sin(t / 1700) * .015; wS.material.opacity = .09 + Math.sin(t / 2300) * .02; winL.intensity = .5 + Math.sin(t / 3100) * .08; beamTex.offset.y = Math.sin(t / 4200) * .03;
       if (r0 >= 0) { const re = t - r0, up = re < 400 ? re / 400 : re < 750 ? 1 : 1 - (re - 750) / 450, u = clamp(up, 0, 1), eu = u * u * (3 - 2 * u);
         rem.position.lerpVectors(remRest, remUp, eu); rem.quaternion.copy(qRest).slerp(aimQ(), eu);
         const ir = re > 420 && re < 700 && (Math.floor(re / 60) % 2); tip.material.emissiveIntensity = ir ? 1 : 0; irL.intensity = ir ? .8 : 0;
-        if (re > 480 && state === 'play' && !rem.userData.sw) { rem.userData.sw = 1; clip = (clip + 1) % CLIPS.length; state = 'boot'; st0 = t; }
+        if (re > 480 && state === 'play' && !rem.userData.sw) { rem.userData.sw = 1; clip = (clip + 1) % clipN(); playClip(clip); state = 'boot'; st0 = t; }
         if (re > 1200) { r0 = -1; rem.userData.sw = 0; rem.position.copy(remRest); rem.quaternion.copy(qRest); } }
       P.render(); pin(ovTv.el, tv, tvC); pin(ovVfd.el, vcr, vfC);
     });
