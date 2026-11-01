@@ -152,16 +152,18 @@ export function initMaszyn(root, opts) {
     const zone = () => { const G = L[mode], top = pre.getBoundingClientRect().top, lh = pre.offsetHeight / G.ch.length, H = innerHeight;
       if (sv) sv.vis = G.ch.map((_, r) => { const y = top + r * lh; return y + lh > 0 && y < H; });   // poza oknem tekst zostaje czytelny w DOM (kopiowanie, szukanie)
       return G.ch.map((_, r) => { const y = top + r * lh; return y >= 0 && y + lh <= H ? 1 : 0; }); };
-    let sRaf = 0, sLast = 0;
+    let sRaf = 0, sLast = 0, sY = scrollY;
     // tekst jest przerysowywany podczas animacji przewijania; gdyby wypadło to między wciśnięciem a puszczeniem przycisku myszy, element pod kursorem znikałby z DOM
     // i przeglądarka nie wysłałaby kliknięcia (link by nie zadziałał), więc na czas trzymania przycisku przerysowanie czeka
     let pressed = false; pre.addEventListener('pointerdown', () => { pressed = true; }); addEventListener('pointerup', () => { pressed = false; }, true); addEventListener('pointercancel', () => { pressed = false; }, true);
     const sStep = now => { if (pressed) { sLast = now; sRaf = requestAnimationFrame(sStep); return; } const dt = Math.min(64, now - sLast); sLast = now; const tg = zone(); let moving = false; sv.tick++;
+      // szybkie przewijanie (rzut palcem) albo kolejka wierszy czekających na rozszyfrowanie: wiersze w oknie od razu stają się czytelne, inaczej w tekście zostawały puste pasy
+      const vel = Math.abs(scrollY - sY) / Math.max(8, dt); sY = scrollY; let pend = 0; for (let r = 0; r < tg.length; r++) if (tg[r] > sv[r]) pend++; const burst = vel > .4 || pend > 3;
       const mid = innerHeight / 2 - pre.getBoundingClientRect().top, lh = pre.offsetHeight / tg.length;
       for (let r = 0; r < tg.length; r++) { if (sv[r] === tg[r]) continue; moving = true;
         // rozszyfrowanie po kolei, w kierunku czytania od krawędzi, którą wiersz wjechał: najwyżej ~2 wiersze naraz
         // wiersz głębiej niż 2 linie od krawędzi (duży skok: PageDown, kotwica, rzut palcem) od razu staje się czytelny
-        const y = r * lh, edge = Math.min(y - (mid - innerHeight / 2), mid + innerHeight / 2 - y - lh) / lh; if (tg[r] && edge > 2.5) { sv[r] = 1; continue; }
+        const y = r * lh, edge = Math.min(y - (mid - innerHeight / 2), mid + innerHeight / 2 - y - lh) / lh; if (tg[r] && (edge > 2.5 || burst)) { sv[r] = 1; continue; }
         const nb = y > mid ? r - 1 : r + 1; if (tg[r] > sv[r] && tg[nb] && sv[nb] < .5 && sv.vis[nb]) continue;
         sv.dir[r] = tg[r] < sv[r]; sv[r] += Math.sign(tg[r] - sv[r]) * Math.min(Math.abs(tg[r] - sv[r]), dt / 200); }
       render(null); sRaf = moving ? requestAnimationFrame(sStep) : 0; };

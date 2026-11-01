@@ -70,6 +70,8 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 Puste bloki przy szybkim przewijaniu (rastrowanie nie nadążało) powodowały: wersy w tle Krzyka (`.k-lines`, warstwa wysokości całej strony z maską i `mix-blend-mode:screen`, setki spanów pisanych litera po literze przy każdym wjeździe w kadr), obrócone duże sekcje i podwójny cień tekstu. Na telefonie (≤700 px) wersy są od razu gotowe (bez `prep` i bez pisania), bez maski i mieszania, sekcje bez obrotu, jeden cień tekstu;
 pisany tekst, który wyjechał z okna w trakcie pisania, kończy się od razu (`typeOut`); przejścia masek person są szybsze, a części person niższe. Test: przewijanie skryptem z `Emulation.setCPUThrottlingRate` 4× i pomiar czasu klatek (średnia spadła z ok. 63 do ok. 40 ms).
 
+Maszynologia (NFO): wiersze wjeżdżające w okno rozszyfrowują się po kolei przy krawędzi, ale przy szybkim przewijaniu (prędkość > 0,4 px/ms) albo gdy w kolejce czeka więcej niż 3 wiersze, wszystkie wiersze w oknie od razu stają się czytelne (`burst` w `sStep`); wcześniej wiersze czekały w kolejce i w tekście były puste pasy (widać je było na nagraniu z telefonu). Test: skrypt przewija w kółko co klatkę o 55 px i liczy wiersze w oknie różne od tekstu docelowego (było do 3, jest 0).
+
 ## Piksele kwadratowe
 
 Wszystkie pełnoekranowe płótna z ditherem (rozkład kart, szczelina przejścia, kurtyna sigili, klatki przewijania) mają siatkę liczoną z rozmiaru okna i rozmiar CSS równy dokładnie `płótno × piksel` (a nie `100vw × 100vh` ani stały 16:9), bo inaczej na telefonie piksele rozciągają się w prostokąty. Nowe takie płótno rób tak samo.
