@@ -266,7 +266,8 @@ function gateOuter(pre){
   const PX=2, COL={'#':'#cdd0d8',s:'#969aa4',d:'#6e717d',D:'#3a3c46',w:'#ffffff',c:'#3ff0ff',t:'#0e7c8a',T:'#07444c'};
   const old=pre.querySelector('canvas.gout'); if(old) old.remove();
   const cv=document.createElement('canvas'); cv.className='gout'; pre.prepend(cv);
-  function draw(){
+  let busy=false, dirty=false;                                   // dirty: rozmiar zmienił się w trakcie animacji, przerysuj po niej
+  function draw(anim){
     const r=pre.getBoundingClientRect(); if(!r.width) return;
     // nieparzysta szerokość (piksel środka) i płótno wyśrodkowane na oknie co do pół piksela, żeby ozdoby były symetryczne względem tekstu
     let W=Math.floor(r.width/PX); if(!(W%2)) W--; const H=Math.floor(r.height/PX);
@@ -322,11 +323,23 @@ function gateOuter(pre){
       if(e<6 && e/6<=th) continue;                                   // poszarpany ditherem brzeg płyty
       const tx=vn(px,py,7)*.4+fib[py*W+px]*.9-.08;
       if(tx>th+.18){ D[k]=28; D[k+1]=31; D[k+2]=52; } D[k+3]=255; }
-    x.clearRect(0,0,W,H); x.putImageData(im,0,0);
-    for(const [k,c] of M){ const [a,b]=k.split(',').map(Number); x.fillStyle=COL[c]; x.fillRect(a,b,1,1); }
+    const orn=[...M].map(([k,c])=>{ const [a,b]=k.split(',').map(Number); return [a,b,c,Math.min(Math.hypot(a,b),Math.hypot(W-a,H-b),Math.hypot(a-cx,b)*.8,Math.hypot(a-cx,H-b)*.8)]; }).sort((p,q)=>p[3]-q[3]);
+    const final=()=>{ x.clearRect(0,0,W,H); x.putImageData(im,0,0); for(const [a,b,c] of orn){ x.fillStyle=COL[c]; x.fillRect(a,b,1,1); } };
+    if(!anim||RM){ final(); return; }
+    // pojawianie się jak ramka w Maszynologii: płyta wyłania się ditherem (próg Bayera, od góry ku dołowi) z rozjarzonym cyjanowym brzegiem,
+    // ozdoby rosną od narożników i rombu; w niskich klatkach (18/s)
+    busy=true; const src=new Uint8ClampedArray(D), fr=x.createImageData(W,H), F=fr.data, DUR=1300; let t0=-1, last=0;
+    const step=now=>{ if(t0<0) t0=now; if(now-last<1000/18){ requestAnimationFrame(step); return; } last=now; const k=Math.min(1,(now-t0)/DUR);
+      for(let py=0;py<H;py++){ const lim=k*1.7-(py/H)*.7; for(let px=0;px<W;px++){ const i=(py*W+px)*4, on=bth(px,py)<lim;
+        F[i]=src[i]; F[i+1]=src[i+1]; F[i+2]=src[i+2]; F[i+3]=on?src[i+3]:0;
+        if(on && bth(px,py)>lim-.08 && src[i+3]){ F[i]=20; F[i+1]=110; F[i+2]=130; } } }   // świeży brzeg ditheru rozjarzony cyjanem
+      x.clearRect(0,0,W,H); x.putImageData(fr,0,0);
+      const n=Math.floor(orn.length*Math.min(1,k*1.25)); for(let j=0;j<n;j++){ const [a,b,c]=orn[j]; x.fillStyle=j>n-24?COL.c:COL[c]; x.fillRect(a,b,1,1); }
+      if(k<1) requestAnimationFrame(step); else { busy=false; if(dirty){ dirty=false; draw(false); } else final(); } };
+    requestAnimationFrame(step);
   }
-  draw();
-  if(window.ResizeObserver){ let t; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(()=>{ if(pre.querySelector('canvas.gout')===cv) draw(); },80); }).observe(pre); }
+  draw(true);
+  if(window.ResizeObserver){ let t; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(()=>{ if(pre.querySelector('canvas.gout')!==cv) return; if(busy) dirty=true; else draw(false); },80); }).observe(pre); }
 }
 
 /* --- brama: po kliknięciu cała ramka z napisami pęka na kawałki, które w niskich klatkach (9 kl/s) opadają w czeluść: kurczą się, obracają i migoczą aż znikną --- */
@@ -405,8 +418,8 @@ FONTS().then(()=>{
   fit();
   const tints={red:{hi:[150,18,30],lo:[70,8,16]}}; const tint='red';
   const T={
-    pl:{art:'[ Sztuka ]',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Sztuka z chaosu',intro:'Ekspresja w tym, co nas otacza. A także w tym, czego nie rozumiemy.',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
-    en:{art:'[ Art ]',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'Art out of chaos',intro:'Expression in what surrounds us. And in what we do not understand.',s1:'music · image · unveilings',s2:'projects · experience · CV',mach:'Machinology'}
+    pl:{art:'[ Sztuka ]',enter:'[ ZEJDŹ W GŁĄB ]',calm:'» zejdź ostrożnie (tryb spokojny)',title:'Co cię tu sprowadza?',s1:'muzyka · obraz · odsłony',s2:'projekty · doświadczenie · CV',mach:'Maszynologia'},
+    en:{art:'[ Art ]',enter:'[ DESCEND ]',calm:'» descend gently (calm mode)',title:'What brings you here?',s1:'music · image · unveilings',s2:'projects · experience · CV',mach:'Machinology'}
   };
   let lang=opts.lang;
   const frame=()=>{ const s=T[lang]; const w=40; const ctr=(str,ch=' ')=>{const n=[...str.replace(/\uFE0E/g,'')].length; const l=Math.floor((w-n)/2); return ch.repeat(Math.max(0,l))+str+ch.repeat(Math.max(0,w-n-l));};
@@ -416,7 +429,7 @@ FONTS().then(()=>{
       `<span class="gl gb"><span class="w">D. K.</span><span class="gx"></span><span class="yr">2026</span></span>`;
     gateOuter($('gFrame'));
     $('gEnter').onclick=()=>go(false); $('gCalm').onclick=()=>go(true);
-    $('gArt')&&($('gArt').textContent=s.art); $('gTitle').textContent=s.title; $('gIntro').textContent=s.intro; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; };
+    $('gArt')&&($('gArt').textContent=s.art); $('gTitle').textContent=s.title; $('gS1').textContent=s.s1; $('gS2').textContent=s.s2; $('gMach').textContent=s.mach; };
   // język zmienia wspólny przełącznik w rogu (LangKeys)
   // zmiana języka: stary napis rozsypuje się w bloki i rozkodowuje w nowy (jak zejście w bramie); na końcu ramka przycisków dopasowuje się do nowej szerokości
   let lt=0;
@@ -424,7 +437,7 @@ FONTS().then(()=>{
     const s=T[lang], calmHidden=!$('gCalm')||$('gCalm').hidden;
     import('./xlate').then(({decodeSwap})=>{
       const me=++lt; let n=0;
-      Promise.all([['gEnter',s.enter],['gCalm',s.calm],['gArt',s.art],['gTitle',s.title],['gIntro',s.intro],['gS1',s.s1],['gS2',s.s2],['gMach',s.mach]].map(([id,t])=>$(id)?decodeSwap($(id),t,{delay:n++*60}):0))
+      Promise.all([['gEnter',s.enter],['gCalm',s.calm],['gArt',s.art],['gTitle',s.title],['gS1',s.s1],['gS2',s.s2],['gMach',s.mach]].map(([id,t])=>$(id)?decodeSwap($(id),t,{delay:n++*60}):0))
         .then(()=>{ if(me!==lt||!gate.isConnected) return; frame(); if($('gCalm')) $('gCalm').hidden=calmHidden; }); }); }; addEventListener('krzyk-lang',onLang);
   frame(); import('./gatecards');     // moduł kart pobiera się z góry, żeby wyłanianie ruszyło bez opóźnienia po zejściu
   // wybór drogi: wybrana karta się spala (ogień od dołu, piksele żarzą się i odlatują jako popiół), druga gaśnie w cieniu, potem z góry leci kurtyna sigili w kolorze działu (veil.js)

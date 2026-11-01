@@ -18,7 +18,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // kanciasty obrys wyrwy (znormalizowany 0..1): prawie cała sekcja, zin tylko przy krawędziach
 function tear() {
-  const r = rng(911), W = 800, H = 500, P = [], L = W * .07, T = H * .09, Rr = W * .93, Bb = H * .9;
+  const r = rng(911), W = 800, H = 500, P = [], L = W * .025, T = H * .03, Rr = W * .975, Bb = H * .97;
   const edge = (ax, ay, bx, by, n, ix, iy) => { for (let i = 0; i < n; i++) { const f = i / n, d = (r() - .35) * 26 + (i % 3 === 1 ? (r() - .5) * 40 : 0); P.push([(ax + (bx - ax) * f + ix * d) / W, (ay + (by - ay) * f + iy * d) / H]); } };
   edge(L, T, Rr, T, 9, 0, 1); edge(Rr, T, Rr, Bb, 6, -1, 0); edge(Rr, Bb, L, Bb, 9, 0, -1); edge(L, Bb, L, T, 6, 1, 0);
   return P;

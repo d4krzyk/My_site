@@ -122,12 +122,11 @@ button{-webkit-user-select:none;user-select:none}
 /* ===== nawigacja kartami (podstrony): warstwa nad stroną, ikonka w prawym górnym rogu ===== */
 .cards-nav{position:fixed;inset:0;z-index:50;pointer-events:none}
 /* przełącznik języka: pikselowe klawisze obok kart, wciśnięty = aktywny, w kolorze działu */
-.lang-keys{--acc:#dfe2e8;--acc-d:#6e717d;position:fixed;top:34px;right:156px;z-index:55;display:grid;grid-template-columns:1fr 1fr;width:78px;height:30px;padding:3px;box-sizing:border-box;font-family:var(--f-dos);font-size:16px;line-height:1;
+.lang-keys{--acc:#dfe2e8;--acc-d:#6e717d;position:fixed;top:12px;right:14px;z-index:55;display:grid;grid-template-columns:1fr 1fr;width:78px;height:30px;padding:3px;box-sizing:border-box;font-family:var(--f-dos);font-size:16px;line-height:1;
   background:#0b0c12;border:2px solid var(--acc-d);-webkit-font-smoothing:none;
   clip-path:polygon(3px 0,calc(100% - 3px) 0,100% 3px,100% calc(100% - 3px),calc(100% - 3px) 100%,3px 100%,0 calc(100% - 3px),0 3px)}
 .lang-keys.krzyk{--acc:#3ff0ff;--acc-d:#0e7c8a}
 .lang-keys.maszyn{--acc:#ff3a3a;--acc-d:#a8161f}
-.lang-keys.brama{top:16px;right:16px}   /* brama nie ma ikonki kart, więc przełącznik stoi w samym rogu, a nie pośrodku */
 .lang-keys .lk-thumb{position:absolute;left:3px;top:3px;bottom:3px;width:calc(50% - 3px);background:var(--acc);transition:transform .3s steps(5)}
 .lang-keys[data-on="en"] .lk-thumb{transform:translateX(100%)}
 .lang-keys button{all:unset;position:relative;z-index:1;cursor:pointer;box-sizing:border-box;display:flex;align-items:center;justify-content:center;padding-top:2px;letter-spacing:1px;color:#9a9cab;transition:color .2s steps(3)}
@@ -135,7 +134,7 @@ button{-webkit-user-select:none;user-select:none}
 .lang-keys button[aria-pressed="true"]{color:#000}
 .lang-keys button:focus-visible{outline:2px dashed var(--acc);outline-offset:1px}
 .lang-keys.busy button{cursor:progress}.lang-keys.busy button[aria-disabled="true"]{opacity:.5}
-.cards-nav .deck{all:unset;pointer-events:auto;cursor:pointer;position:fixed;right:10px;top:8px;z-index:6;width:136px;height:84px}
+.cards-nav .deck{all:unset;pointer-events:auto;cursor:pointer;position:fixed;right:10px;top:46px;z-index:6;width:136px;height:84px}
 .cards-nav .deck canvas{width:100%;height:100%;display:block}
 .cards-nav .deck:focus-visible{outline:1px dashed var(--cyan);outline-offset:2px}
 /* rozkład: wygaszenie ditherem i karty z awersami */
@@ -155,8 +154,8 @@ button{-webkit-user-select:none;user-select:none}
 .scard:not(.cur):hover .sr,.scard:not(.cur):focus-visible .sr{color:var(--silver)}
 @media (max-width:700px){
   .spread.stack .scard .sr{left:calc(100% + 12px);right:auto;top:50%;transform:translateY(-50%);text-align:left;font-size:13px}
-  .cards-nav .deck{right:2px;top:2px}
-  .lang-keys{top:32px;right:144px}.lang-keys.brama{top:12px;right:10px}   /* stałe położenie na każdej stronie telefonu (bez chowania przy przewijaniu), obok ikonki kart */
+  .cards-nav .deck{right:2px;top:42px}
+  .lang-keys{top:10px;right:10px}   /* stałe położenie na każdej stronie telefonu (bez chowania przy przewijaniu), obok ikonki kart */
 }
 /* przełącznik języka w rozkładzie */
 /* szczelina: nowa strona wyłania się przez poziome rozcięcie */
@@ -486,6 +485,6 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .kp-cn i{position:absolute;left:14%;top:96%;white-space:nowrap;font:normal 14px/1.2 var(--f-dos);color:#a89cb8;text-shadow:0 2px 0 #000}
 
 /* zapłon bramy przy ładowaniu: sztandary zapalają się cyjanem (skokowo, jeden po drugim), a ramka z napisem otwiera się od środka z cyjanowym rozbłyskiem */
-@keyframes frameIgnite{0%{opacity:0;clip-path:inset(46% 49% 46% 49%);filter:brightness(4) drop-shadow(0 0 8px #3ff0ff)}25%{opacity:1;clip-path:inset(46% 0 46% 0);filter:brightness(3) drop-shadow(0 0 10px #3ff0ff)}70%{opacity:1;clip-path:inset(0 0 0 0);filter:brightness(1.8) drop-shadow(0 0 8px #3ff0ff)}100%{opacity:1;clip-path:inset(0 0 0 0);filter:none}}
-.gate .layer.entry .frame{animation:frameIgnite 1.3s steps(13) .1s backwards}
-@media (prefers-reduced-motion:reduce){.gate .layer.entry .frame{animation:none}}
+@keyframes frameTxt{0%{opacity:0;filter:brightness(3)}100%{opacity:1;filter:none}}
+.gate .layer.entry .frame > :not(canvas){animation:frameTxt .6s steps(6) .55s backwards}   /* ramkę buduje canvas (gateOuter), tekst wchodzi po niej */
+@media (prefers-reduced-motion:reduce){.gate .layer.entry .frame > :not(canvas){animation:none}}

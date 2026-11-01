@@ -2,7 +2,7 @@ import CardsNav from '@/components/CardsNav';
 import KrzykFx, { KrzykLayers } from '@/components/KrzykFx';
 import { asset } from '@/lib/base';
 
-export const metadata = { title: 'Krzyk — KRZYK', description: 'Krzyk: muzyka, obraz, persony. Sztuka z chaosu.' };
+export const metadata = { title: 'Krzyk — KRZYK', description: 'Krzyk: muzyka, obraz, persony.' };
 
 // dział Krzyk: kolaż przechodzący w ciemne tła, pod nim od razu pole wyborów z modelami 3D, potem podrozdziały z ciemnej tektury (treść w budowie);
 // pole wyborów i każdy podrozdział zajmują pełny ekran
