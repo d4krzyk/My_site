@@ -10,8 +10,8 @@ import * as V from './vhssound';
 // dwa układy sceny: komputer (poziomo 16:10) i telefon (pionowo: telewizor u góry, dywan z kasetą i pilotem pod nim, wariant „dwa piętra”)
 const PHONE = () => matchMedia('(max-width:700px)').matches;
 const LAYOUTS = {
-  land: { w: 512, h: 320, pw: 960, ph: 600, fov: 46, cam: [.62, .5, 1.8], look: [.5, .3, 0], tape: [.5, .42, .6], rem: [.8, .66], remUp: [.72, .22, .92], remL: [.78, .38, .95] },
-  port: { w: 288, h: 480, pw: 540, ph: 900, fov: 50, cam: [.02, .5, 1.75], look: [.02, .12, 0], tape: [-.12, .66, .3], rem: [.15, .8], remUp: [.08, .26, .95], remL: [.08, .42, 1.0] },
+  land: { w: 512, h: 320, pw: 960, ph: 600, fov: 46, cam: [.62, .5, 1.8], look: [.5, .3, 0], tape: [.5, .42, .6], rem: [.8, .66], remUp: [.72, .22, .92], remHold: [.62, .34, 1.2], remS: 1.9, remL: [.78, .38, .95] },
+  port: { w: 288, h: 480, pw: 540, ph: 900, fov: 50, cam: [.02, .5, 1.75], look: [.02, .12, 0], tape: [-.12, .66, .3], rem: [.15, .8], remUp: [.08, .26, .95], remHold: [.02, .2, 1.25], remS: 2.3, remL: [.08, .42, 1.0] },
 };
 // lista filmów z kanału YouTube (public/krzyk/clips.json, tworzy ją scripts/clips.mjs przy budowie), od najnowszych: [etykieta, tytuł, id filmu, czas w s]
 let CLIPS = [];
@@ -139,7 +139,7 @@ export function initMuzyka(host, A) {
   const loadYT = () => ytP || (ytP = new Promise(res => { if (window.YT && window.YT.Player) return res(window.YT); const prev = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = () => { if (prev) prev(); res(window.YT); }; const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; sc.onerror = () => res(null); document.head.appendChild(sc); }));
   const applyMute = () => { if (!yt || !yt.mute) return; try { soundOn() ? yt.unMute() : yt.mute(); } catch (e) {} };
-  const playClip = async i => { const c = CLIPS[i]; if (!c || !c[2]) return; ytErr = false; ytState = -1; ytAt = performance.now();
+  const playClip = async i => { const c = CLIPS[i]; if (!c || !c[2]) return; ytErr = false; ytState = -1; ytAt = performance.now(); shown = false;
     const YT = await loadYT(); if (!YT || !alive) { ytErr = true; return; }
     if (!yt) { const holder = document.createElement('div'); ytWrap.appendChild(holder);
       yt = new YT.Player(holder, { width: 480, height: 360, videoId: c[2], playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, modestbranding: 1, rel: 0, iv_load_policy: 3, playsinline: 1, cc_load_policy: 0, origin: location.origin },
@@ -166,8 +166,12 @@ export function initMuzyka(host, A) {
   const insert = () => { if (state !== 'idle') return; playClip(clip); if (RM) { state = 'play'; cas.visible = false; st0 = tNow; return; } state = 'in'; st0 = tNow; };
   const eject = () => { if (state === 'idle' || state === 'out') return; stopClip(); stopHiss(); if (state === 'in') { resetCas(); state = 'idle'; return; } if (RM) { state = 'idle'; resetCas(); return; } V.ejectSeq(); state = 'out'; st0 = tNow; cas.visible = true; placeTape(1); };
   // przyciski pilota: poprzedni / następny utwór, pauza i wznowienie, od początku (działają, gdy kaseta jest w magnetowidzie; „play” przy pustym magnetowidzie wsuwa kasetę)
-  const rbbC = new THREE.Vector3();
-  const jump = d => { if (state !== 'play' && state !== 'boot') return; clip = (clip + d + clipN()) % clipN(); playClip(clip); stopHiss(); V.loadWhirr(.6, 0); V.drumSpin(.1); state = 'boot'; st0 = tNow; };
+  const rbbC = new THREE.Vector3(), remHold = new THREE.Vector3(), qHold = new THREE.Quaternion().multiplyQuaternions(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), .38 + Math.PI), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2 - .3));   // czubek w górę, ekran ku kamerze, lekko odchylony i obrócony (ukośna perspektywa)
+  let osdLabel = 'PLAY ▶';
+  const jump = d => { if (state !== 'play' && state !== 'boot') return;
+    // poprzedni utwór milknie od razu, ekran wraca do niebieskiego, a nowy dostaje własny rozruch (szum śledzenia aż do startu, potem OSD) jak przy pierwszym wsunięciu kasety
+    stopClip(); stopHiss(); shown = false; ytWrap.style.visibility = 'hidden'; osdLabel = d > 0 ? '▶▶ NEXT' : '◀◀ PREV';
+    clip = (clip + d + clipN()) % clipN(); playClip(clip); V.loadWhirr(.6, 0); V.drumSpin(.1); state = 'boot'; st0 = tNow; };
   const togglePause = () => { if (state === 'idle') { insert(); return; } if (state !== 'play' || !yt) return; V.playClunk(); try { if (ytState === 2) yt.playVideo(); else if (ytState === 1) yt.pauseVideo(); } catch (e) {} };
   const restart = () => { if (state !== 'play' || !yt) return; V.playClunk(); try { yt.seekTo(0, true); yt.playVideo(); } catch (e) {} vidAt = performance.now(); };
   const press = name => { V.remoteClick(); const pd = pads.find(q => q.name === name); if (pd) pd.t = tNow; if (name === 'prev') jump(-1); else if (name === 'next') jump(1); else if (name === 'pause') togglePause(); else if (name === 'again') restart(); };
@@ -189,7 +193,7 @@ export function initMuzyka(host, A) {
   const applyLayout = () => { lay = LAYOUTS[PHONE() ? 'port' : 'land'];
     P.resize(lay.w, lay.h); cam.fov = lay.fov; cam.updateProjectionMatrix();
     camBase.set(...lay.cam); lookBase.set(...lay.look); restP.set(lay.tape[0], FY + .017, lay.tape[1]); restRy = lay.tape[2];
-    remRest.set(lay.rem[0], FY + .016, lay.rem[1]); remUp.set(...lay.remUp); remL.position.set(...lay.remL);
+    remRest.set(lay.rem[0], FY + .016, lay.rem[1]); remUp.set(...lay.remUp); remHold.set(...lay.remHold); remL.position.set(...lay.remL);
     const tn = Math.tan(lay.fov * Math.PI / 360), asp = lay.w / lay.h, d = Math.max(.82, .54 / (.8 * 2 * tn * asp), .4 / (.92 * tn));   // cały ekran 4:3 mieści się i na szerokość, i na wysokość
     camZ.set(0, .425, .229 + d);
     if (paper.width !== lay.pw || paper.height !== lay.ph) { paper.width = lay.pw; paper.height = lay.ph; drawEdge(paper); }
@@ -206,7 +210,7 @@ export function initMuzyka(host, A) {
     const by = 150 - ((e / 11) % 190); for (let y = 0; y < 16; y++) { const yy = Math.round(by + y); if (yy < 0 || yy >= 144) continue; const k = Math.sin(y / 16 * Math.PI); sx.fillStyle = `rgba(255,255,255,${(.12 + .5 * Math.random()) * k})`; sx.fillRect(0, yy, 192, 1); }
     sx.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < 144; y += 3) sx.fillRect(0, y, 192, 1);
     const vg = sx.createRadialGradient(96, 72, 50, 96, 72, 120); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.4)'); sx.fillStyle = vg; sx.fillRect(0, 0, 192, 144);
-    if (osd) { sx.font = '16px VT323, monospace'; sx.textAlign = 'left'; sx.textBaseline = 'top'; sx.shadowColor = '#000'; sx.shadowBlur = 3; sx.fillStyle = '#fff'; sx.fillText(Math.floor(e / 500) % 2 ? 'PLAY ▶' : 'PLAY', 8, 6); sx.shadowBlur = 0; } };
+    if (osd) { sx.font = '16px VT323, monospace'; sx.textAlign = 'left'; sx.textBaseline = 'top'; sx.shadowColor = '#000'; sx.shadowBlur = 3; sx.fillStyle = '#fff'; sx.fillText(Math.floor(e / 500) % 2 ? osdLabel : osdLabel.replace(/[▶◀]/g, ''), 8, 6); sx.shadowBlur = 0; } };
   const sx = ovTv.x, img = sx.createImageData(192, 144);
 
   Promise.all([loadPSX(P, A.tv), loadPSX(P, A.vcr), loadPSX(P, A.tape), loadPSX(P, A.remote)]).then(([tvM, vcrM, tapeM, remM]) => {
@@ -219,14 +223,20 @@ export function initMuzyka(host, A) {
     // przyciski na pilocie (prawdziwe bryły, klikane promieniem): poprzedni, następny, pauza/wznów, od początku; ikony rysowane w niskiej rozdzielczości
     const sp = rem.position.clone(), sq = rem.quaternion.clone(); rem.position.set(0, 0, 0); rem.quaternion.identity(); rem.updateMatrixWorld(true);   // obwiednia w układzie pilota
     const rbb = new THREE.Box3().setFromObject(ri); rbbC.copy(rbb.getCenter(new THREE.Vector3())); rem.position.copy(sp); rem.quaternion.copy(sq); rem.updateMatrixWorld(true);
-    const icon = (kind, bg) => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, 32, 32); x.fillStyle = '#10131a'; x.strokeStyle = '#10131a'; x.lineWidth = 3;
-      const tri = (cx, dir, sz = 7) => { x.beginPath(); x.moveTo(cx - dir * sz * .6, 16 - sz); x.lineTo(cx + dir * sz * .8, 16); x.lineTo(cx - dir * sz * .6, 16 + sz); x.closePath(); x.fill(); };
-      if (kind === 'prev') { x.fillRect(7, 8, 3, 16); tri(18, -1); tri(24, -1, 6); } else if (kind === 'next') { x.fillRect(22, 8, 3, 16); tri(14, 1); tri(8, 1, 6); }
-      else if (kind === 'pause') { tri(11, 1, 8); x.fillRect(19, 8, 3, 16); x.fillRect(25, 8, 3, 16); } else { x.beginPath(); x.arc(16, 17, 8, Math.PI * .9, Math.PI * 2.55); x.stroke(); x.beginPath(); x.moveTo(5, 8); x.lineTo(13, 8); x.lineTo(9, 15); x.closePath(); x.fill(); }
+    const icon = (kind, col) => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'); x.fillStyle = '#0c0e14'; x.fillRect(0, 0, 32, 32);
+      x.strokeStyle = col; x.lineWidth = 2; x.beginPath(); x.arc(16, 16, 14, 0, 7); x.stroke();                       // kolorowy rant przycisku
+      x.setTransform(0, 1, -1, 0, 32, 0);   // UV denka walca są obrócone o 90° względem pilota stojącego czubkiem w górę: rysujemy w układzie ekranu
+      x.fillStyle = '#fff';
+      const tri = (xa, xb, y0, y1) => { x.beginPath(); x.moveTo(xa, (y0 + y1) / 2); x.lineTo(xb, y0); x.lineTo(xb, y1); x.closePath(); x.fill(); };      // trójkąt z wierzchołkiem w xa
+      if (kind === 'prev') { x.fillRect(8, 9, 4, 14); tri(13, 25, 9, 23); }                                            // |◀
+      else if (kind === 'next') { x.fillRect(20, 9, 4, 14); tri(19, 7, 9, 23); }                                       // ▶|
+      else if (kind === 'pause') { x.fillStyle = col; tri(24, 7, 8, 24); x.fillStyle = '#fff'; x.fillRect(19, 10, 3, 12); x.fillRect(24, 10, 3, 12); }   // ▶ + ❚❚
+      else { x.fillStyle = col; x.fillRect(10, 10, 12, 12); }                                                          // ■ od początku
       return P.tex(c); };
-    const mkPad = (name, kind, bg, px, pz) => { const side = P.mat({ color: 0x1b1d26 }), top = P.mat({ map: icon(kind, bg) }), m = new THREE.Mesh(new THREE.CylinderGeometry(.0095, .0095, .0045, 14), [side, top, side]);
+    const mkPad = (name, kind, col, px, pz) => { const side = P.mat({ color: 0x1b1d26 }), top = P.mat({ map: icon(kind, col) }), m = new THREE.Mesh(new THREE.CylinderGeometry(.0095, .0095, .0045, 14), [side, top, side]);
       m.position.set(px, rbb.max.y + .0022, pz); rem.add(m); pads.push({ name, m, y: m.position.y, t: -1e9 }); };
-    mkPad('prev', 'prev', '#cfd2da', .0112, .018); mkPad('next', 'next', '#cfd2da', .0112, .043); mkPad('pause', 'pause', '#e0485a', -.0112, .018); mkPad('again', 'again', '#3ff0ff', -.0112, .043);   // na ekranie: góra poprzedni i następny, dół pauza i od początku
+    // na ekranie (pilot stoi czubkiem do góry, ekran ku kamerze): górny rząd poprzedni i następny, dolny pauza i od początku
+    mkPad('prev', 'prev', '#3ff0ff', .0112, .043); mkPad('next', 'next', '#3ff0ff', -.0112, .043); mkPad('pause', 'pause', '#7dffb0', .0112, .018); mkPad('again', 'again', '#ff5a6a', -.0112, .018);
     const tip = new THREE.Mesh(new THREE.BoxGeometry(.012, .012, .012), P.mat({ color: 0x330000, emissive: 0xff2020, emissiveIntensity: 0 })); tip.position.set(0, 0, .09); rem.add(tip);
     const irL = new THREE.PointLight(0xff3030, 0, .6); irL.position.set(0, 0, .1); rem.add(irL); scene.add(rem);
     const aimQ = () => { const o = new THREE.Object3D(); o.position.copy(remUp); o.lookAt(tvAim); return o.quaternion; };
@@ -237,14 +247,12 @@ export function initMuzyka(host, A) {
       zoom += ((zin ? 1 : 0) - zoom) * (1 - Math.exp(-dt / 190)); if (Math.abs((zin ? 1 : 0) - zoom) < .002) zoom = zin ? 1 : 0;
       zr += ((zrem ? 1 : 0) - zr) * (1 - Math.exp(-dt / 190)); if (Math.abs((zrem ? 1 : 0) - zr) < .002) zr = zrem ? 1 : 0;
       const ez = ease(zoom), er = ease(zr); cam.position.lerpVectors(camBase, camZ, ez); const lk = new THREE.Vector3().lerpVectors(lookBase, lookZ, ez);
-      if (er > 0) {   // powiększony pilot: widok z góry, pilot leży poziomo (czubek po prawej) na komputerze i telefonie, przyciski w tym samym układzie
-        rem.updateMatrixWorld(true); const c = rem.localToWorld(rbbC.clone()), ax = new THREE.Vector3(0, 0, 1).applyQuaternion(rem.quaternion); ax.y = 0; ax.normalize();
-        const t2 = Math.tan(lay.fov * Math.PI / 360), asp = lay.w / lay.h, dist = (PHONE() ? .088 : .105) / (t2 * asp) + (PHONE() ? .02 : .035), upR = new THREE.Vector3(ax.z, 0, -ax.x);
-        cam.position.lerp(new THREE.Vector3(c.x, c.y + dist, c.z + .0001), er); lk.lerp(c, er); cam.up.lerpVectors(new THREE.Vector3(0, 1, 0), upR, er).normalize(); } else cam.up.set(0, 1, 0);
+      // pilot po kliknięciu leci z dywanu przed telewizor, staje czubkiem do góry i ukośnie ku kamerze (większy, żeby dało się trafić w przyciski); klik poza nim odsyła go na dywan
+      cam.up.set(0, 1, 0); rem.position.lerpVectors(remRest, remHold, er); rem.position.y += Math.sin(er * Math.PI) * .07; rem.quaternion.copy(qRest).slerp(qHold, er); rem.scale.setScalar(1 + (lay.remS - 1) * er);
       cam.lookAt(lk);
       for (const q of pads) q.m.position.y = q.y - (tNow - q.t < 150 ? .0022 : 0);   // wciśnięty przycisk
       if (state === 'in') { const k = clamp(e / 2000, 0, 1); placeTape(k); if (k >= 1) { cas.visible = false; V.tapeThunk(); V.loadWhirr(.75, .14); V.drumSpin(.2); state = 'boot'; st0 = t; } }
-      if (state === 'boot' && e > 700) { state = 'play'; st0 = t; V.playClunk(); stopHiss(); hiss = V.trackingHiss(); }
+      if (state === 'boot' && e > 700) { state = 'play'; st0 = t; osdLabel = 'PLAY ▶'; V.playClunk(); stopHiss(); hiss = V.trackingHiss(); }
       if (state === 'out') { const k = clamp(e / 2000, 0, 1); placeTape(1 - k); if (k >= 1) { state = 'idle'; resetCas(); } }
       const ex = state === 'out' ? e : 1e9;
       if (state === 'out' && ex < 520) { const kq = ex / 520; sx.fillStyle = '#000'; sx.fillRect(0, 0, 192, 144); sx.fillStyle = '#fff';
