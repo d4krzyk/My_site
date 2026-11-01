@@ -61,7 +61,7 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 ## Wybór sekcji i przewijanie (Krzyk)
 
 - **Blokada kart:** dopóki trwa animacja jednej opcji (walkman, maski, kaseta, telefon), pozostałe są nieaktywne i przygaszone (`rooms-busy` w `initRooms`, wspólna flaga dla wszystkich kart).
-- **Układ wyboru (A0):** bez napisu „wybierz”; trzy płyty w rzędzie (muzyka, persony, obraz), mniejsze i nieco powyżej środka, pod nimi niski, szeroki pasek kontaktu z leżącym telefonem (płótno 210×90, `PHONE_CAM_Z`, `PHONE_TILT`); całość w jednym ekranie. Na telefonie płyty jedna pod drugą na pełną szerokość, pasek kontaktu na końcu. Przejście kontaktu startuje z leżącego telefonu w płycie i w locie podnosi go do pionu.
+- **Układ wyboru (A0):** bez napisu „wybierz”; komputer: trzy płyty w rzędzie (muzyka, persony, obraz), pod nimi niski, szeroki pasek kontaktu z leżącym telefonem (płótno 210×90); całość w jednym ekranie. **Telefon (≤700 px): wszystkie cztery kafelki jednakowe, jeden pod drugim; kontakt to zwykły kwadratowy kafelek ze stojącym telefonem (nie leży)**. Dwa układy telefonu opisuje `phoneLay()` w `psx.js`; przejście kontaktu startuje z tego, co stoi w kafelku (na komputerze z leżącego telefonu, który w locie podnosi się do pionu).
 - **Przewijanie sekcjami (wariant B):** `points()` w `klatki.js`: skok od sekcji do sekcji, górna krawędź sekcji u góry okna; tylko sekcja wyższa od okna o >12% dostaje dodatkowy
   przystanek u dołu; sekcja person ma przystanek dla każdej persony; za ostatnim przystankiem jeden skok na sam dół, potem ruch w dół nic nie robi.
 
@@ -78,6 +78,9 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 
 ## Brama (strona główna)
 
+Przy ładowaniu sztandary zapalają się cyjanem (skokowo, lewy potem prawy, `tabIgnite`), a ramka z napisem otwiera się od środka z cyjanowym rozbłyskiem (`frameIgnite`); przy ograniczeniu animacji nic z tego nie działa. Znacznik przy Krzyku to „[ Sztuka ]” po polsku i „[ Art ]” po angielsku (`#gArt`).
+
+
 Kręgi ze znaków w tle (`gate.js`, pętla 30 kl./s) obracają się bez przerwy, każdy z własną prędkością i kierunkiem (0,06–0,4 rad/s). Liczba znaków w kręgu rośnie przez podwajanie
 (8, 16, 32…), a nowe znaki wyłaniają się między istniejącymi, więc przy rozszerzaniu kręgu nic nie przeskakuje; rozmiar czcionki zmienia się płynnie przez skalę. Nie wracać do
 przeliczania liczby znaków co klatkę: każda jej zmiana rozstawiała cały krąg od nowa (zacięcia).
@@ -90,6 +93,8 @@ z ciemności jako pognieciona kreska i się prostuje, przy wyjściu zwija się i
 animacji w systemie nagłówek jest zwykłym tekstem.
 
 ## Język PL/EN i animowana zmiana
+
+**Blokada:** zmiana języka uruchamia animacje, więc `setLang` ignoruje kolejne kliknięcia do końca animacji (`LANG_MS` w `lang.js`, zdarzenie `krzyk-lang-busy`; nieaktywny klawisz jest przygaszony). Bez tego szybkie przełączanie nakładało animacje i część tekstu zostawała bez efektu. Przełącznik języka ma stałe położenie na każdej stronie telefonu (obok ikonki kart), bez chowania przy przewijaniu.
 
 Przełącznik języka (`LangKeys`, zdarzenie `krzyk-lang`, `src/lib/lang.js`) zmienia tylko teksty informacyjne. **Nazwy własne zostają bez zmian:** persony (Anxtan, Nugis, Stoir), KRZYK, imię i nazwisko autora,
 nazwy projektów i instytucji, napisy w tle (wersy kolażu, listing cracktro, ekran Nokii w przejściu kontaktu). Nazwy działów mają wersje (Brama/Gate, Maszynologia/Machinology: też tytuł i prompt na stronie Maszynologii).
@@ -104,7 +109,7 @@ Zmiana jest animowana zgodnie z motywem miejsca, żeby nie było nagłego przesk
 
 ## Muzyka (pokój z telewizorem)
 
-Sekcja `#k-muzyka` w Krzyku (`src/engine/muzyka.js`, markup w `krzyk/page.js`, style `.mu-*` w `globals.css`): kanciasta wyrwa w zinie (tło strony z tego miejsca, `bg-mid.webp`, brzegi: raster, suche pociągnięcia czarnego pędzla, czerwony tusz; bez taśm i bez białego brzegu),
+Sekcja `#k-muzyka` w Krzyku (`src/engine/muzyka.js`, markup w `krzyk/page.js`, style `.mu-*` w `globals.css`): kanciasta wyrwa **wycięta wprost w tle strony** (scena ma `clip-path` wg `tear()`; sekcja nie ma tektury ani własnego tła, dookoła widać prawdziwe tło, na telefonie też), brzegi na przezroczystej warstwie `.mu-edge` (raster, suche pociągnięcia czarnego pędzla, czerwony tusz; bez taśm i bez białego brzegu). Nagłówek sekcji jest tylko dla czytników ekranu (napis „muzyka” jest na tabliczce w rogu),
 za nią ciemny pokój PSX: dywan okrągły, ściana w pasy, okno z roletami po prawej (światło miasta, paski na podłodze i ścianie), plakat, kable, telewizor po lewej z magnetowidem, jedna kaseta i pilot na dywanie.
 Modele w `public/krzyk/3d/` (`old_tv`, `vhs_player`, `vhs_tape`, `remote`). Z siatki magnetowidu wycięty jest wbudowany, leżący fragment kasety (`stripFront`), bo animowana kaseta jest osobna (inaczej były dwie).
 Sterowanie tylko klikiem w obiekty (bez przycisków): kaseta → wsuwa się do magnetowidu i rusza klip, magnetowid → wysuwa kasetę, pilot → zmienia klip, telewizor → kamera najeżdża i ekran wypełnia kadr (Esc albo kolejny klik cofa).
@@ -119,8 +124,14 @@ Tabliczka „muzyka” (tekstura płyty wyboru, krzywo) w prawym górnym rogu. P
   Przejście jest po kolei: najpierw poprzednia maska wraca do rzędu (cień), dopiero potem następna wychodzi do rogu. Opis zaczyna się pisać po wylądowaniu maski (`personaSeated` zamiast `personaActive` w `persvoice`).
   Dukanie: `persvoice` zgłasza każdą wpisaną literę (`setPersonaTalk`), maska w rogu rusza się w jej rytmie, każda inaczej (Anxtan drży i strzela na boki, Nugis podskakuje i kiwa głową, Stoir szarpie się jak manekin); działa też bez dźwięku.
 - **Dźwięk (`src/lib/sound.js`):** stan w `localStorage` (`krzyk-sound`: `on`/`off`, domyślnie brak wyboru = wyłączony), zdarzenie `krzyk-sound`, wspólny `AudioContext` (`audio()`); po odświeżeniu strony wznawiany pierwszym gestem.
-  Wybór „z dźwiękiem / bez dźwięku” pod ostrzeżeniem w ramce bramy (`gate.js`, `.gsnd`) i ikonka oscyloskopu w lewym dolnym rogu każdej strony (`components/SoundIcon.js`, w `layout.js`): wykończenie A (srebrny monitor ze śrubkami i cieniem), płaska linia = wył, fala krzyku z poświatą = wł,
+  Brama nie ma ostrzeżenia ani wyboru dźwięku (usunięte na prośbę autora); dźwięk włącza się tylko ikonką oscyloskopu w lewym dolnym rogu każdej strony (`components/SoundIcon.js`, w `layout.js`): wykończenie A (srebrny monitor ze śrubkami i cieniem), płaska linia = wył, fala krzyku z poświatą = wł,
   pod spodem „dźwięk” i „wł/wył” (EN: „sound”, „on/off”). Gdy nie ma jeszcze wyboru, ikonka kilka razy pulsuje. Głosy person (`persvoice`) grają tylko przy włączonym dźwięku.
+
+## Konteksty WebGL (limit przeglądarki)
+
+Przeglądarki (zwłaszcza Android) dają ok. 8 aktywnych kontekstów WebGL, a strona Krzyk ma ich 9 (cztery płyty wyboru, scena person, trzy napisy person, pokój w muzyce); po przekroczeniu limitu przeglądarka po cichu zabija najstarsze,
+i na telefonie znikał telewizor, a persony się psuły. `src/engine/glbudget.js` (`watchGL`, podpięte w `ps1()` i przy napisach person) zwalnia kontekst płótna, które od 2,5 s jest poza ekranem, i odtwarza go po powrocie (three.js wczytuje wszystko od nowa po `webglcontextrestored`).
+Dodając nowe płótno WebGL, zawsze rejestruj je w `watchGL`; w teście liczy się maksimum żywych kontekstów (powinno być wyraźnie poniżej 8).
 
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
 

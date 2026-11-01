@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { RM, loop, clamp, makeGlyph, drawGlyph } from './core';
 import { drawLCD, bay, hash, T_NOISE } from './nokia';
+import { watchGL } from './glbudget';
 
 const ease = k => k * k * (3 - 2 * k), easeOut = k => 1 - Math.pow(1 - k, 3);
 const TAU = Math.PI * 2;
@@ -11,7 +12,7 @@ const TAU = Math.PI * 2;
 /* ---------- wspólny potok PS1 (jak na planszy) ---------- */
 export function ps1(canvas, lowW, lowH, { clear = 0x000000, alpha = 0, fog = null } = {}) {
   const r = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
-  r.setPixelRatio(1); r.setSize(lowW, lowH, false); r.setClearColor(clear, alpha);
+  r.setPixelRatio(1); r.setSize(lowW, lowH, false); r.setClearColor(clear, alpha); watchGL(canvas, r);   // kontekst zwalniany poza ekranem (zob. glbudget)
   const scene = new THREE.Scene(); if (fog) scene.fog = new THREE.Fog(clear, fog[0], fog[1]);
   const cam = new THREE.PerspectiveCamera(35, lowW / lowH, .05, 60);
   const snap = new THREE.Vector2(lowW / 2.5, lowH / 2.5);
@@ -126,15 +127,17 @@ export function makeMask(P, kind, seed) {
 }
 
 /* ---------- pole wyborów ---------- */
-const PHONE_CAM_Z = 1.05;   // odległość kamery od leżącego telefonu w niskiej płycie kontaktu (też używana do dopasowania rozmiaru na starcie przejścia kontaktu)
-const PHONE_TILT = -.42;    // telefon w płycie leży na boku (obrót o 90°) i jest lekko odchylony do tyłu, jak położony na stole
+// kafelek kontaktu ma dwa układy: komputer = niski, szeroki pasek z leżącym telefonem (obrót o 90°, odchylony do tyłu jak położony na stole),
+// telefon (≤700 px) = kafelek jak pozostałe, kwadratowy, z telefonem stojącym pionowo; przejście kontaktu startuje z tego, co stoi w kafelku
+const phonePort = () => matchMedia('(max-width:700px)').matches;
+const phoneLay = () => phonePort() ? { cw: 176, ch: 176, camZ: 2.05, tilt: 0, rz: 0 } : { cw: 210, ch: 90, camZ: 1.05, tilt: -.42, rz: Math.PI / 2 };
 export function initRooms(root, { assets, go }) {
   const stop = [];
   const items = [...root.querySelectorAll('[data-room]')], room = { busy: false };
   const setRoomBusy = v => { room.busy = v; root.classList.toggle('rooms-busy', v); items.forEach(b => { if (v) b.setAttribute('aria-disabled', 'true'); else { b.removeAttribute('aria-disabled'); b.classList.remove('chosen'); } }); };
   items.forEach(btn => {
     const kind = btn.dataset.room, cv = btn.querySelector('canvas');
-    const wide = kind === 'phone', P = ps1(cv, wide ? 210 : 176, wide ? 90 : 176);     // telefon: niska, szeroka płyta (model leży na boku)
+    const L0 = kind === 'phone' ? phoneLay() : null, P = ps1(cv, L0 ? L0.cw : 176, L0 ? L0.ch : 176);     // telefon: niski pasek (komputer) albo kwadratowy kafelek (telefon)
     lights(P);
     // zajętość jest wspólna dla wszystkich kart: dopóki trwa animacja jednej, pozostałe są zablokowane i przygaszone (inaczej animacje nakładają się na siebie)
     const st = { hot: false, t0: 0, now: 0, get busy() { return room.busy; }, set busy(v) { setRoomBusy(v); } };
@@ -214,7 +217,8 @@ export function initRooms(root, { assets, go }) {
       loadPSX(P, assets.phone).then(m => {
         // w pliku ekran patrzy w +Y, a telefon leży wzdłuż X górą (słuchawka, antena) ku −X: najpierw ekran do kamery, potem góra do góry
         m.rotation.set(Math.PI / 2, 0, -Math.PI / 2, 'ZYX');
-        const o = fit(m, 1.1); P.scene.add(o); P.cam.position.set(0, 0, PHONE_CAM_Z); P.cam.lookAt(0, 0, 0);
+        const o = fit(m, 1.1); P.scene.add(o); let lay = phoneLay(); const setCam = () => { lay = phoneLay(); P.resize(lay.cw, lay.ch); P.cam.position.set(0, 0, lay.camZ); P.cam.lookAt(0, 0, 0); }; setCam();
+        matchMedia('(max-width:700px)').addEventListener('change', setCam);
         let ring = 0;
         // klik: telefon dzwoni, wylatuje z karty, kamera najeżdża na ekranik; krzyk na LCD, zielony szum przenosi do kontaktu
         // nakładka startuje od razu; telefon w karcie chowa się dopiero po pierwszej narysowanej klatce nakładki (bez przerwy, w której go nie widać)
@@ -222,7 +226,7 @@ export function initRooms(root, { assets, go }) {
           phoneCall(assets, cv, () => go(kind, true), () => { cv.style.visibility = ''; st.busy = false; }, () => { cv.style.visibility = 'hidden'; }); };
         // leży na boku: ekran do widza, słuchawka w lewo; przy najechaniu drga jak wibrujący telefon
         tick = (t) => { const r = ring ? Math.sin((t - st.t0) / 18) * .12 : 0, buzz = st.hot ? Math.sin(t / 40) * .035 : 0;
-          o.rotation.set(PHONE_TILT + Math.sin(t / 2000) * .04, Math.sin(t / 1700) * .16 + r, Math.PI / 2 + buzz + r * .5);
+          o.rotation.set(lay.tilt + Math.sin(t / 2000) * (lay.rz ? .04 : .06), Math.sin(t / 1700) * (lay.rz ? .16 : (st.hot ? .8 : .45)) + r, lay.rz + buzz + r * .5);
           o.position.set(st.hot ? Math.sin(t / 33) * .006 : 0, Math.sin(t / 1000) * .012, 0); };
       }).catch(() => {});
     }
@@ -388,7 +392,10 @@ export function initPersonaStage(cv, parts) {
     // nazwa obok maski: pojawia się, gdy maska wyląduje, gaśnie, gdy maska zaczyna wracać
     if (SEATED !== cnFor) { cnFor = SEATED; if (SEATED >= 0) { const el = parts[SEATED], tag = el.querySelector('.kp-tag'); } }
     cn.classList.toggle('on', SEATED >= 0 && active === SEATED);
-    cn.style.left = ((cx + cs * 1.05 - .08 + halfW) / (2 * halfW) * 100) + '%'; cn.style.top = ((halfH - cy) / (2 * halfH) * 100) + '%';
+    // komputer: nazwa obok maski; wąski ekran (telefon): pod maską, żeby nie wchodzić pod przełącznik języka i ikonkę kart
+    const nar = W / Hh < 1.7; cn.classList.toggle('below', nar);
+    cn.style.left = (nar ? (cx - cs * .95 + halfW) / (2 * halfW) * 100 : (cx + cs * 1.05 - .08 + halfW) / (2 * halfW) * 100) + '%';
+    cn.style.top = (nar ? (halfH - cy + cs * 1.55) / (2 * halfH) * 100 : (halfH - cy) / (2 * halfH) * 100) + '%';
     P.render();
   });
   return () => { ro.disconnect(); cn.remove(); };
@@ -493,7 +500,7 @@ function phoneCall(assets, pickCv, arrive, done, shown) {
   const tc = document.createElement('canvas'); tc.width = 168; tc.height = 96; const tx = tc.getContext('2d'), T = P.tex(tc);
   const keys = new THREE.PointLight(0x9dff7a, 0, 1.2); P.scene.add(keys);
   const HW = 3 * Math.tan(17.5 * Math.PI / 180), r0 = pickCv.getBoundingClientRect();
-  const s0 = r0.height / H * 3 / PHONE_CAM_Z, p0 = new THREE.Vector3((r0.left + r0.width / 2 - W / 2) / (H / 2) * HW, -(r0.top + r0.height / 2 - H / 2) / (H / 2) * HW, 0);
+  const PL = phoneLay(), s0 = r0.height / H * 3 / PL.camZ, p0 = new THREE.Vector3((r0.left + r0.width / 2 - W / 2) / (H / 2) * HW, -(r0.top + r0.height / 2 - H / 2) / (H / 2) * HW, 0);
   let finished = false, jumped = false, shownCb = false, t0 = null, o = null, scr = null;
   const end = () => { if (finished) return; finished = true; if (!jumped) arrive(); ov.remove(); P.r.dispose(); removeEventListener('keydown', key); phBusy = false; done(); };
   const key = e => { if (e.key === 'Escape') end(); }; addEventListener('keydown', key); ov.addEventListener('click', end);
@@ -510,7 +517,7 @@ function phoneCall(assets, pickCv, arrive, done, shown) {
   }).catch(end);
   loop(cv, 30, t => { if (finished || !o) return; if (t0 === null) t0 = t; const e = t - t0, lt = e - 500;
     const k1 = ease(clamp(e / 1000, 0, 1)), ring = e < 900 ? Math.sin(e / 18) * .1 * (1 - e / 900) : 0;
-    o.position.lerpVectors(p0, new THREE.Vector3(0, 0, 0), k1); o.scale.setScalar(s0 + (1 - s0) * k1); o.rotation.set(PHONE_TILT * (1 - k1), ring, Math.PI / 2 * (1 - k1) + ring * .5);   // z leżącego na boku podnosi się do pionu
+    o.position.lerpVectors(p0, new THREE.Vector3(0, 0, 0), k1); o.scale.setScalar(s0 + (1 - s0) * k1); o.rotation.set(PL.tilt * (1 - k1), ring, PL.rz * (1 - k1) + ring * .5);   // z leżącego na boku podnosi się do pionu
     keys.intensity = e < 1400 ? (.6 + .4 * Math.sin(e / 50)) * 1.2 : 0; keys.position.set(o.position.x, o.position.y - .25, .5);
     // kamera: z (0,0,3) na oś ekranu, w takiej odległości, żeby LCD zmieścił się w oknie (94%)
     o.updateMatrixWorld(true); scr.getWorldPosition(camT); camN.set(0, 0, 1).applyQuaternion(scr.getWorldQuaternion(new THREE.Quaternion()));
@@ -548,7 +555,7 @@ export function initPersonaTitles(parts) {
   parts.forEach((el, i) => {
     const name = el.dataset.name, h = el.querySelector('h3'); if (!name || !h) return;
     const cv = document.createElement('canvas'); cv.className = 'kp-title'; cv.setAttribute('aria-hidden', 'true'); const corner = el.closest('section').querySelector('.kp-cn'); if (corner) corner.appendChild(cv); else el.insertBefore(cv, h); h.classList.add('kp-gl');   // wstążka stoi w rogu obok maski
-    const r = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true }); r.setPixelRatio(1); r.setClearColor(0x000000, 0); r.autoClear = false;
+    const r = new THREE.WebGLRenderer({ canvas: cv, antialias: false, alpha: true }); r.setPixelRatio(1); r.setClearColor(0x000000, 0); r.autoClear = false; watchGL(cv, r);
     const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(30, 3, .1, 50); cam.position.set(0, 0, 7); cam.lookAt(0, 0, 0);
     const res = new THREE.Vector2(1, 1), tint = new THREE.Vector3(...TITLE_COL[i % 3].map(v => v / 255)), gain = { value: 0 };
     const geo = new THREE.PlaneGeometry(1, 1, NX, 1); geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3), 3));
