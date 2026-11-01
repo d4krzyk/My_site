@@ -266,9 +266,9 @@ function gateOuter(pre){
   const PX=2, COL={'#':'#cdd0d8',s:'#969aa4',d:'#6e717d',D:'#3a3c46',w:'#ffffff',c:'#3ff0ff',t:'#0e7c8a',T:'#07444c'};
   const old=pre.querySelector('canvas.gout'); if(old) old.remove();
   const cv=document.createElement('canvas'); cv.className='gout'; pre.prepend(cv);
-  let busy=false, dirty=false;                                   // dirty: rozmiar zmienił się w trakcie animacji, przerysuj po niej
+  let busy=false, dirty=false, tok=0, cur=null, played=false;    // dirty: rozmiar zmienił się w trakcie animacji, przerysuj po niej
   function draw(anim){
-    const r=pre.getBoundingClientRect(); if(!r.width) return;
+    const r=pre.getBoundingClientRect(); if(!r.width) return; tok++; busy=false;
     // nieparzysta szerokość (piksel środka) i płótno wyśrodkowane na oknie co do pół piksela, żeby ozdoby były symetryczne względem tekstu
     let W=Math.floor(r.width/PX); if(!(W%2)) W--; const H=Math.floor(r.height/PX);
     cv.width=W; cv.height=H; cv.style.width=W*PX+'px'; cv.style.height=H*PX+'px'; cv.style.left=(r.width-W*PX)/2+'px'; cv.style.top='0px';
@@ -325,21 +325,34 @@ function gateOuter(pre){
       if(tx>th+.18){ D[k]=28; D[k+1]=31; D[k+2]=52; } D[k+3]=255; }
     const orn=[...M].map(([k,c])=>{ const [a,b]=k.split(',').map(Number); return [a,b,c,Math.min(Math.hypot(a,b),Math.hypot(W-a,H-b),Math.hypot(a-cx,b)*.8,Math.hypot(a-cx,H-b)*.8)]; }).sort((p,q)=>p[3]-q[3]);
     const final=()=>{ x.clearRect(0,0,W,H); x.putImageData(im,0,0); for(const [a,b,c] of orn){ x.fillStyle=COL[c]; x.fillRect(a,b,1,1); } };
-    if(!anim||RM){ final(); return; }
-    // pojawianie się jak ramka w Maszynologii: płyta wyłania się ditherem (próg Bayera, od góry ku dołowi) z rozjarzonym cyjanowym brzegiem,
-    // ozdoby rosną od narożników i rombu; w niskich klatkach (18/s)
-    busy=true; const src=new Uint8ClampedArray(D), fr=x.createImageData(W,H), F=fr.data, DUR=1300; let t0=-1, last=0;
-    const step=now=>{ if(t0<0) t0=now; if(now-last<1000/18){ requestAnimationFrame(step); return; } last=now; const k=Math.min(1,(now-t0)/DUR);
+    // klatka animacji dla postępu k (0 = pusto, 1 = gotowa ramka): płyta wyłania się ditherem (próg Bayera, od góry ku dołowi) z rozjarzonym cyjanowym brzegiem,
+    // ozdoby rosną od narożników i rombu (w niskich klatkach, 18/s); ta sama funkcja gra wstecz przy znikaniu (zmiana języka)
+    const src=new Uint8ClampedArray(D), fr=x.createImageData(W,H), F=fr.data;
+    const frameAt=k=>{
       for(let py=0;py<H;py++){ const lim=k*1.7-(py/H)*.7; for(let px=0;px<W;px++){ const i=(py*W+px)*4, on=bth(px,py)<lim;
         F[i]=src[i]; F[i+1]=src[i+1]; F[i+2]=src[i+2]; F[i+3]=on?src[i+3]:0;
         if(on && bth(px,py)>lim-.08 && src[i+3]){ F[i]=20; F[i+1]=110; F[i+2]=130; } } }   // świeży brzeg ditheru rozjarzony cyjanem
       x.clearRect(0,0,W,H); x.putImageData(fr,0,0);
-      const n=Math.floor(orn.length*Math.min(1,k*1.25)); for(let j=0;j<n;j++){ const [a,b,c]=orn[j]; x.fillStyle=j>n-24?COL.c:COL[c]; x.fillRect(a,b,1,1); }
-      if(k<1) requestAnimationFrame(step); else { busy=false; if(dirty){ dirty=false; draw(false); } else final(); } };
+      const n=Math.floor(orn.length*Math.min(1,k*1.25)); for(let j=0;j<n;j++){ const [a,b,c]=orn[j]; x.fillStyle=j>n-24?COL.c:COL[c]; x.fillRect(a,b,1,1); } };
+    cur={final,frameAt,clear:()=>x.clearRect(0,0,W,H)};
+    if(!anim||RM){ final(); return; }
+    run(1);
+  }
+  // odtwarzanie w przód (budowanie) albo wstecz (znikanie); kolejne wywołanie lub przerysowanie przerywa poprzednie
+  function run(dir,done){
+    if(!cur){ done&&done(); return; }
+    const my=++tok; busy=true; const DUR=dir>0?1300:800; let t0=-1,last=0;
+    const step=now=>{ if(my!==tok) return; if(t0<0) t0=now; if(now-last<1000/18){ requestAnimationFrame(step); return; } last=now;
+      const p=Math.min(1,(now-t0)/DUR); cur.frameAt(dir>0?p:1-p);
+      if(p<1){ requestAnimationFrame(step); return; }
+      busy=false; if(dir>0){ if(dirty){ dirty=false; draw(false); } else cur.final(); } else cur.clear(); done&&done(); };
     requestAnimationFrame(step);
   }
-  draw(true);
-  if(window.ResizeObserver){ let t; new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(()=>{ if(pre.querySelector('canvas.gout')!==cv) return; if(busy) dirty=true; else draw(false); },80); }).observe(pre); }
+  pre._gOut=done=>{ if(RM||!cur){ done&&done(); return; } run(-1,done); };
+  // start po wczytaniu czcionek i ułożeniu strony: zmierzona wcześniej szerokość okna była za mała, ramka przeskakiwała, a napis wychodził poza nią
+  const ready=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();
+  ready.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(pre.querySelector('canvas.gout')!==cv) return; played=true; draw(true); })));
+  if(window.ResizeObserver){ let t; const ro=new ResizeObserver(()=>{ clearTimeout(t); t=setTimeout(()=>{ if(pre.querySelector('canvas.gout')!==cv){ ro.disconnect(); return; } if(!played) return; if(busy&&tok){ dirty=true; return; } draw(false); },80); }); ro.observe(pre); }
 }
 
 /* --- brama: po kliknięciu cała ramka z napisami pęka na kawałki, które w niskich klatkach (9 kl/s) opadają w czeluść: kurczą się, obracają i migoczą aż znikną --- */
@@ -436,9 +449,13 @@ FONTS().then(()=>{
   const onLang=e=>{ if(!gate.isConnected){ removeEventListener('krzyk-lang',onLang); return; } if(e.detail===lang) return; lang=e.detail;
     const s=T[lang], calmHidden=!$('gCalm')||$('gCalm').hidden;
     import('./xlate').then(({decodeSwap})=>{
-      const me=++lt; let n=0;
-      Promise.all([['gEnter',s.enter],['gCalm',s.calm],['gArt',s.art],['gTitle',s.title],['gS1',s.s1],['gS2',s.s2],['gMach',s.mach]].map(([id,t])=>$(id)?decodeSwap($(id),t,{delay:n++*60}):0))
-        .then(()=>{ if(me!==lt||!gate.isConnected) return; frame(); if($('gCalm')) $('gCalm').hidden=calmHidden; }); }); }; addEventListener('krzyk-lang',onLang);
+      const me=++lt; let n=0, fr=$('gFrame');
+      // ramka z przyciskiem nie przestawia się w locie (napis o innej długości wychodził poza starą ramę i ramka przeskakiwała): obecna znika jak przy budowie, tylko wstecz
+      // (napis gaśnie, płyta rozsypuje się ditherem od dołu, ozdoby cofają się do narożników), a potem buduje się od nowa już pod nowy napis
+      fr.classList.add('swap');
+      const outP=new Promise(r=>fr._gOut?fr._gOut(r):r());
+      Promise.all([outP,...[['gArt',s.art],['gTitle',s.title],['gS1',s.s1],['gS2',s.s2],['gMach',s.mach]].map(([id,t])=>$(id)?decodeSwap($(id),t,{delay:n++*60}):0)])
+        .then(()=>{ if(me!==lt||!gate.isConnected) return; frame(); fr.classList.remove('swap'); if($('gCalm')) $('gCalm').hidden=calmHidden; }); }); }; addEventListener('krzyk-lang',onLang);
   frame(); import('./gatecards');     // moduł kart pobiera się z góry, żeby wyłanianie ruszyło bez opóźnienia po zejściu
   // wybór drogi: wybrana karta się spala (ogień od dołu, piksele żarzą się i odlatują jako popiół), druga gaśnie w cieniu, potem z góry leci kurtyna sigili w kolorze działu (veil.js)
   let picked=false;

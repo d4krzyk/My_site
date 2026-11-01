@@ -23,7 +23,10 @@ export function typeOut(el, { seed = 7, speed = 1, delay = 0 } = {}) {
   const sp = prep(el, seed); if (RM) { sp.forEach(s => s.classList.add('on')); return Promise.resolve(); }
   const r = rng(seed + 3);
   return new Promise(res => { let i = 0;
-    const step = () => { if (i >= sp.length) return res(); const s = sp[i++]; s.classList.add('on', 'hit'); setTimeout(() => s.classList.remove('hit'), 90);
+    const step = () => { if (i >= sp.length) return res();
+      // tekst, który wyjechał z okna w trakcie pisania (szybkie przewijanie), kończy się od razu zamiast doganiać przewijanie
+      if (!(i & 3) && el.isConnected) { const q = el.getBoundingClientRect(); if (q.bottom < -80 || q.top > innerHeight + 80) { while (i < sp.length) sp[i++].classList.add('on'); return res(); } }
+      const s = sp[i++]; s.classList.add('on', 'hit'); setTimeout(() => s.classList.remove('hit'), 90);
       const ch = s.textContent; setTimeout(step, ((ch === ' ' ? 110 : /[,.]/.test(ch) ? 230 : 38) + r() * 70) / speed); };
     setTimeout(step, delay); });
 }
@@ -146,7 +149,8 @@ export function initKrzykFx(sec, opts = {}) {
       }
       y += dy + (ph ? 230 : 330) + r() * (ph ? 260 : 380); if (r() < .8) side = !side;
     }
-    box.querySelectorAll('.k-line').forEach(el => { prep(el, +el.dataset.seed); io.observe(el); });
+    // na telefonie wersy w tle są od razu gotowe: pisanie ich litera po literze (setki spanów, odliczanie przy każdym wjeździe w kadr) zapychało wątek podczas przewijania
+    if (!ph) box.querySelectorAll('.k-line').forEach(el => { prep(el, +el.dataset.seed); io.observe(el); });
   };
   let tm; const re = () => { clearTimeout(tm); tm = setTimeout(build, 200); };
   build(); watch();

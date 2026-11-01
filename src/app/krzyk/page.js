@@ -61,17 +61,16 @@ export default function Krzyk() {
             </nav>
             {SUBS.map(([id, code, h, txt, he, txte]) => id === 'k-muzyka' ? (
               <section className="k-sub k-muzyka" id={id} key={id}>
-                <span className="k-code dos">{code}</span>
                 <h2 className="sr-only" data-en={he}>{h}</h2>
-                {/* pokój z telewizorem w zinowej wyrwie (engine/muzyka): klik w kasetę, magnetowid, pilot albo ekran; tabliczka krzywo naklejona w rogu */}
-                <div className="mu-host">
-                  <div className="mu-plq" aria-hidden="true"><i style={{ backgroundImage: `url(${asset('/krzyk/plate-0.webp')})` }} /><u /><s /><b data-en="music">muzyka</b></div>
-                </div>
+                {/* tabliczka z nazwą działu zamiast znacznika i nagłówka (ta sama w muzyce i persony), krzywo naklejona nad sceną */}
+                <div className="k-plq" aria-hidden="true"><i style={{ backgroundImage: `url(${asset('/krzyk/plate-0.webp')})` }} /><u /><s /><b data-en="music">muzyka</b></div>
+                {/* pokój z telewizorem w zinowej wyrwie (engine/muzyka): klik w kasetę, magnetowid, pilot albo ekran */}
+                <div className="mu-host" />
               </section>
             ) : id === 'k-persony' ? (
               <section className="k-sub k-persony" id={id} key={id}>
-                <span className="k-code dos">{code}</span>
-                <h2 data-type="" data-seed={code.charCodeAt(1)} data-en={he}>{h}</h2>
+                <h2 className="sr-only" data-en={he}>{h}</h2>
+                <div className="k-plq" aria-hidden="true"><i style={{ backgroundImage: `url(${asset('/krzyk/plate-1.webp')})` }} /><u /><s /><b data-en="personas">persony</b></div>
                 <div className="kp-stage" aria-hidden="true"><div className="kp-stage-in"><canvas /></div></div>
                 {PERSONY.map(([n, tag, d, tage, de], i) => (
                   <div className="kp-part" data-p={i} data-name={n} key={n}>
