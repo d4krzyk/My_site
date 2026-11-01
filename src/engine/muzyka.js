@@ -241,8 +241,7 @@ export function initMuzyka(host, A) {
           // OSD jak w magnetowidzie: tylko przez kilka sekund po starcie taśmy, potem znika (w telewizji napisy nie wiszą cały czas)
           sx.font = '16px VT323, monospace'; const line = c0[0] + (c0[1] ? ' · ' + c0[1] : ''), tw = sx.measureText(line).width, dur = tw > 176 ? 900 + (tw + 24) / 45 * 1000 + 700 : 4200;   // długi tytuł przesuwa się bokiem w całości, a OSD trwa tyle, by go przeczytać
           if (ts < dur) { const oa = Math.min(1, (dur - ts) / 700); sx.save(); sx.globalAlpha = oa; sx.font = '16px VT323, monospace'; sx.textAlign = 'left'; sx.textBaseline = 'top'; sx.shadowColor = '#000'; sx.shadowBlur = 3;
-            sx.fillStyle = '#fff'; sx.fillText('PLAY ▶', 8, 6); ticker(line, 8, 124, 176, ts);
-            if (!soundOn()) { sx.fillStyle = '#ffe58a'; ticker('WYCISZONE', 8, 88, 176, ts); ticker('DŹWIĘK: IKONKA W ROGU', 8, 104, 176, ts); } sx.restore(); }
+            sx.fillStyle = '#fff'; sx.fillText('PLAY ▶', 8, 6); ticker(line, 8, 124, 176, ts); sx.restore(); }
           vfd('►' + fmt(yt && yt.getCurrentTime ? yt.getCurrentTime() : ts / 1000)); scr = 1.1; } }
       glowL.intensity = scr; scrGlow.material.opacity = .12 + scr * .14;
       fS.material.opacity = .1 + Math.sin(t / 1700) * .015; wS.material.opacity = .09 + Math.sin(t / 2300) * .02; winL.intensity = .5 + Math.sin(t / 3100) * .08; beamTex.offset.y = Math.sin(t / 4200) * .03;
