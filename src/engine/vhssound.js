@@ -63,7 +63,7 @@ export function trackingHiss() {
 // zatrzaśnięcie ścieżki: krótki pisk, szum odpływa
 export function trackLock() {
   const a = A(); if (!a) return; const { ctx, master } = a, t = ctx.currentTime;
-  tone(ctx, master, t, .18, 'sine', 2200, 900, .55); tone(ctx, master, t, .16, 'sine', 62, 40, .6); burst(ctx, master, t, .4, 'bandpass', 3000, .7, .5);
+  tone(ctx, master, t, .18, 'sine', 2200, 900, .55); tone(ctx, master, t, .16, 'sine', 62, 40, .6);
 }
 // wysuwanie kasety: obroty maleją, na końcu stuk
 export function ejectSeq() { loadWhirr(1.1, 0, true); tapeThunk(1.05); }
