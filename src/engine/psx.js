@@ -369,7 +369,7 @@ export function initPersonaStage(cv, parts) {
        fac = Math.min(1, Math.max(.55, W / Hh / 2.4)), cs = .36 * fac;
     const cx = -halfW + cs * 1.05 + .14, cy = halfH - cs * 1.3 - .08, now = performance.now();
     ms.forEach((m, i) => {
-      const tgP = i === shown && active === shown ? 1 : 0; pr[i] += Math.sign(tgP - pr[i]) * Math.min(Math.abs(tgP - pr[i]), (d || 40) / 850);
+      const tgP = i === shown && active === shown ? 1 : 0; pr[i] += Math.sign(tgP - pr[i]) * Math.min(Math.abs(tgP - pr[i]), (d || 40) / 560);
       const pe = ease(pr[i]), on = active === i, off = active >= 0 && !on, tg = { z: i === shown ? .4 : off ? -.6 : 0, s: i === shown ? .36 : off ? .33 : .4, c: on ? 1 : off ? .14 : .75, y: off ? .14 : 0 }, c = cur[i];
       for (const k in tg) c[k] += (tg[k] - c[k]) * .12;
       let x = (i - 1) * span, y = c.y + Math.sin(t / 900 + i * 2) * .05, rx = 0, ry = 0, rz = 0, sc = c.s * Math.min(1, Math.max(.55, W / Hh / 2.4));

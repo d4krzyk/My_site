@@ -184,6 +184,11 @@ html::-webkit-scrollbar,body::-webkit-scrollbar{width:0;height:0;display:none}
   .k-bgs{background-image:var(--btp),var(--bmp)}
   .k-foot{background-image:var(--bbp)}
   .k-body{width:92%}
+  /* wydajność przewijania na telefonie: duże warstwy z maską, mieszaniem (screen), obrotem i podwójnym cieniem tekstu zostawiały puste bloki (rastrowanie nie nadążało) */
+  .k-lines{mix-blend-mode:normal;-webkit-mask:none;mask:none;opacity:.5}
+  .k-safe{mix-blend-mode:normal}
+  .k-sub:nth-of-type(2n),.k-sub:nth-of-type(2n+1){transform:none}
+  .k-body :is(p,h1,h2){text-shadow:0 0 5px #000,1px 1px 0 #000}
 }
 /* Krzyk: warstwy nad tłem (w układzie kolażu 1280 px = 100cqw) */
 .k-lines{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;mix-blend-mode:screen;
@@ -449,7 +454,6 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 /* sekcja muzyki: pokój PSX w wyrwie wyciętej wprost w tle strony (engine/muzyka); bez tektury i bez własnego tła, dookoła widać prawdziwe tło */
 .k-sub.k-muzyka{display:block;background:none;box-shadow:none;transform:none;padding-left:0;padding-right:0;min-height:0}
 .k-sub.k-muzyka::before,.k-sub.k-muzyka::after{display:none}
-.k-muzyka .k-code{padding-left:clamp(18px,4vw,44px)}
 .mu-host{position:relative;width:100%;aspect-ratio:16/10;margin:8px 0 4px;container-type:inline-size}
 .mu-view{position:absolute;inset:0;background:#020308}
 .mu-view canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
@@ -457,13 +461,14 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .mu-edge{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3}
 .mu-ov{position:absolute;left:0;top:0;transform-origin:0 0;visibility:hidden;pointer-events:none;z-index:2}
 .mu-ov canvas{position:static;width:100%;height:100%;image-rendering:pixelated}
-.mu-plq{position:absolute;right:3.2%;top:4.2%;width:19%;aspect-ratio:2.05/1;z-index:4;transform:rotate(3.2deg);filter:drop-shadow(0 3px 5px rgba(0,0,0,.65));pointer-events:none}
-.mu-plq i{position:absolute;inset:0;background:center/cover;clip-path:polygon(2% 6%,30% 1%,58% 5%,97% 0,100% 44%,96% 100%,64% 96%,31% 100%,0 93%,3% 50%)}
-.mu-plq b{position:absolute;left:0;right:0;top:50%;transform:translateY(-52%) rotate(-1.4deg);text-align:center;font:400 4.6cqw/1 "Special Elite K",monospace;color:#e3d6b4;text-shadow:0 0 6px #000;letter-spacing:.02em}
-.mu-plq u{position:absolute;left:8%;top:-5%;width:24%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-16deg)}
-.mu-plq s{position:absolute;right:6%;bottom:-6%;width:22%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-22deg)}
+.k-plq{position:relative;width:clamp(150px,19vw,250px);aspect-ratio:2.05/1;margin:0 0 14px clamp(18px,4vw,44px);z-index:4;transform:rotate(-2.6deg);filter:drop-shadow(0 3px 5px rgba(0,0,0,.65));pointer-events:none;container-type:inline-size;flex:none}
+.k-plq i{position:absolute;inset:0;background:center/cover;clip-path:polygon(2% 6%,30% 1%,58% 5%,97% 0,100% 44%,96% 100%,64% 96%,31% 100%,0 93%,3% 50%)}
+.k-plq b{position:absolute;left:0;right:0;top:50%;transform:translateY(-52%) rotate(-1.4deg);text-align:center;font:400 19cqw/1 "Special Elite K",monospace;color:#e3d6b4;text-shadow:0 0 6px #000;letter-spacing:.02em}
+.k-plq u{position:absolute;left:8%;top:-5%;width:24%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-16deg)}
+.k-plq s{position:absolute;right:6%;bottom:-6%;width:22%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-22deg)}
+.k-persony .k-plq{margin-top:-8px}
 /* telefon: wariant „dwa piętra”: pionowa scena, telewizor u góry, dywan z kasetą i pilotem pod nim */
-@media (max-width:700px){.mu-host{aspect-ratio:288/480;margin-top:6px}.mu-plq{width:40%;right:2.5%;top:2.2%}.mu-plq b{font-size:7.4cqw}}
+@media (max-width:700px){.kp-part{min-height:46svh}.mu-host{aspect-ratio:288/480;margin-top:6px}.k-plq{width:clamp(150px,46vw,210px)}}
 
 /* ikonka dźwięku w lewym dolnym rogu (components/SoundIcon): oscyloskop, pod nim „dźwięk" i „wł/wył" */
 .snd-icon{all:unset;cursor:pointer;position:fixed;left:12px;bottom:10px;z-index:55;display:grid;justify-items:center;gap:1px;font-family:var(--f-dos);line-height:1;color:#8f94a6;-webkit-tap-highlight-color:transparent}
@@ -484,5 +489,6 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 
 /* zapłon bramy przy ładowaniu: sztandary zapalają się cyjanem (skokowo, jeden po drugim), a ramka z napisem otwiera się od środka z cyjanowym rozbłyskiem */
 @keyframes frameTxt{0%{opacity:0;filter:brightness(3)}100%{opacity:1;filter:none}}
-.gate .layer.entry .frame > :not(canvas){animation:frameTxt .6s steps(6) .55s backwards}   /* ramkę buduje canvas (gateOuter), tekst wchodzi po niej */
+.gate .layer.entry .frame > :not(canvas){animation:frameTxt .6s steps(6) .55s backwards}
+.gate .layer.entry .frame.swap > :not(canvas){opacity:0;animation:none;transition:opacity .3s steps(4)}   /* ramkę buduje canvas (gateOuter), tekst wchodzi po niej */
 @media (prefers-reduced-motion:reduce){.gate .layer.entry .frame > :not(canvas){animation:none}}

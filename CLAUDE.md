@@ -65,6 +65,11 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 - **Przewijanie sekcjami (wariant B):** `points()` w `klatki.js`: skok od sekcji do sekcji, górna krawędź sekcji u góry okna; tylko sekcja wyższa od okna o >12% dostaje dodatkowy
   przystanek u dołu; sekcja person ma przystanek dla każdej persony; za ostatnim przystankiem jeden skok na sam dół, potem ruch w dół nic nie robi.
 
+## Wydajność przewijania na telefonie
+
+Puste bloki przy szybkim przewijaniu (rastrowanie nie nadążało) powodowały: wersy w tle Krzyka (`.k-lines`, warstwa wysokości całej strony z maską i `mix-blend-mode:screen`, setki spanów pisanych litera po literze przy każdym wjeździe w kadr), obrócone duże sekcje i podwójny cień tekstu. Na telefonie (≤700 px) wersy są od razu gotowe (bez `prep` i bez pisania), bez maski i mieszania, sekcje bez obrotu, jeden cień tekstu;
+pisany tekst, który wyjechał z okna w trakcie pisania, kończy się od razu (`typeOut`); przejścia masek person są szybsze, a części person niższe. Test: przewijanie skryptem z `Emulation.setCPUThrottlingRate` 4× i pomiar czasu klatek (średnia spadła z ok. 63 do ok. 40 ms).
+
 ## Piksele kwadratowe
 
 Wszystkie pełnoekranowe płótna z ditherem (rozkład kart, szczelina przejścia, kurtyna sigili, klatki przewijania) mają siatkę liczoną z rozmiaru okna i rozmiar CSS równy dokładnie `płótno × piksel` (a nie `100vw × 100vh` ani stały 16:9), bo inaczej na telefonie piksele rozciągają się w prostokąty. Nowe takie płótno rób tak samo.
@@ -83,7 +88,7 @@ Cracktro w Maszynologii nie przelicza się przy zmianie samej wysokości okna (p
 
 ## Brama (strona główna)
 
-Przy ładowaniu sztandary **powstają z płomienia na krawędziach** (odwrócone spalenie w `tornTab`, `gate.js`: cyjanowy ogień rozpala się przy brzegu, jego czoło sunie w głąb pola `BV`, za nim jest materiał, przed nim jeszcze nic; lewy startuje wcześniej niż prawy; nie jest to rozjaśnienie CSS), a środkowa ramka z napisem buduje się jak ramki w Maszynologii (`gateOuter` w `gate.js`, jak `redFrame`: płyta wyłania się ditherem od góry z rozjarzonym cyjanowym brzegiem, ozdoby rosną od narożników i rombu, 18 kl./s), tekst wchodzi po niej (`frameTxt`); przy ograniczeniu animacji nic z tego nie działa. Po zejściu nagłówek wyboru drogi to pytanie „Co cię tu sprowadza?” / „What brings you here?” (bez opisu pod spodem; hasło „sztuka z chaosu” zostaje tylko w tekstach Krzyka i metadanych). Znacznik przy Krzyku to „[ Sztuka ]” po polsku i „[ Art ]” po angielsku (`#gArt`).
+Przy ładowaniu sztandary **powstają z płomienia na krawędziach** (odwrócone spalenie w `tornTab`, `gate.js`: cyjanowy ogień rozpala się przy brzegu, jego czoło sunie w głąb pola `BV`, za nim jest materiał, przed nim jeszcze nic; lewy startuje wcześniej niż prawy; nie jest to rozjaśnienie CSS), a środkowa ramka z napisem buduje się jak ramki w Maszynologii (`gateOuter` w `gate.js`, jak `redFrame`: płyta wyłania się ditherem od góry z rozjarzonym cyjanowym brzegiem, ozdoby rosną od narożników i rombu, 18 kl./s), tekst wchodzi po niej (`frameTxt`); przy ograniczeniu animacji nic z tego nie działa. Ramka startuje dopiero po wczytaniu czcionek i ułożeniu strony (`document.fonts.ready` + 2 klatki), bo wcześniej mierzona szerokość była za mała i ramka przeskakiwała, a napis wychodził poza nią. **Zmiana języka:** ramka z przyciskiem nie przestawia się w locie; napis w niej gaśnie, obecna ramka znika tą samą animacją puszczoną wstecz (`pre._gOut`, płyta rozsypuje się ditherem od dołu, ozdoby cofają się do narożników), a potem buduje się od nowa już pod nowy napis (`frame()`); pozostałe napisy bramy zmieniają się przez `decodeSwap`. Po zejściu nagłówek wyboru drogi to pytanie „Co cię tu sprowadza?” / „What brings you here?” (bez opisu pod spodem; hasło „sztuka z chaosu” zostaje tylko w tekstach Krzyka i metadanych). Znacznik przy Krzyku to „[ Sztuka ]” po polsku i „[ Art ]” po angielsku (`#gArt`).
 
 
 Kręgi ze znaków w tle (`gate.js`, pętla 30 kl./s) obracają się bez przerwy, każdy z własną prędkością i kierunkiem (0,06–0,4 rad/s). Liczba znaków w kręgu rośnie przez podwajanie
@@ -120,7 +125,7 @@ Modele w `public/krzyk/3d/` (`old_tv`, `vhs_player`, `vhs_tape`, `remote`). Z si
 Sterowanie tylko klikiem w obiekty (bez przycisków): kaseta → wsuwa się do magnetowidu i rusza klip, magnetowid → wysuwa kasetę, pilot → zmienia klip, telewizor → kamera najeżdża i ekran wypełnia kadr (Esc albo kolejny klik cofa).
 Ekran i wyświetlacz VFD to płótna 2D przyklejone homografią do modelu. **Nie dodawać migających cząsteczek** (kurz, losowe kreski na ekranie): wyglądały źle i zostały usunięte; szum jest tylko na pustym ekranie.
 Telefon (≤700 px): wariant „dwa piętra” — scena pionowa 288×480 (`LAYOUTS.port`): telewizor z magnetowidem u góry, dywan z kasetą i pilotem pod nim, zoom dopasowany do szerokości; układ przełącza się też przy zmianie szerokości (`applyLayout`).
-Tabliczka „muzyka” (tekstura płyty wyboru, krzywo) w prawym górnym rogu. Później: plakietki z tytułami utworów, z których wysuwa się kaseta i rusza klip z YouTube.
+Nad sceną stoi tabliczka „muzyka” (`.k-plq`, tekstura płyty wyboru, krzywo naklejona, w miejscu dawnego znacznika A1 i nagłówka; takiej samej tabliczki „persony” używa sekcja person, znaczniki A1 i A2 usunięte). Później: plakietki z tytułami utworów, z których wysuwa się kaseta i rusza klip z YouTube.
 
 ## Persony w rogu i dźwięk
 
