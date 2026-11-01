@@ -132,7 +132,7 @@ export function initMuzyka(host, A) {
     const q = corners.map(v => { const p = v.clone().applyMatrix4(obj.matrixWorld).project(cam); return [(p.x + 1) / 2 * cw, (1 - p.y) / 2 * ch]; }); el.style.transform = quadT(el.offsetWidth, el.offsetHeight, q); el.style.visibility = 'visible'; };
 
   // ---- odtwarzacz YouTube (IFrame API ładowane przy pierwszym wsunięciu kasety, youtube.com bez ciasteczek śledzących nie jest odpytywany wcześniej)
-  let yt = null, ytP = null, ytState = -1, ytErr = false, ytAt = 0, shown = false;
+  let yt = null, ytP = null, ytState = -1, ytErr = false, ytAt = 0, shown = false, vidAt = 0;
   const clipN = () => Math.max(1, CLIPS.length);
   const loadYT = () => ytP || (ytP = new Promise(res => { if (window.YT && window.YT.Player) return res(window.YT); const prev = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = () => { if (prev) prev(); res(window.YT); }; const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; sc.onerror = () => res(null); document.head.appendChild(sc); }));
@@ -184,7 +184,13 @@ export function initMuzyka(host, A) {
   applyLayout(); cam.position.copy(camBase); cam.lookAt(lookBase);
   const mq = matchMedia('(max-width:700px)'), onMq = () => applyLayout(); mq.addEventListener('change', onMq);
   const vfd = s => { const vx = ovVfd.x; vx.fillStyle = '#020a0c'; vx.fillRect(0, 0, 160, 40); if (s) { vx.font = '30px VT323, monospace'; vx.textBaseline = 'middle'; vx.textAlign = 'center'; vx.fillStyle = '#3ff0ff'; vx.shadowColor = '#3ff0ff'; vx.shadowBlur = 6; vx.fillText(s, 80, 21); vx.shadowBlur = 0; } };
-  const eq = (sx, e) => { for (let i = 0; i < 16; i++) { const h = 6 + Math.abs(Math.sin(e / 260 + i * .9) * Math.sin(e / 510 + i * .4)) * 48, y = 118 - h; sx.fillStyle = i % 5 === 0 ? '#c4121d' : '#3ff0ff'; sx.fillRect(12 + i * 11, y, 8, h); sx.fillStyle = 'rgba(0,0,0,.35)'; for (let j = 0; j < h; j += 3) sx.fillRect(12 + i * 11, y + j, 8, 1); } };
+  // niebieski ekran magnetowidu z pasmem śledzenia (szumowa wstęga wędrująca w górę) i opcjonalnym OSD „PLAY ▶”
+  const blueScreen = (e, osd) => { sx.fillStyle = '#1428c8'; sx.fillRect(0, 0, 192, 144);
+    const g = sx.createLinearGradient(0, 0, 0, 144); g.addColorStop(0, 'rgba(255,255,255,.07)'); g.addColorStop(1, 'rgba(0,0,0,.18)'); sx.fillStyle = g; sx.fillRect(0, 0, 192, 144);
+    const by = 150 - ((e / 11) % 190); for (let y = 0; y < 16; y++) { const yy = Math.round(by + y); if (yy < 0 || yy >= 144) continue; const k = Math.sin(y / 16 * Math.PI); sx.fillStyle = `rgba(255,255,255,${(.12 + .5 * Math.random()) * k})`; sx.fillRect(0, yy, 192, 1); }
+    sx.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < 144; y += 3) sx.fillRect(0, y, 192, 1);
+    const vg = sx.createRadialGradient(96, 72, 50, 96, 72, 120); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.4)'); sx.fillStyle = vg; sx.fillRect(0, 0, 192, 144);
+    if (osd) { sx.font = '16px VT323, monospace'; sx.textAlign = 'left'; sx.textBaseline = 'top'; sx.shadowColor = '#000'; sx.shadowBlur = 3; sx.fillStyle = '#fff'; sx.fillText(Math.floor(e / 500) % 2 ? 'PLAY ▶' : 'PLAY', 8, 6); sx.shadowBlur = 0; } };
   const sx = ovTv.x, img = sx.createImageData(192, 144);
 
   Promise.all([loadPSX(P, A.tv), loadPSX(P, A.vcr), loadPSX(P, A.tape), loadPSX(P, A.remote)]).then(([tvM, vcrM, tapeM, remM]) => {
@@ -209,27 +215,29 @@ export function initMuzyka(host, A) {
       const ex = state === 'out' ? e : 1e9;
       if (state === 'out' && ex < 520) { const kq = ex / 520; sx.fillStyle = '#000'; sx.fillRect(0, 0, 192, 144); sx.fillStyle = '#fff';
         if (kq < .5) { const h = Math.max(2, 144 * (1 - kq / .5)); sx.fillRect(0, 72 - h / 2, 192, h); } else { const w = Math.max(2, 192 * (1 - (kq - .5) / .5)); sx.fillRect(96 - w / 2, 71, w, 2); } scr = .1; vfd('EJECT'); }
+      else if (state === 'in' && e > 900) { blueScreen(e, false); vfd('LOAD'); scr = .8; }                     // taśma się wciąga: ekran robi się niebieski jak w magnetowidzie
       else if (state === 'idle' || state === 'in' || state === 'out') {
         // pusty ekran: spokojny szum (tylko tu)
         for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 150; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } sx.putImageData(img, 0, 0);
         sx.fillStyle = 'rgba(0,0,0,.5)'; sx.fillRect(0, 0, 192, 144); sx.font = '16px VT323, monospace'; sx.textBaseline = 'middle'; sx.textAlign = 'center'; sx.fillStyle = '#fff'; sx.fillText('BRAK SYGNAŁU', 96, 72); vfd(Math.floor(t / 500) % 2 ? '12:00' : ''); scr = .45; }
-      else if (state === 'boot') { const kb = e / 700; sx.fillStyle = '#000'; sx.fillRect(0, 0, 192, 144); sx.fillStyle = '#fff';
-        if (kb < .45) { const w = 192 * (kb / .45); sx.fillRect(96 - w / 2, 71, w, 2); } else { const h = 144 * ((kb - .45) / .55); sx.fillRect(0, 72 - h / 2, 192, h); } scr = 1.3; vfd('CH ' + (clip + 1)); }
+      else if (state === 'boot') { blueScreen(e, true); scr = 1.0; vfd('CH ' + (clip + 1)); }
       else {
         const c0 = CLIPS[clip] || ['KLIP', '', null], vid = !ytErr && ytState === 1 && !!c0[2], title = c0[1].length > 22 ? c0[1].slice(0, 21) + '…' : c0[1];
-        if (vid !== shown) { shown = vid; ytWrap.style.visibility = vid ? 'visible' : 'hidden'; }
-        if (vid) { sx.clearRect(0, 0, 192, 144); }                                                   // film widać spod płótna: tu tylko prążki, napisy OSD i ciemniejsze rogi
-        else { const g2 = sx.createLinearGradient(0, 0, 192, 144); g2.addColorStop(0, '#16203a'); g2.addColorStop(1, '#05060c'); sx.fillStyle = g2; sx.fillRect(0, 0, 192, 144); eq(sx, e);
-          const by = 144 - ((e / 18) % 190); sx.fillStyle = 'rgba(255,255,255,.2)'; sx.fillRect(0, by, 192, 3); }
-        sx.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < 144; y += 3) sx.fillRect(0, y, 192, 1);
-        const vg = sx.createRadialGradient(96, 72, 50, 96, 72, 120); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)'); sx.fillStyle = vg; sx.fillRect(0, 0, 192, 144);
-        sx.font = '16px VT323, monospace'; sx.textAlign = 'left'; sx.textBaseline = 'top'; sx.shadowColor = '#000'; sx.shadowBlur = 3; sx.fillStyle = '#fff'; sx.fillText('PLAY ▶   SP', 8, 6); sx.fillStyle = Math.floor(e / 600) % 2 ? '#ff2a3a' : '#6a1018'; sx.fillText('●', 166, 6);
-        sx.fillStyle = '#fff'; sx.fillText(c0[0] + (title ? ' · ' + title : ''), 8, 124);
-        if (ytErr) { sx.fillStyle = '#ff6a6a'; sx.fillText('BŁĄD TAŚMY', 8, 60); }
-        else if (!vid && c0[2] && ytState !== 1 && performance.now() - ytAt > 800) { sx.fillStyle = '#9fd0ff'; sx.fillText('ŁADOWANIE…', 8, 60); }
-        else if (vid && !soundOn() && e < 6000) { sx.fillStyle = '#ffe58a'; sx.fillText('WYCISZONE', 8, 90); sx.fillText('DŹWIĘK: IKONKA W ROGU', 8, 105); }
-        sx.shadowBlur = 0;
-        const ct = vid && yt && yt.getCurrentTime ? yt.getCurrentTime() : e / 1000; vfd('►' + fmt(ct)); scr = vid ? 1.1 : .9 + Math.abs(Math.sin(e / 400)) * .3; }
+        if (vid !== shown) { shown = vid; vidAt = performance.now(); ytWrap.style.visibility = vid ? 'visible' : 'hidden'; }
+        const ts = performance.now() - vidAt;
+        if (ytErr) { for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 150; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; } sx.putImageData(img, 0, 0);
+          sx.fillStyle = 'rgba(0,0,0,.5)'; sx.fillRect(0, 0, 192, 144); sx.font = '16px VT323, monospace'; sx.textBaseline = 'middle'; sx.textAlign = 'center'; sx.fillStyle = '#fff'; sx.fillText('BŁĄD TAŚMY', 96, 72); vfd('ERR'); scr = .45; }
+        else if (!vid) { blueScreen(e, true); vfd('►' + fmt(0)); scr = 1.0; }                                                   // taśma jeszcze się nie rozpędziła: niebieski ekran z pasmem śledzenia
+        else {
+          sx.clearRect(0, 0, 192, 144);                                                                                      // film widać spod płótna
+          if (ts < 420) { const a = 1 - ts / 420; for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 170; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255 * a * a; } sx.putImageData(img, 0, 0); }   // łapanie ścieżki: szum odpływa
+          sx.fillStyle = 'rgba(0,0,0,.22)'; for (let y = 0; y < 144; y += 3) sx.fillRect(0, y, 192, 1);
+          const vg = sx.createRadialGradient(96, 72, 50, 96, 72, 120); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.45)'); sx.fillStyle = vg; sx.fillRect(0, 0, 192, 144);
+          // OSD jak w magnetowidzie: tylko przez kilka sekund po starcie taśmy, potem znika (w telewizji napisy nie wiszą cały czas)
+          if (ts < 4200) { const oa = Math.min(1, (4200 - ts) / 700); sx.save(); sx.globalAlpha = oa; sx.font = '16px VT323, monospace'; sx.textAlign = 'left'; sx.textBaseline = 'top'; sx.shadowColor = '#000'; sx.shadowBlur = 3;
+            sx.fillStyle = '#fff'; sx.fillText('PLAY ▶', 8, 6); sx.fillText(c0[0] + (title ? ' · ' + title : ''), 8, 124);
+            if (!soundOn()) { sx.fillStyle = '#ffe58a'; sx.fillText('WYCISZONE', 8, 90); sx.fillText('DŹWIĘK: IKONKA W ROGU', 8, 106); } sx.restore(); }
+          vfd('►' + fmt(yt && yt.getCurrentTime ? yt.getCurrentTime() : ts / 1000)); scr = 1.1; } }
       glowL.intensity = scr; scrGlow.material.opacity = .12 + scr * .14;
       fS.material.opacity = .1 + Math.sin(t / 1700) * .015; wS.material.opacity = .09 + Math.sin(t / 2300) * .02; winL.intensity = .5 + Math.sin(t / 3100) * .08; beamTex.offset.y = Math.sin(t / 4200) * .03;
       if (r0 >= 0) { const re = t - r0, up = re < 400 ? re / 400 : re < 750 ? 1 : 1 - (re - 750) / 450, u = clamp(up, 0, 1), eu = u * u * (3 - 2 * u);
