@@ -240,8 +240,7 @@ export function initMuzyka(host, A) {
       pads.push({ name, m, h, y: m.position.y, t: -1e9 }); };
     // na ekranie (pilot stoi czubkiem do góry, ekran ku kamerze): górny rząd poprzedni i następny, dolny pauza i od początku
     mkPad('prev', 'prev', '#3ff0ff', .0112, .043); mkPad('next', 'next', '#3ff0ff', -.0112, .043); mkPad('pause', 'pause', '#38ff5c', .0112, .018); mkPad('again', 'again', '#ff5a6a', -.0112, .018);
-    const tip = new THREE.Mesh(new THREE.BoxGeometry(.012, .012, .012), P.mat({ color: 0x330000, emissive: 0xff2020, emissiveIntensity: 0 })); tip.position.set(0, 0, .09); rem.add(tip);
-    const irL = new THREE.PointLight(0xff3030, 0, .6); irL.position.set(0, 0, .1); rem.add(irL); scene.add(rem);
+    scene.add(rem);   // bez diody podczerwieni (czerwona kostka na czubku pilota usunięta na prośbę autora)
     const aimQ = () => { const o = new THREE.Object3D(); o.position.copy(remUp); o.lookAt(tvAim); return o.quaternion; };
 
     loop(host, RM ? 6 : 25, (t, dt) => {
@@ -287,7 +286,6 @@ export function initMuzyka(host, A) {
       fS.material.opacity = .1 + Math.sin(t / 1700) * .015; wS.material.opacity = .09 + Math.sin(t / 2300) * .02; winL.intensity = .5 + Math.sin(t / 3100) * .08; beamTex.offset.y = Math.sin(t / 4200) * .03;
       if (r0 >= 0) { const re = t - r0, up = re < 400 ? re / 400 : re < 750 ? 1 : 1 - (re - 750) / 450, u = clamp(up, 0, 1), eu = u * u * (3 - 2 * u);
         rem.position.lerpVectors(remRest, remUp, eu); rem.quaternion.copy(qRest).slerp(aimQ(), eu);
-        const ir = re > 420 && re < 700 && (Math.floor(re / 60) % 2); tip.material.emissiveIntensity = ir ? 1 : 0; irL.intensity = ir ? .8 : 0;
         if (re > 480 && state === 'play' && !rem.userData.sw) { rem.userData.sw = 1; clip = (clip + 1) % clipN(); playClip(clip); stopHiss(); V.loadWhirr(.6, 0); V.drumSpin(.1); state = 'boot'; st0 = t; }
         if (re > 1200) { r0 = -1; rem.userData.sw = 0; rem.position.copy(remRest); rem.quaternion.copy(qRest); } }
       P.render(); pin(ovTv.el, tv, tvC); pin(ovVfd.el, vcr, vfC);
