@@ -65,6 +65,11 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 - **Przewijanie sekcjami (wariant B):** `points()` w `klatki.js`: skok od sekcji do sekcji, górna krawędź sekcji u góry okna; tylko sekcja wyższa od okna o >12% dostaje dodatkowy
   przystanek u dołu; sekcja person ma przystanek dla każdej persony; za ostatnim przystankiem jeden skok na sam dół, potem ruch w dół nic nie robi.
 
+## Piksele kwadratowe
+
+Wszystkie pełnoekranowe płótna z ditherem (rozkład kart, szczelina przejścia, kurtyna sigili, klatki przewijania) mają siatkę liczoną z rozmiaru okna i rozmiar CSS równy dokładnie `płótno × piksel` (a nie `100vw × 100vh` ani stały 16:9), bo inaczej na telefonie piksele rozciągają się w prostokąty. Nowe takie płótno rób tak samo.
+Cracktro w Maszynologii nie przelicza się przy zmianie samej wysokości okna (pasek adresu na telefonie), tylko przy zmianie szerokości albo wyraźnej zmianie wysokości.
+
 ## Karty: wybór drogi w bramie i nawigacja kartami
 
 - **Wybór drogi w bramie** (`src/engine/gatecards.js`, markup w `Gate.js`): po zejściu dwie karty (awersy z `public/cards/`: II ze słońcem = Krzyk, IV z księżycem = Maszynologia), bez napisów „poziom -1/-2”.
@@ -78,7 +83,7 @@ i odsłania sekcję kontaktu: pod koniec całość (obraz LCD, przyciemnienie i 
 
 ## Brama (strona główna)
 
-Przy ładowaniu sztandary zapalają się cyjanem (skokowo, lewy potem prawy, `tabIgnite`), a ramka z napisem otwiera się od środka z cyjanowym rozbłyskiem (`frameIgnite`); przy ograniczeniu animacji nic z tego nie działa. Znacznik przy Krzyku to „[ Sztuka ]” po polsku i „[ Art ]” po angielsku (`#gArt`).
+Przy ładowaniu sztandary **powstają z płomienia na krawędziach** (odwrócone spalenie w `tornTab`, `gate.js`: cyjanowy ogień rozpala się przy brzegu, jego czoło sunie w głąb pola `BV`, za nim jest materiał, przed nim jeszcze nic; lewy startuje wcześniej niż prawy; nie jest to rozjaśnienie CSS), a środkowa ramka z napisem buduje się jak ramki w Maszynologii (`gateOuter` w `gate.js`, jak `redFrame`: płyta wyłania się ditherem od góry z rozjarzonym cyjanowym brzegiem, ozdoby rosną od narożników i rombu, 18 kl./s), tekst wchodzi po niej (`frameTxt`); przy ograniczeniu animacji nic z tego nie działa. Po zejściu nagłówek wyboru drogi to pytanie „Co cię tu sprowadza?” / „What brings you here?” (bez opisu pod spodem; hasło „sztuka z chaosu” zostaje tylko w tekstach Krzyka i metadanych). Znacznik przy Krzyku to „[ Sztuka ]” po polsku i „[ Art ]” po angielsku (`#gArt`).
 
 
 Kręgi ze znaków w tle (`gate.js`, pętla 30 kl./s) obracają się bez przerwy, każdy z własną prędkością i kierunkiem (0,06–0,4 rad/s). Liczba znaków w kręgu rośnie przez podwajanie
@@ -87,14 +92,14 @@ przeliczania liczby znaków co klatkę: każda jej zmiana rozstawiała cały kr�
 
 ## Nazwy person (sekcja Krzyk → persony)
 
-Nazwa aktywnej persony to niskorozdzielcza, miękka tekstura na wstążce z 8 wielokątów (`initPersonaTitles` w `src/engine/psx.js`): mapowanie afiniczne,
+Nazwa aktywnej persony (tekstura 192×42, piksel wstążki ≈ 2,3 px ekranu, żeby litery były czytelne; na telefonie wstążka szeroka na ok. 2/3 ekranu) to niskorozdzielcza, miękka tekstura na wstążce z 8 wielokątów (`initPersonaTitles` w `src/engine/psx.js`): mapowanie afiniczne,
 przyciąganie wierzchołków do pikseli, fala i skręt biegnące bez przerwy oraz smuga ruchu (echo), wzór z dema PS1 z Euskal 2001; **stylu wstążki nie zmieniać**. Wstążka stoi w rogu obok maski (zob. „Persony w rogu i dźwięk”). Przy wejściu słowo wynurza się
 z ciemności jako pognieciona kreska i się prostuje, przy wyjściu zwija się i gaśnie. Zwykły `h3` zostaje w stronie (ukryty wizualnie), a przy ograniczeniu
 animacji w systemie nagłówek jest zwykłym tekstem.
 
 ## Język PL/EN i animowana zmiana
 
-**Blokada:** zmiana języka uruchamia animacje, więc `setLang` ignoruje kolejne kliknięcia do końca animacji (`LANG_MS` w `lang.js`, zdarzenie `krzyk-lang-busy`; nieaktywny klawisz jest przygaszony). Bez tego szybkie przełączanie nakładało animacje i część tekstu zostawała bez efektu. Przełącznik języka ma stałe położenie na każdej stronie telefonu (obok ikonki kart), bez chowania przy przewijaniu.
+**Blokada:** zmiana języka uruchamia animacje, więc `setLang` ignoruje kolejne kliknięcia do końca animacji (`LANG_MS` w `lang.js`, zdarzenie `krzyk-lang-busy`; nieaktywny klawisz jest przygaszony). Bez tego szybkie przełączanie nakładało animacje i część tekstu zostawała bez efektu. Przełącznik to jedna pikselowa płytka z suwakiem, który skokowo przesuwa się na aktywny język. Ma **identyczne, stałe położenie na każdej stronie** (prawy górny róg, `top:12px; right:12px`), a ikonka kart stoi pod nim (`top:28px; right:-19px`: płótno ma przezroczyste marginesy, więc rysunek kart (x 23–106 z 136 px) leży równo z prawą krawędzią przełącznika), tak samo na komputerze i telefonie; bez chowania przy przewijaniu. Na telefonie nic nie może wystawać poza szerokość okna (`overflow-x:clip` na bramie, html i body), bo przeglądarka poszerza wtedy układ i elementy `position:fixed` (przełącznik, ikonka dźwięku) się przesuwają.
 
 Przełącznik języka (`LangKeys`, zdarzenie `krzyk-lang`, `src/lib/lang.js`) zmienia tylko teksty informacyjne. **Nazwy własne zostają bez zmian:** persony (Anxtan, Nugis, Stoir), KRZYK, imię i nazwisko autora,
 nazwy projektów i instytucji, napisy w tle (wersy kolażu, listing cracktro, ekran Nokii w przejściu kontaktu). Nazwy działów mają wersje (Brama/Gate, Maszynologia/Machinology: też tytuł i prompt na stronie Maszynologii).
@@ -109,7 +114,7 @@ Zmiana jest animowana zgodnie z motywem miejsca, żeby nie było nagłego przesk
 
 ## Muzyka (pokój z telewizorem)
 
-Sekcja `#k-muzyka` w Krzyku (`src/engine/muzyka.js`, markup w `krzyk/page.js`, style `.mu-*` w `globals.css`): kanciasta wyrwa **wycięta wprost w tle strony** (scena ma `clip-path` wg `tear()`; sekcja nie ma tektury ani własnego tła, dookoła widać prawdziwe tło, na telefonie też), brzegi na przezroczystej warstwie `.mu-edge` (raster, suche pociągnięcia czarnego pędzla, czerwony tusz; bez taśm i bez białego brzegu). Nagłówek sekcji jest tylko dla czytników ekranu (napis „muzyka” jest na tabliczce w rogu),
+Sekcja `#k-muzyka` w Krzyku (`src/engine/muzyka.js`, markup w `krzyk/page.js`, style `.mu-*` w `globals.css`): kanciasta wyrwa (zajmuje prawie całą sekcję: `tear()` od 2,5% do 97,5%, żeby ramka nie zasłaniała modeli) **wycięta wprost w tle strony** (scena ma `clip-path` wg `tear()`; sekcja nie ma tektury ani własnego tła, dookoła widać prawdziwe tło, na telefonie też), brzegi na przezroczystej warstwie `.mu-edge` (raster, suche pociągnięcia czarnego pędzla, czerwony tusz; bez taśm i bez białego brzegu). Nagłówek sekcji jest tylko dla czytników ekranu (napis „muzyka” jest na tabliczce w rogu),
 za nią ciemny pokój PSX: dywan okrągły, ściana w pasy, okno z roletami po prawej (światło miasta, paski na podłodze i ścianie), plakat, kable, telewizor po lewej z magnetowidem, jedna kaseta i pilot na dywanie.
 Modele w `public/krzyk/3d/` (`old_tv`, `vhs_player`, `vhs_tape`, `remote`). Z siatki magnetowidu wycięty jest wbudowany, leżący fragment kasety (`stripFront`), bo animowana kaseta jest osobna (inaczej były dwie).
 Sterowanie tylko klikiem w obiekty (bez przycisków): kaseta → wsuwa się do magnetowidu i rusza klip, magnetowid → wysuwa kasetę, pilot → zmienia klip, telewizor → kamera najeżdża i ekran wypełnia kadr (Esc albo kolejny klik cofa).
@@ -129,9 +134,11 @@ Tabliczka „muzyka” (tekstura płyty wyboru, krzywo) w prawym górnym rogu. P
 
 ## Konteksty WebGL (limit przeglądarki)
 
-Przeglądarki (zwłaszcza Android) dają ok. 8 aktywnych kontekstów WebGL, a strona Krzyk ma ich 9 (cztery płyty wyboru, scena person, trzy napisy person, pokój w muzyce); po przekroczeniu limitu przeglądarka po cichu zabija najstarsze,
-i na telefonie znikał telewizor, a persony się psuły. `src/engine/glbudget.js` (`watchGL`, podpięte w `ps1()` i przy napisach person) zwalnia kontekst płótna, które od 2,5 s jest poza ekranem, i odtwarza go po powrocie (three.js wczytuje wszystko od nowa po `webglcontextrestored`).
-Dodając nowe płótno WebGL, zawsze rejestruj je w `watchGL`; w teście liczy się maksimum żywych kontekstów (powinno być wyraźnie poniżej 8).
+Przeglądarki (zwłaszcza Android) dają ok. 8 aktywnych kontekstów WebGL, a strona Krzyk miała ich 9 (cztery płyty wyboru, scena person, trzy napisy person, pokój w muzyce); po przekroczeniu limitu przeglądarka po cichu zabija najstarsze
+i takiego kontekstu nie da się odzyskać: na telefonie znikał telewizor (zostawał sam ekranik 2D na białej/pustej scenie), a persony się psuły. Zwalnianie kontekstów poza ekranem nie wystarczało.
+Dlatego **cała strona ma jeden kontekst WebGL**: `src/engine/glbudget.js` (`sharedRenderer`) daje każdemu płótnu lekkiego „przedstawiciela” renderera (ten sam interfejs: `setSize`, `setClearColor`, `autoClear`, `clear`, `render`, `dispose`),
+a scenę rysuje wspólny renderer na ukrytym płótnie i od razu kopiuje obraz na płótno 2D elementu (`autoClear = false` = kopiowanie addytywne, jak w napisach person z echem). `ps1()` i napisy person już z tego korzystają.
+Nowe płótno WebGL zawsze twórz przez `ps1()` albo `sharedRenderer(canvas)`, nigdy `new THREE.WebGLRenderer` (w teście liczy się liczba utworzonych kontekstów, powinna być 1).
 
 ## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
 

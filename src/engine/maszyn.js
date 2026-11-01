@@ -329,7 +329,10 @@ ogien:  mov cx,64000
   /* demo na całą stronę: szerokość logiczna 320, wysokość dopasowana do proporcji okna; pas ze scrollerem zostaje przy dolnej krawędzi, a nad nim biegnie dłuższy listing */
   let Y0=141, BT=120, BB=175, SY=180, LN=10;
   const layout=()=>{ H=Math.max(200,Math.round(W*(innerHeight||200)/(innerWidth||320))); c.width=W; c.height=H; const d=H-200; Y0=141+d; BT=120+d; BB=175+d; SY=180+d; LN=Math.ceil((BT-2)/16)+1; };
-  layout(); let rt; addEventListener('resize',()=>{ clearTimeout(rt); rt=setTimeout(layout,150); },{passive:true});
+  layout(); let rt, lw=innerWidth, lh=innerHeight;
+  // na telefonie pasek adresu chowa się i pokazuje podczas przewijania, co zmienia tylko innerHeight; przeliczanie płótna (czyści je i układa demo od nowa) przy każdej takiej zmianie
+  // było widać jako dziwne ładowanie animacji przy szybkim przewijaniu, więc reagujemy na zmianę szerokości albo wyraźną zmianę wysokości (obrót, klawiatura)
+  addEventListener('resize',()=>{ if(innerWidth===lw && Math.abs(innerHeight-lh)<lh*.22) return; clearTimeout(rt); rt=setTimeout(()=>{ lw=innerWidth; lh=innerHeight; layout(); },150); },{passive:true});
   const HOLD=Math.round(1300/FT)*SP;            // "KLUCZ OK" trzyma się ~1,3 s (w px drogi)
 
   /* każde przejście taśmy dekoduje w innej kolejności i z innymi sigilami */
