@@ -127,7 +127,7 @@ Modele w `public/krzyk/3d/` (`old_tv`, `vhs_player`, `vhs_tape`, `remote`). Z si
 Sterowanie tylko klikiem w obiekty (bez przycisków): kaseta → wsuwa się do magnetowidu i rusza klip, magnetowid → wysuwa kasetę, pilot → zmienia klip, telewizor → kamera najeżdża i ekran wypełnia kadr (Esc albo kolejny klik cofa).
 Ekran i wyświetlacz VFD to płótna 2D przyklejone homografią do modelu. **Nie dodawać migających cząsteczek** (kurz, losowe kreski na ekranie): wyglądały źle i zostały usunięte; szum jest tylko na pustym ekranie.
 Telefon (≤700 px): wariant „dwa piętra” — scena pionowa 288×480 (`LAYOUTS.port`): telewizor z magnetowidem u góry, dywan z kasetą i pilotem pod nim, zoom dopasowany do szerokości; układ przełącza się też przy zmianie szerokości (`applyLayout`).
-Nad sceną stoi tabliczka „muzyka” (`.k-plq`, tekstura płyty wyboru, krzywo naklejona, w miejscu dawnego znacznika A1 i nagłówka; takiej samej tabliczki „persony” używa sekcja person, znaczniki A1 i A2 usunięte). Później: plakietki z tytułami utworów, z których wysuwa się kaseta i rusza klip z YouTube.
+Nad sceną stoi tabliczka „muzyka” (`.k-plq`, tekstura płyty wyboru, krzywo naklejona, w muzyce w lewym górnym rogu wyrwy (zachodzi na nią ujemnym marginesem, żeby nie zabierała miejsca), w personach tuż nad maskami; takiej samej tabliczki „persony” używa sekcja person, znaczniki A1 i A2 usunięte). Później: plakietki z tytułami utworów, z których wysuwa się kaseta i rusza klip z YouTube.
 
 ## Persony w rogu i dźwięk
 

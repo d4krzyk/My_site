@@ -466,9 +466,13 @@ body:has(.maszyn){background:#000}   /* bez niebieskiej poświaty u góry: tło 
 .k-plq b{position:absolute;left:0;right:0;top:50%;transform:translateY(-52%) rotate(-1.4deg);text-align:center;font:400 19cqw/1 "Special Elite K",monospace;color:#e3d6b4;text-shadow:0 0 6px #000;letter-spacing:.02em}
 .k-plq u{position:absolute;left:8%;top:-5%;width:24%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-16deg)}
 .k-plq s{position:absolute;right:6%;bottom:-6%;width:22%;height:15%;background:rgba(22,22,26,.88);transform:rotate(-22deg)}
-.k-persony .k-plq{margin-top:-8px}
+.k-plq{--ph:calc(clamp(150px,19vw,250px) / 2.05)}
+.k-muzyka .k-plq{margin-bottom:calc(var(--ph) * -.72);margin-left:clamp(10px,2vw,28px)}   /* tabliczka siedzi w rogu wyrwy, nie nad nią */
+.k-sub.k-muzyka{padding-top:0}
+.k-persony .k-plq{margin-top:-14px;margin-bottom:calc(var(--ph) * -.55)}
+.k-sub.k-persony{padding-top:14px}
 /* telefon: wariant „dwa piętra”: pionowa scena, telewizor u góry, dywan z kasetą i pilotem pod nim */
-@media (max-width:700px){.kp-part{min-height:46svh}.mu-host{aspect-ratio:288/480;margin-top:6px}.k-plq{width:clamp(150px,46vw,210px)}}
+@media (max-width:700px){.kp-part{min-height:46svh}.mu-host{aspect-ratio:288/480;margin-top:6px}.k-plq{width:clamp(150px,46vw,210px);--ph:calc(clamp(150px,46vw,210px) / 2.05)}}
 
 /* ikonka dźwięku w lewym dolnym rogu (components/SoundIcon): oscyloskop, pod nim „dźwięk" i „wł/wył" */
 .snd-icon{all:unset;cursor:pointer;position:fixed;left:12px;bottom:10px;z-index:55;display:grid;justify-items:center;gap:1px;font-family:var(--f-dos);line-height:1;color:#8f94a6;-webkit-tap-highlight-color:transparent}
