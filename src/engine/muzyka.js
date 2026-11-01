@@ -230,15 +230,16 @@ export function initMuzyka(host, A) {
       const tri = (xa, xb, y0, y1) => { x.beginPath(); x.moveTo(xa, (y0 + y1) / 2); x.lineTo(xb, y0); x.lineTo(xb, y1); x.closePath(); x.fill(); };      // trójkąt z wierzchołkiem w xa
       if (kind === 'prev') { x.fillRect(8, 9, 4, 14); tri(13, 25, 9, 23); }                                            // |◀
       else if (kind === 'next') { x.fillRect(20, 9, 4, 14); tri(19, 7, 9, 23); }                                       // ▶|
-      else if (kind === 'pause') { x.fillStyle = col; tri(24, 7, 8, 24); x.fillStyle = '#fff'; x.fillRect(19, 10, 3, 12); x.fillRect(24, 10, 3, 12); }   // ▶ + ❚❚
+      else if (kind === 'pause') { x.fillStyle = col; tri(17, 6, 9, 23); x.fillRect(20, 10, 3, 12); x.fillRect(25, 10, 3, 12); }   // ▶ + ❚❚ w całości w kolorze przycisku, trójkąt nie dotyka kresek
       else { x.fillStyle = col; x.fillRect(10, 10, 12, 12); }                                                          // ■ od początku
       return P.tex(c); };
-    const mkPad = (name, kind, col, px, pz) => { const side = P.mat({ color: 0x1b1d26 }), top = P.mat({ map: icon(kind, col) }), m = new THREE.Mesh(new THREE.CylinderGeometry(.0095, .0095, .0045, 14), [side, top, side]);
+    const mkPad = (name, kind, col, px, pz) => { const side = P.mat({ color: 0x1b1d26 }), top = (() => { const tx = icon(kind, col); return P.mat({ color: 0x000000, emissive: 0xffffff, emissiveMap: tx, emissiveIntensity: 1 }); })()   // ikony świecą własnym kolorem, niezależnie od ciemnego oświetlenia pokoju
+      , m = new THREE.Mesh(new THREE.CylinderGeometry(.0095, .0095, .0045, 14), [side, top, side]);
       m.position.set(px, rbb.max.y + .0022, pz); rem.add(m);
       const h = new THREE.Mesh(new THREE.CylinderGeometry(.0112, .0112, .012, 10), new THREE.MeshBasicMaterial()); h.visible = false; h.position.copy(m.position); rem.add(h);   // niewidoczna, większa strefa trafienia (palec na telefonie)
       pads.push({ name, m, h, y: m.position.y, t: -1e9 }); };
     // na ekranie (pilot stoi czubkiem do góry, ekran ku kamerze): górny rząd poprzedni i następny, dolny pauza i od początku
-    mkPad('prev', 'prev', '#3ff0ff', .0112, .043); mkPad('next', 'next', '#3ff0ff', -.0112, .043); mkPad('pause', 'pause', '#7dffb0', .0112, .018); mkPad('again', 'again', '#ff5a6a', -.0112, .018);
+    mkPad('prev', 'prev', '#3ff0ff', .0112, .043); mkPad('next', 'next', '#3ff0ff', -.0112, .043); mkPad('pause', 'pause', '#38ff5c', .0112, .018); mkPad('again', 'again', '#ff5a6a', -.0112, .018);
     const tip = new THREE.Mesh(new THREE.BoxGeometry(.012, .012, .012), P.mat({ color: 0x330000, emissive: 0xff2020, emissiveIntensity: 0 })); tip.position.set(0, 0, .09); rem.add(tip);
     const irL = new THREE.PointLight(0xff3030, 0, .6); irL.position.set(0, 0, .1); rem.add(irL); scene.add(rem);
     const aimQ = () => { const o = new THREE.Object3D(); o.position.copy(remUp); o.lookAt(tvAim); return o.quaternion; };
