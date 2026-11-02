@@ -158,20 +158,55 @@ Dlatego **cała strona ma jeden kontekst WebGL**: `src/engine/glbudget.js` (`sha
 a scenę rysuje wspólny renderer na ukrytym płótnie i od razu kopiuje obraz na płótno 2D elementu (`autoClear = false` = kopiowanie addytywne, jak w napisach person z echem). `ps1()` i napisy person już z tego korzystają.
 Nowe płótno WebGL zawsze twórz przez `ps1()` albo `sharedRenderer(canvas)`, nigdy `new THREE.WebGLRenderer` (w teście liczy się liczba utworzonych kontekstów, powinna być 1).
 
-## Plan na przyszłość (ustalone z autorem, jeszcze niezrobione)
+## Plan na przyszłość: kolejność prac (ustalone z autorem 2026-11-02)
 
-- **Ustalone w wizualizacjach (artefakt „Wizualizacje dla Krzyku”), do wdrożenia:**
-  - (wdrożone) Persony (A2) i dźwięk: zob. sekcja „Persony w rogu i dźwięk” wyżej.
-  - (wdrożone) Muzyka (A1): zob. sekcja „Muzyka (pokój z telewizorem)” wyżej.
-- **Kamera HC90E:** po powstaniu sekcji Obraz podmienić zdjęcie na LCD (zob. wyżej).
-- **Do sprawdzenia na prawdziwych urządzeniach (nie testowane, tylko emulacja w Chromium):** przewijanie sekcjami w Krzyku na gładziku (Mac); animacje na prawdziwym telefonie i tablecie; Safari (m.in. powrót z GitHuba przyciskiem „wstecz”).
-- **Release info (Maszynologia): zdjęcie autora pod CV.** Dodać pod CV zdjęcie autora w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).
-  Autor dośle zdjęcia; wtedy zaproponować warianty (np. próg + dither Bayera w czerni i krwi, z żarzącymi się oczami, rozpad w piksele przy odkodowaniu
-  razem z resztą animacji wejścia). Używać tylko zdjęć dostarczonych przez autora i bez innych osób; zdjęcie ma być częścią animowanego odkodowania strony.
-  **Stan (2026-10-31):** autor dodał już zdjęcie do Maszynologii (plik na jego Dysku Google); pracę nad nim zaplanowano na później. Linku nie zapisuję w repozytorium
-  (jest publiczne, a oryginał nie ma być publiczny, na stronie ma być tylko wersja progowa); gdy przyjdzie czas, autor poda go ponownie.
-- **Maszynologia: podstrony projektów (po obronie magisterki).** Z czasem zrobić podstrony poszczególnych projektów autora z GitHuba, żeby lepiej pokazać,
-  co robią (opis, zrzuty, linki). Na razie projekty są tylko jako klikalne linki do repozytoriów w Release info oraz pliki README w terminalu. Termin: po magisterce, bez pośpiechu.
+Robić po kolei, od góry. Po skończeniu punktu oznaczyć go „(zrobione)” i dopisać szczegóły do właściwej sekcji wyżej.
+
+### Etap 1. Domknąć to, co już jest
+
+1. **Fonty lokalnie.** Przenieść fonty z Google Fonts do repozytorium (`next/font/local`), bo build na GitHubie dwa razy padł na ich pobieraniu.
+2. **Testy w CI.** Zapisać w repo testy Playwright uruchamiane przy każdym PR:
+   - strony ładują się bez błędów JS,
+   - jest jeden kontekst WebGL,
+   - na telefonie nic nie wystaje w bok,
+   - zmiana języka działa,
+   - telewizor rusza na atrapie YouTube.
+3. **Sprawdzenie na prawdziwych urządzeniach** (dotąd prawie wszystko testowane tylko w emulacji Chromium): jeden przegląd według listy na Androidzie, iPhonie (Safari) i komputerze z gładzikiem.
+   Do sprawdzenia: telewizor i YouTube (w tym film w elemencie z transformacją 3D na iOS i autoodtwarzanie), pilot i jego przyciski na dotyk, persony, brama, zmiana języka, przewijanie sekcjami na gładziku, powrót z GitHuba przyciskiem „wstecz”, głośność efektów dźwiękowych. Potem poprawki.
+
+### Etap 2. Uzupełnić treść
+
+4. **Sekcja Kontakt.** Teraz „w budowie”. Prawdziwe dane (mail, GitHub, LinkedIn, YouTube @zchaosu), działające bez animacji i czytelne dla czytników ekranu, w klimacie Nokii z przejścia kontaktu.
+5. **Ujednolicenie nagłówków.** Obraz i kontakt dostają tabliczki `.k-plq` jak muzyka i persony; usunąć znaczniki A3 i A4.
+6. **CV do pobrania** w Maszynologii (PDF albo prosta strona tekstowa do druku), bo rekruter nie zawsze przebije się przez animacje.
+7. **Sekcja Obraz** (aparat DSC-V1 do przeglądania zdjęć). Najpierw wizualizacja 2–3 wariantów w artefakcie, wybór autora, potem wdrożenie. Po powstaniu sekcji podmienić zdjęcie na LCD kamery HC90E (`public/krzyk/lcd.webp`, zob. „Kamera HC90E”).
+8. **Plansza person.** Przerobić brązową planszę (dziś dużo pustej tektury między personami).
+9. **Zdjęcie autora pod CV** (Maszynologia), w formie progowej, ditherowanej (czarno-czerwona, jakby w cieniu).
+   Zaproponować warianty (np. próg + dither Bayera w czerni i krwi, z żarzącymi się oczami, rozpad w piksele przy odkodowaniu razem z resztą animacji wejścia).
+   Używać tylko zdjęć dostarczonych przez autora i bez innych osób; zdjęcie ma być częścią animowanego odkodowania strony.
+   **Stan (2026-10-31):** autor ma zdjęcie na Dysku Google. Linku nie zapisuję w repozytorium (jest publiczne, a oryginał nie ma być publiczny; na stronie ma być tylko wersja progowa); gdy przyjdzie czas, autor poda go ponownie.
+10. **Muzyka: plakietki z tytułami utworów**, z których wysuwa się kaseta i rusza klip.
+
+### Etap 3. Jakość dla odwiedzających
+
+11. **Pominięcie intro dla wracających:** bramę i intro można pominąć jednym klawiszem albo strona pamięta, że gość już je widział.
+12. **Wydajność:** pomiar Lighthouse na telefonie. Mniejsze wersje teł Krzyka na telefon (największe ok. 800 KB, po zdekodowaniu dziesiątki MB pamięci), leniwe ładowanie modeli 3D dopiero przed sekcją.
+13. **Dostępność:** telewizor, pilot i kafelki wyboru działają dziś tylko kliknięciem w płótno 3D. Dodać odpowiedniki z klawiatury (Tab i Enter na niewidocznych przyciskach) i opisy dla czytników ekranu.
+14. **SEO i udostępnianie:** obrazek Open Graph (podgląd linku), opisy stron PL/EN, favicon, `sitemap`.
+15. **Statystyki bez ciasteczek** (np. Plausible lub GoatCounter), tylko jeśli autor zechce.
+
+### Etap 4. Później
+
+16. **Maszynologia: podstrony projektów (po obronie magisterki, bez pośpiechu).** Opis, zrzuty, linki dla projektów z GitHuba. Animacja otwierania ma wtedy prowadzić do podstrony zamiast do GitHuba (`finish` w `openProject`).
+17. **Czwarta persona:** miejsce i forma do ustalenia z autorem (zob. „Persony”).
+
+### Sposób pracy
+
+- **Jedna rzecz to jeden mały PR** z opisem, co ma działać (kryteria akceptacji). Testy w CI, podgląd z Netlify (podpięty do PR-ów), a autor sprawdza na telefonie przed merge'em.
+- **Nowe sekcje najpierw jako wizualizacja** w artefakcie (2–3 warianty), dopiero potem kod (sprawdziło się przy muzyce i personach).
+- **Lista kontrolna przed publikacją:** telefon i komputer, PL i EN, ograniczone animacje, dźwięk wł./wył.
+- **Porządek w kodzie przy okazji zmian, nie osobno:** przy następnej zmianie w muzyce wydzielić odtwarzacz i pilota z `muzyka.js` do osobnych plików; długie opisy sekcji z `CLAUDE.md` można przenieść do `docs/`.
+- **Nowa gałąź na każdy PR** zamiast jednej gałęzi łatanej po squash-merge'ach.
 
 ## Efekty demosceny: referencja techniczna (obowiązująca)
 
