@@ -200,6 +200,21 @@ Robić po kolei, od góry. Po skończeniu punktu oznaczyć go „(zrobione)” i
 16. **Maszynologia: podstrony projektów (po obronie magisterki, bez pośpiechu).** Opis, zrzuty, linki dla projektów z GitHuba. Animacja otwierania ma wtedy prowadzić do podstrony zamiast do GitHuba (`finish` w `openProject`).
 17. **Czwarta persona:** miejsce i forma do ustalenia z autorem (zob. „Persony”).
 
+### Dopisane 2026-11-15 (tylko zapisane, jeszcze nie robione; autor nie miał czasu)
+
+Najpierw błędy (18–20), potem nowe funkcje; sensownie przed Etapem 2 albo razem z krokiem 3 (przegląd na urządzeniach).
+
+18. **Przewijanie w sekcji Krzyk na komputerze** dziwnie się zachowuje u autora. Sprawdzić `points()` w `klatki.js` (skoki od sekcji do sekcji) na kółku myszy, gładziku i klawiaturze; zapytać autora o przeglądarkę i urządzenie wejściowe oraz co dokładnie jest dziwne (skacze, hamuje, utyka), odtworzyć w teście z emulacją kółka i gładzika.
+19. **Nagłówek wyboru drogi w bramie** („Co cię tu sprowadza?”) stoi za nisko i nakłada się na karty. Poprawić położenie w pionie na komputerze i telefonie (po zejściu, w PL i EN).
+20. **Ikonka dźwięku zasłonięta napisem** podczas przewijania w Maszynologii. Ikonka (`SoundIcon`, lewy dolny róg) ma być zawsze na wierzchu albo napis ma ją omijać.
+21. **Telewizor: ciszej i głośniej.** Dwa przyciski (na pilocie i/lub klik na telewizorze) oraz pasek głośności pośrodku ekranu jak w starych telewizorach (OSD: napis „GŁOŚNO” i rząd kresek, znika po chwili). Głośność dotyczy filmu (`setVolume` playera YouTube) i powinna współgrać z ikonką dźwięku i głośnością główną z `lib/sound`.
+22. **Mini odtwarzacz po wyjściu z sekcji Muzyka.** Gdy muzyka gra dalej, w rogu (np. po lewej) pojawia się małe okienko „teraz leci” z tytułem oraz przyciskami pauza, następny, poprzedni. Propozycja wykonania:
+    - wygląd: miniaturowy model 3D walkmana z kasetą, który wyłania się z przezroczystości ditherem (jak maski person), w stylu PS1 przy niskiej liczbie klatek (rysowanie co kilka klatek, jedna scena z `sharedRenderer`, bez nowego kontekstu WebGL); na telefonie mniejszy lub sam pasek z tytułem;
+    - najpierw wydzielić odtwarzacz i pilota z `muzyka.js` do osobnego modułu na poziomie strony (stan: aktualny klip, pauza, głośność, API YouTube), żeby film grał, gdy pokój z telewizorem jest poza oknem; iframe zostaje w DOM (poza ekranem, nie `display:none`), a pokój i mini odtwarzacz tylko pokazują ten sam stan;
+    - przyciski mini odtwarzacza wołają te same funkcje co pilot (`jump`, `togglePause`); pojawia się przy opuszczeniu sekcji, znika po zatrzymaniu muzyki albo po powrocie do telewizora;
+    - wcześniej zrobić wizualizację 2–3 wariantów w artefakcie (walkman z kasetą, małe okienko z kasetą, sam pasek), wybór autora.
+23. **Dźwięki dla całej strony** (przejścia, karty, maski, przełącznik języka, kliknięcia, brama) w tym samym stylu syntezy WebAudio co `vhssound.js` i `voices.js`, plus **minimalna regulacja głośności** przy ikonce dźwięku, która nie zajmuje miejsca: rozwija się po najechaniu (na telefonie po dotknięciu), np. suwak albo kilka kresek jak w telewizorze, albo ikonka rozsuwa się w pasek. Pomysły do przedyskutowania z autorem przed wdrożeniem (też wersja z klawiatury i dla czytników ekranu).
+
 ### Sposób pracy
 
 - **Jedna rzecz to jeden mały PR** z opisem, co ma działać (kryteria akceptacji). Testy w CI, podgląd z Netlify (podpięty do PR-ów), a autor sprawdza na telefonie przed merge'em.
